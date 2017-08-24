@@ -38,7 +38,7 @@ end
 
 qu(x) = x*x'
  
-#let
+@testset "d10" begin
     d = 10 # 40 disconnected
     n = 10000
     alpha = 0.3
@@ -74,9 +74,9 @@ qu(x) = x*x'
 
     a = O +  2*full.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
-#end
+end
 
-#let
+@testset "d23" begin
     d = 23 # 40 disconnected
     n = 100000
     alpha = 0.2
@@ -111,5 +111,28 @@ qu(x) = x*x'
     a = O +  2*full.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
-    #end
+end
 
+
+@testset "d5" begin
+     g = DiGraph(5)
+    d = nv(g)
+    for (i,j) in [(1,2), (2,3), (2,4),(4,5), (3,5)]
+        add_edge!(g,i,j)
+    end
+    
+    h, s = skeleton(d, dseporacle, g)
+    @test Graph(g) == h
+    h, s = skeleton(d, truetest)
+    @test ne(h) == 0
+    
+end    
+
+@testset "truefalse" begin 
+    d = 15
+    @time h, s = skeleton(d, falsetest)
+    @test ne(h) == div(d*(d-1),2)
+     d = 100
+    @time h, s = skeleton(d, truetest)
+    @test ne(h) == 0
+end    

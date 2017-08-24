@@ -96,29 +96,7 @@ Gaussian test at the critical value c. C is covariance of n observations.
     abs(t) < c
 end 
 
-function partialcorchol(i, j, s, C)
-    n = length(s)
-    if n == 0
-        C[i,j]
-    elseif n == 1
-        k = s[1]
-        (C[i, j] - C[i, k]*C[j, k])/sqrt((1 - C[j, k]^2)*(1 - C[i, k]^2))
-    elseif n < 10
-        C0 = C[[i;j;s],[i;j;s]]
-        #P = cholfact(C0*C0')\C0
-        P = inv(cholfact(C0))
-        -P[1, 2]/sqrt(P[1, 1]*P[2, 2])
-    else 
-        C0 = C[[i;j;s],[i;j;s]]
-        P = pinv(C0, 1.5e-8)
-        -P[1, 2]/sqrt(P[1, 1]*P[2, 2])
-    end  
-end
-@inline function gausscitestchol(i, j, s, stat, c)
-    C, n = stat
-    r = partialcorchol(i, j, s, C)
-    r = clamp(r, -1, 1)
-    n - length(s) - 3 <= 0 && return true # remove edges which cannot be tested for
-    t = sqrt(n - length(s) - 3)*atanh(r)
-    abs(t) < c
-end 
+
+truetest(i, j, s) = true
+falsetest(i, j, s) = false
+randtest(i, j, s, c) = rand() < c
