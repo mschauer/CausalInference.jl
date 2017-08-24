@@ -1,34 +1,10 @@
 using Base.Test, LightGraphs, Combinatorics
 
+
+gplot(g) = graphplot(g, names=vertices(g), nodesize=2.5, fontsize=20, nodeshape=:circle)
+
+
 import LightGraphs: discover_vertex!
-
-mutable struct IsConnectedVisitor{V} <: AbstractGraphVisitor
-    found::Bool
-    v::V
-    function IsConnectedVisitor{V}(v::V) where {V}
-        new(false, v)
-    end
-end
-
-function discover_vertex!{V}(visitor::IsConnectedVisitor{V}, v::V)
-    visitor.found = v == visitor.v
-    !visitor.found
-end
-function isconnected(g, v::V, w::V) where {V}
-    visitor = IsConnectedVisitor{V}(w)
-    traverse_graph!(g, BreadthFirst(), [v], visitor)
-    visitor.found
-end
-
-function dsep(g, v::V, w::V, s) where {V}
-    gs, vmap = induced_subgraph(g, setdiff(vertices(g),s)) # this is suboptimal, better rewrite traverse_graph! to accept tabu set
-    vr = searchsorted(vmap,v)
-    wr = searchsorted(vmap,w)
-    if isempty(vr) || isempty(vr) 
-        throw(ArgumentError("vertices not contained in induced subgraph"))
-    end
-    !isconnected(gs, first(vr), first(wr))
-end
 
 
 """
@@ -75,6 +51,24 @@ function skeleton(n::V, I, par...) where {V}
         end
     end    
 end
+
+Base.start(e::LightGraphs.SimpleGraphs.SimpleEdge) = 1
+Base.next(e::LightGraphs.SimpleGraphs.SimpleEdge, state) = state == 1 ? (src(e), 2) : (dst(e), 3)
+Base.done(e::LightGraphs.SimpleGraphs.SimpleEdge, state) = state == 3
+
+
+
+function orient_unshielded(g, S)
+    for e in edges(g)
+        v, w = src(e), dst(e)
+        for z in neighbors(g, w)
+            z == v && continue
+            v in neighbors(g, z) && continue
+            println("$v - $w - $z")
+        end
+    end
+end
+
 
 function skeleton_stable(n, I, par...)
     
@@ -170,13 +164,17 @@ falsetest(i, j, s) = false
 randtest(i, j, s, c) = rand() < c
 
 
-function oracle(i, j, s, g)
+function oracle2(i, j, s, g)
     dsep(g, i, j, s)
+end        
+
+function oracle(i, j, s, g)
+    !has_path(g, i, j; exclude_vertices=s)
 end        
 
 
 srand(5)
-let d = 20 # 40 disconnected
+let d = 30 # 40 disconnected
     n = 10000
     alpha = 0.05
     qu(x) = x*x'
@@ -188,8 +186,11 @@ let d = 20 # 40 disconnected
 
     C = cor(X,2)
     g = Graph((L*L' .!= 0)-I)
-
+    println("Test Seth's version")
     @time h, s = skeleton(d, oracle, g)
+    @test g == h
+    println("Test old version")
+    @time h, s = skeleton(d, oracle2, g)
     @test g == h
     @time h, s = skeleton(d, truetest)
     @test ne(h) == 0
@@ -216,7 +217,7 @@ if !isfile(joinpath("data","NCI-60.csv"))
         run(`wget http://nugget.unisa.edu.au/ParallelPC/data/real/NCI-60.csv`)
     end
 end 
-let d = 2000
+let d = 20
     data = readcsv("data/NCI-60.csv")
     d = min(size(data,2),d)
     X = data[:,1:d]'
