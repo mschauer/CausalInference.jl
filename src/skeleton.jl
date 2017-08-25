@@ -27,7 +27,7 @@ function skeleton(n::V, I, par...) where {V}
     d = 0 # depth
     while true
         isdone = true
-        for e0 in collect(edges(g))::Vector{edgetype(g)} # cannot remove edges while iterating
+        for e0 in collect(edges(g)) # cannot remove edges while iterating
             for e in (e0, reverse(e0))
                 nb0 = neighbors(g, src(e))
                 if length(nb0) > d  # i.e. |nb\{dst(e)}| >= d 
