@@ -1,9 +1,9 @@
 
 """
     dsep(g::AbstractGraph, u, v, s; verbose = false)
-    
-    
-Algorithm:
+
+Check  whether `u` and `v` are d-separated given set `s`.
+Algorithm: unrolled https://arxiv.org/abs/1304.1505
 
 """
 function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
@@ -12,8 +12,6 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
     out_seen = falses(nv(g)) # nodes reached earlier forwards
     descendant = falses(nv(g)) # descendant in s
     blocked = falses(nv(g))
-#    given = falses(nv(g)) # descendant in s
-    
     
     for ve in S 
         in_seen[ve] = true
@@ -56,14 +54,6 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
         sout = isempty(out_next) 
         sin && sout && return true # no vertices in the queue
         
-   #    for i in in_next
-   #         print("<-$i ")
-   #     end
-   #     for i in out_next
-   #         print("->$i ")
-   #     end
-   #     println()
-        
         if !sin # some vertex reach backwards in the queue
             src = shift!(in_next)  
             for w in out_neighbors(g, src) # possible collider at destination
@@ -104,5 +94,4 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
         end
 
     end
-    return true
 end

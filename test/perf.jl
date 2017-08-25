@@ -16,7 +16,5 @@ let
     p = 0.01
     @time h, s = skeleton(d, gausscitest, (C,n), quantile(Normal(), 1-p/2)) 
     println("inferred edges ", ne(h))
-
-    @time h, s = skeleton(d, gausscitestchol, (C,n), quantile(Normal(), 1-p/2)) 
-    println("inferred edges ", ne(h))
+    
 end
