@@ -1,4 +1,5 @@
 using CausalInference
+using LightGraphs
 using Base.Test
 
 include("skeleton.jl")

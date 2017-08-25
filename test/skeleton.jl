@@ -1,5 +1,6 @@
 
 using CausalInference
+using LightGraphs
 using Base.Test
 
 function skeleton2(n::V, I, par...) where {V}
@@ -69,11 +70,18 @@ qu(x) = x*x'
     a = O +  2*full.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
+    @test div(sum(a .== 3),2)/ne(g) >= 0.9
+    @test  div(sum(a .== 2),2)/ne(g) <= 0.1
+
     println("Using data (n = $n)")
     @time h, s = skeleton(d, gausscitest, (C,n), 2.5)
 
     a = O +  2*full.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
+
+
+    @test div(sum(a .== 3),2)/ne(g) >= 0.9
+    @test  div(sum(a .== 2),2)/ne(g) <= 0.1
 end
 
 @testset "d23" begin
@@ -105,12 +113,17 @@ end
     a = O +  2*full.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
+    @test div(sum(a .== 3),2)/ne(g) >= 0.9
+    @test  div(sum(a .== 2),2)/ne(g) <= 0.1
+
     println("Using data (n = $n)")
     @time h, s = skeleton(d, gausscitest, (C,n), 1.96)
 
     a = O +  2*full.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
+    @test div(sum(a .== 3),2)/ne(g) >= 0.85
+    @test  div(sum(a .== 2),2)/ne(g) <= 0.15
 end
 
 
@@ -123,16 +136,16 @@ end
     
     h, s = skeleton(d, dseporacle, g)
     @test Graph(g) == h
-    h, s = skeleton(d, truetest)
+    h, s = skeleton(d, CausalInference.truetest)
     @test ne(h) == 0
     
 end    
 
 @testset "truefalse" begin 
     d = 15
-    @time h, s = skeleton(d, falsetest)
+    @time h, s = skeleton(d, CausalInference.falsetest)
     @test ne(h) == div(d*(d-1),2)
      d = 100
-    @time h, s = skeleton(d, truetest)
+    @time h, s = skeleton(d, CausalInference.truetest)
     @test ne(h) == 0
 end    
