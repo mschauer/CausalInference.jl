@@ -29,12 +29,14 @@ function skeleton(n::V, I, par...) where {V}
         isdone = true
         for e0 in collect(edges(g)) # cannot remove edges while iterating
             for e in (e0, reverse(e0))
-                nb0 = neighbors(g, src(e))
-                if length(nb0) > d  # i.e. |nb\{dst(e)}| >= d 
-                    nb = copy(nb0)
-                    removesorted!(nb, dst(e))
+                nb = neighbors(g, src(e))
+                if length(nb) > d  # i.e. |nb\{dst(e)}| >= d 
+                    r = searchsorted(nb, dst(e))
+                    if isempty(r) 
+                        continue
+                    end
                     isdone = false
-                    for s in combinations(nb, d)
+                    for s in combinations_without(nb, d,  first(r)) # do not modify s!
                         if I(src(e), dst(e), s, par...) 
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))

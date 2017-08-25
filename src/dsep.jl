@@ -18,7 +18,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
         blocked[ve] = true
     end
    
-    (in_seen[u] || in_seen[v]) && throw(ArgumentError("S should not contain u or v"))
+    (in_seen[u] || in_seen[v]) && throw(ArgumentError("S=$S should not contain u=$u or v=$v"))
     
     u == v && throw(ArgumentError("u == v"))
     

@@ -7,5 +7,6 @@ export dsep, skeleton, gausscitest, dseporacle, partialcor
 
 include("skeleton.jl")
 include("dsep.jl")
+include("combinations_without.jl")
 
 end # module
