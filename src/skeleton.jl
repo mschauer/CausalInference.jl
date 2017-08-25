@@ -31,8 +31,10 @@ function skeleton(n::V, I, par...) where {V}
             for e in (e0, reverse(e0))
                 nb0 = neighbors(g, src(e))
                 if length(nb0) > d  # i.e. |nb\{dst(e)}| >= d 
+                    i = searchsorted(nb0, dst(e))
+                    isempty(i) && continue # the edge does not exist anymore
                     nb = copy(nb0)
-                    removesorted!(nb, dst(e))
+                    deleteat!(nb, first(i))
                     isdone = false
                     for s in combinations(nb, d)
                         if I(src(e), dst(e), s, par...) 
