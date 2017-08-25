@@ -1,4 +1,6 @@
 using Distributions
+using CausalInference
+using LightGraphs
 
 quantile(Normal(), 0.95)
 
@@ -16,5 +18,5 @@ let
     p = 0.01
     @time h, s = skeleton(d, gausscitest, (C,n), quantile(Normal(), 1-p/2)) 
     println("inferred edges ", ne(h))
-    
+
 end
