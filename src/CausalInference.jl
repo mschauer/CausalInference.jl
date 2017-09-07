@@ -4,7 +4,7 @@ using LightGraphs.SimpleGraphs
 using Combinatorics
 
 export dsep, skeleton, gausscitest, dseporacle, partialcor
-export unshielded
+export unshielded, pcalg
 
 include("skeleton.jl")
 include("dsep.jl")
