@@ -7,11 +7,11 @@
 
 # CausalInference.jl
 
-Julia package for causal inference, graphical models and structure learning with the PC algorithm. This package contains for now the classical (unstable) the PC algorithm, tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle using Chickering's DAG->CPDAG conversion algorithm (implemented as `dsep` and `cpdag` in this package).
+Julia package for causal inference, graphical models and structure learning with the PC algorithm. This package contains for now the classical PC algorithm, tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle with CPDAGs computed with Chickering's DAG->CPDAG conversion algorithm (implemented as `dsep` and `cpdag` in this package).
 
 See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) for other implemented functionality and [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInference.jl/issues/1) for coordination of the development.
 
-The algorithm use the Julia package [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl). Graphs are represented by sorted adjacency lists (vectors in the implemention), CPDAGs are just `DiGraph`s where unoriented Edges are represented by a forward and a backward directed edge.
+The algorithms use the Julia package [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl). Graphs are represented by sorted adjacency lists (vectors in the implemention). CPDAGs are just `DiGraph`s where unoriented edges are represented by both a forward and a backward directed edge.
 
 # References
 
