@@ -55,11 +55,21 @@ function skeleton(n::V, I, par...) where {V}
     end    
 end
 
+"""
+    dseporacle(i, j, s, g)
 
+Oracle for the `skeleton` and `pcalg` functions using [`dsep`](@ref) on the true graph `g`     
+"""
 function dseporacle(i, j, s, g)
     dsep(g, i, j, s)
 end        
 
+"""
+    partialcor(i, j, s, C)
+
+Compute the partial correlation of nodes `i` and `j` given list of nodes `s`
+using the correlation matrix `C`.
+"""
 function partialcor(i, j, s, C)
     n = length(s)
     if n == 0

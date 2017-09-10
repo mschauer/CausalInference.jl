@@ -1,3 +1,8 @@
+"""
+    digraph(E)
+
+Create `DiGraph` from edge-list.
+"""
 function digraph(E)
     d = maximum(flatten(E))
     g = DiGraph(d)
@@ -7,11 +12,34 @@ function digraph(E)
     g
 end
 
+"""
+    pairs(g)
+
+Return the edge-list as `Pairs`.
+"""
 pairs(g) = map(Pair, collect(edges(g)))
 
-oracle(g) = skeleton(nv(g), dseporacle, g)
+"""
+    skel_oracle(g)
+
+Compute the `skeleton` using the `dseporacle` for the DAG `g`.
+"""
+skel_oracle(g) = skeleton(nv(g), dseporacle, g)
+
+
+"""
+    pc_oracle(g)
+
+Compute CPDAG using the PC algorithm using the `dseporacle` on the DAG `g`. 
+"""
 pc_oracle(g) = pcalg(nv(g), dseporacle, g)
 
+"""
+    randdag(n, alpha = 0.1)
+
+Create random DAG from randomly permuted random triangular matrix with
+edge probability `alpha`.
+"""
 function randdag(n, alpha = 0.1)
     g = DiGraph(n)
     p = randperm(n)

@@ -17,7 +17,7 @@ E3 = [6=>4, 4=>3, 3=>2, 3=>1, 2=>1, 3=>5]
 C3 = copy(E3)
 append!(C3, reverse.(E3))
 
-h, S = oracle(digraph(E1a))
+h, S = skel_oracle(digraph(E1a))
 @test pairs(h) == E1a
 @test length(S) == 2
 @test S[Edge(2, 3)] == [1]
