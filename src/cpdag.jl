@@ -76,45 +76,6 @@ function print_chickering_order(g)
 end
 
 
-
-"""
-Perform a topological sort on the NODES
-Set i=0
-while there are unordered EDGES in g
-    Let y be the lowest ordered NODE that has an unordered EDGE incident into it
-    Let x be the highest ordered NODE for which x => y is not ordered
-    Label x => y with i 
-    i = i + 1
-end
-"""
-function edges_chickering_order(g)
-    ys = topological_sort_by_dfs(g)
-    yp = sortperm(ys)
-    println(ys)
-    n = nv(g)
-    i = 0 # src index
-    j = 0 # dst index
-    k = 1 # edge number
-    xs = Int[]
-
-    while true
-        while i == 0
-            j = j + 1
-            if j > n
-                @goto ende 
-            end
-            xs = sort(in_neighbors(g, ys[j]), by=x->yp[x])
-            i = length(xs)
-        end
-
-        x, y = xs[i], ys[j]
-        println(k, " ", x=>y)
-        k += 1
-        i -= 1
-    end
-    @label ende
-end
-
 @enum Status reversible=0 compelled=1 unknown=2
 """
     cpdag(skel::DiGraph)

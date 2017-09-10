@@ -33,7 +33,6 @@ skel_oracle
 randdag
 CausalInference.disjoint_sorted 
 CausalInference.ordered_edges
-CausalInference.edges_chickering_order
 CausalInference.insorted
 CausalInference.removesorted!
 ```
