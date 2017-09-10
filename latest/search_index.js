@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "CausalInference.jl",
     "category": "section",
-    "text": "Julia package for causal inference, graphical models and structure learning with the PC algorithm. This package contains for now the classical (unstable) the PC algorithm pcalg, tested on random DAGs by comparing the result of the PC algorithm using the d-separation oracle using Chickering's DAG->CPDAG conversion algorithm (implemented as dsep and cpdag in this package).See the Library for other implemented functionality.The algorithm use the Julia package LightGraphs. Graphs are represented by sorted adjacency lists (vectors in the implemention), CPDAGs are just DiGraphs where unoriented Edges are represented by a forward and a backward directed edge."
+    "text": "A Julia package for causal inference, graphical models and structure learning with the PC algorithm. This package contains for now the classical (unstable) PC algorithm pcalg, tested on random DAGs by comparing the result of the PC algorithm using the d-separation oracle with the CPDAG computed with Chickering's DAG->CPDAG conversion algorithm (implemented as dsep and cpdag in this package).See the Library for other implemented functionality.The algorithms use the SimpleGraph and SimpleDiGraph graph representation of the Julia package LightGraphs. Both types of graphs are represented by sorted adjacency lists (vectors of vectors in the LightGraphs implemention).CPDAGs are just modelled as SimpleDiGraphs, where unoriented edges are represented by a forward and a backward directed edge."
 },
 
 {
