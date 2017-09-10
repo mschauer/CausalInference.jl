@@ -111,4 +111,3 @@ end
 
 truetest(i, j, s) = true
 falsetest(i, j, s) = false
-randtest(i, j, s, c) = rand() < c

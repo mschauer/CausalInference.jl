@@ -48,15 +48,14 @@ function next(iter::OrderedEdges, state)
 end
 
 # came in handy while prototyping
-function print_chickering_order(g)
+function chickering_order(g)
+    outp = Pair{Int,Int}[]
     ys = topological_sort_by_dfs(g)
     yp = sortperm(ys)
-    println(ys)
     n = nv(g)
     i = 0 # src index
     j = 0 # dst index
-    k = 1 # edge number
-
+    xs = Int[]
     while true
         while i == 0
             j = j + 1
@@ -66,13 +65,12 @@ function print_chickering_order(g)
             xs = sort(in_neighbors(g, ys[j]), by=x->yp[x])
             i = length(xs)
         end
-
         x, y = xs[i], ys[j]
-        println(k, " ", x=>y)
-        k += 1
+        push!(outp, x=>y)
         i -= 1
     end
     @label ende
+    outp
 end
 
 

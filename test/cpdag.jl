@@ -2,6 +2,10 @@ using CausalInference
 using LightGraphs
 using Base.Test
 
+@testset "chickering" begin
+    g = randdag(200)
+    @test collect(CausalInference.ordered_edges(g)) == map(Edge,  CausalInference.chickering_order(g))
+end
 
 # http://www.multimedia-computing.de/mediawiki/images/5/55/SS08_BN-Lec2-BasicProbTheory_3.pdf
 E1a = [1=>2, 1=>3, 2=>4, 3=>4]
@@ -56,6 +60,16 @@ for n in 0:10
             #@test h1 == h2     
         end
     end
+end
+
+@testset "randdag(50)" begin # up to level 10 or so
+    n = 50
+    g = randdag(n, 0.07)
+    h1 = pc_oracle(g) 
+    h2 = cpdag(g)    
+    h1 == h2  || println(pairs(g))
+    @test pairs(h1) ⊆ pairs(h2) 
+    @test pairs(h2) ⊆ pairs(h1) 
 end
 
 @testset "orient after v structre" begin
