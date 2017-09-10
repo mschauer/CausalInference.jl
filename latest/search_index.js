@@ -9,19 +9,35 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#Home-1",
+    "location": "index.html#CausalInference.jl-1",
     "page": "Home",
-    "title": "Home",
+    "title": "CausalInference.jl",
     "category": "section",
-    "text": ""
+    "text": "Julia package for causal inference, graphical models and structure learning with the PC algorithm. This package contains for now the classical (unstable) the PC algorithm pcalg, tested on random DAGs by comparing the result of the PC algorithm using the d-separation oracle using Chickering's DAG->CPDAG conversion algorithm (implemented as dsep and cpdag in this package).See the Library for other implemented functionality.The algorithm use the Julia package LightGraphs. Graphs are represented by sorted adjacency lists (vectors in the implemention), CPDAGs are just DiGraphs where unoriented Edges are represented by a forward and a backward directed edge."
 },
 
 {
-    "location": "index.html#Summary-1",
+    "location": "index.html#Performance-1",
     "page": "Home",
-    "title": "Summary",
+    "title": "Performance",
     "category": "section",
-    "text": "Causal inference, graphical models and the structure learning with the PC algorithm."
+    "text": "The speed of the algorithm is comparable with the C++ code of the R package pcalg after some pending optimizations. "
+},
+
+{
+    "location": "index.html#Contribution-1",
+    "page": "Home",
+    "title": "Contribution",
+    "category": "section",
+    "text": "See issue #1 (Roadmap/Contribution) for questions and coordination of the development."
+},
+
+{
+    "location": "index.html#References-1",
+    "page": "Home",
+    "title": "References",
+    "category": "section",
+    "text": "D. M. Chickering: Learning Equivalence Classes of Bayesian-Network Structures. Journal of Machine Learning Research 2 (2002), 445-498.\nD. Colombo, M. H. Maathuis: Order-Independent Constraint-Based Causal Structure Learning. Journal of Machine Learning Research 15 (2014), 3921-3962."
 },
 
 {
