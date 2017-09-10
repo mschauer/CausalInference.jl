@@ -136,12 +136,8 @@ function pcalg(n::V, I, par...) where {V}
     while true
         for e in edges(g)
             for (v, w) in (e, reverse(e))
-                if !has_both(dg, w, v) #check if still unoriented
-                    break 
-                end
                 # Rule 1: Orient v-w into v->w whenever there is u->v
                 # such that u and w are not adjacent
-                
                 for u in in_neighbors(dg, v)
                     has_edge(dg, v => u) && continue # not directed
                     adjacent(dg, u, w) && continue
