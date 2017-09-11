@@ -17,6 +17,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "index.html#Example-1",
+    "page": "Home",
+    "title": "Example",
+    "category": "section",
+    "text": "Compute skeleton graph h with separating sets S and CPDAG g from  the 47x1190 data set NCI-60 on expression profiles of miRNAs and mRNAs (T. D. Le, L. Liu et al.: Inferring microRNA–mRNA causal regulatory relationships from expression data, Bioinformatics, vol. 29, no. 6, 765–771, 2013.)using Distributions\nusing CausalInference\nusing LightGraphs\n\np = 0.01\n\nrun(`wget http://nugget.unisa.edu.au/ParallelPC/data/real/NCI-60.csv`)\nX = readcsv(\"NCI-60.csv\")\nd, n = size(X)\nC = Symmetric(cor(X, 2))\n\nh, S = skeleton(d, gausscitest, (C, n), quantile(Normal(), 1-p/2))\ng = pcalg(d, gausscitest, (C, n), quantile(Normal(), 1-p/2)) "
+},
+
+{
     "location": "index.html#Performance-1",
     "page": "Home",
     "title": "Performance",
@@ -93,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Library",
     "title": "CausalInference.pcalg",
     "category": "Function",
-    "text": "pcalg(n::V, I, par...)\n\nPerform the PC skeleton algorithm for a set of 1:n variables using the tests\n\nI(u, v, [s1, ..., sn], par...)\n\nReturns the CPDAG as DiGraph.   \n\n\n\n"
+    "text": "pcalg(n::V, I, par...)\n\nPerform the PC algorithm for a set of 1:n variables using the tests\n\nI(u, v, [s1, ..., sn], par...)\n\nReturns the CPDAG as DiGraph.   \n\n\n\n"
 },
 
 {
