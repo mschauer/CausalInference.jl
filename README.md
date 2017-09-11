@@ -1,6 +1,6 @@
 
 [![Build Status](https://travis-ci.org/mschauer/CausalInference.jl.svg?branch=master)](https://travis-ci.org/mschauer/CausalInference.jl)
-[![Coverage Status](https://coveralls.io/repos/mschauer/CausalInference.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/mschauer/CausalInference.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/mschauer/CausalInference.jl/badge.svg?branch=master)](https://coveralls.io/github/mschauer/CausalInference.jl?branch=master)
 [![codecov.io](http://codecov.io/github/mschauer/CausalInference.jl/coverage.svg?branch=master)](http://codecov.io/github/mschauer/CausalInference.jl?branch=master)
 
 [![Latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://mschauer.github.io/CausalInference.jl/latest/)
