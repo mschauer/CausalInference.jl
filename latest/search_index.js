@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Example",
     "category": "section",
-    "text": "Compute skeleton graph h with separating sets S and CPDAG g from  the 47x1190 data set NCI-60 on expression profiles of miRNAs and mRNAs (T. D. Le, L. Liu et al.: Inferring microRNA–mRNA causal regulatory relationships from expression data, Bioinformatics, vol. 29, no. 6, 765–771, 2013.)using Distributions\nusing CausalInference\nusing LightGraphs\n\np = 0.01\n\nrun(`wget http://nugget.unisa.edu.au/ParallelPC/data/real/NCI-60.csv`)\nX = readcsv(\"NCI-60.csv\")\nd, n = size(X)\nC = Symmetric(cor(X, 2))\n\nh, S = skeleton(d, gausscitest, (C, n), quantile(Normal(), 1-p/2))\ng = pcalg(d, gausscitest, (C, n), quantile(Normal(), 1-p/2)) "
+    "text": "Compute skeleton graph h with separating sets S and CPDAG g from  the 47x1190 data set NCI-60 on expression profiles of miRNAs and mRNAs using Distributions\nusing CausalInference\nusing LightGraphs\n\np = 0.01\n\n# Download data \nrun(`wget http://nugget.unisa.edu.au/ParallelPC/data/real/NCI-60.csv`)\n\n# Read data and compute correlation maxtrix\nX = readcsv(\"NCI-60.csv\")\nd, n = size(X)\nC = Symmetric(cor(X, 2)) \n\n# Compute skeleton `h` and separting sets `S`\nh, S = skeleton(d, gausscitest, (C, n), quantile(Normal(), 1-p/2))\n\n# Compute the CPDAG `g`\ng = pcalg(d, gausscitest, (C, n), quantile(Normal(), 1-p/2)) (Using data from T. D. Le, L. Liu et al.: Inferring microRNA–mRNA causal regulatory relationships from expression data, Bioinformatics, vol. 29, no. 6, 765–771, 2013.)"
 },
 
 {
