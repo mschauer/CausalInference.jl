@@ -13,7 +13,7 @@ CPDAGs are just modelled as `SimpleDiGraph`s, where unoriented edges are represe
 
 
 Compute skeleton graph `h` with separating sets `S` and CPDAG `g` from 
-the 47x1190 data set NCI-60 on expression profiles of miRNAs and mRNAs (T. D. Le, L. Liu et al.: Inferring microRNA–mRNA causal regulatory relationships from expression data, *Bioinformatics*, vol. 29, no. 6, 765–771, 2013.)
+the 47x1190 data set NCI-60 on expression profiles of miRNAs and mRNAs 
 
 ```julia
 using Distributions
@@ -22,15 +22,22 @@ using LightGraphs
 
 p = 0.01
 
+# Download data 
 run(`wget http://nugget.unisa.edu.au/ParallelPC/data/real/NCI-60.csv`)
+
+# Read data and compute correlation maxtrix
 X = readcsv("NCI-60.csv")
 d, n = size(X)
-C = Symmetric(cor(X, 2))
+C = Symmetric(cor(X, 2)) 
 
+# Compute skeleton `h` and separting sets `S`
 h, S = skeleton(d, gausscitest, (C, n), quantile(Normal(), 1-p/2))
+
+# Compute the CPDAG `g`
 g = pcalg(d, gausscitest, (C, n), quantile(Normal(), 1-p/2)) 
 ```
 
+(Using data from T. D. Le, L. Liu et al.: Inferring microRNA–mRNA causal regulatory relationships from expression data, *Bioinformatics*, vol. 29, no. 6, 765–771, 2013.)
 
 
 ## Performance
