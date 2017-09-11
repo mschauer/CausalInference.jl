@@ -95,11 +95,14 @@ function _vskel(n::V, I, par...) where {V}
     dg = DiGraph(g) # use g to keep track of unoriented edges
 
     for (u, v, w) in Z
-        rem_edge!(dg, v => u)
-        rem_edge!(dg, v => w)
-
-        rem_edge!(g, (v, u))
-        rem_edge!(g, (v, w))
+        if has_edge(g, (u, v))
+            rem_edge!(dg, v => u)
+            rem_edge!(g, (v, u))
+        end
+        if has_edge(g, (v, w))
+            rem_edge!(dg, v => w)
+            rem_edge!(g, (v, w))
+        end
     end
     dg
 end
@@ -107,7 +110,7 @@ end
 """
     pcalg(n::V, I, par...)
 
-Perform the PC skeleton algorithm for a set of 1:n variables using the tests
+Perform the PC algorithm for a set of 1:n variables using the tests
 
     I(u, v, [s1, ..., sn], par...)
 
@@ -124,11 +127,14 @@ function pcalg(n::V, I, par...) where {V}
     dg = DiGraph(g) # use g to keep track of unoriented edges
 
     for (u, v, w) in Z
-        rem_edge!(dg, v => u)
-        rem_edge!(dg, v => w)
-
-        rem_edge!(g, (v, u)) 
-        rem_edge!(g, (v, w))
+        if has_edge(g, (u, v))
+            rem_edge!(dg, v => u)
+            rem_edge!(g, (v, u))
+        end
+        if has_edge(g, (v, w))
+            rem_edge!(dg, v => w)
+            rem_edge!(g, (v, w))
+        end
     end
 
     # Step 3: Apply Rule 1-3 consecutively
