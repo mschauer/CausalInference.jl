@@ -1,9 +1,4 @@
 using LightGraphs
-import LightGraphs.rem_edge!
-
-Base.start(e::LightGraphs.SimpleGraphs.SimpleEdge) = 1
-Base.next(e::LightGraphs.SimpleGraphs.SimpleEdge, state) = state == 1 ? (src(e), 2) : (dst(e), 3)
-Base.done(e::LightGraphs.SimpleGraphs.SimpleEdge, state) = state == 3
 
 """
     insorted(a, x)
@@ -57,7 +52,7 @@ where higher nodes have smaller vertex number.
 function unshielded(g, S)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
-        v, w = (src(e), dst(e))
+        v, w = Tuple(e)
         assert(v < w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
@@ -73,11 +68,11 @@ function unshielded(g, S)
     Z
 end
 
-adjacent(dg::DiGraph, v, w) = has_edge(dg, (v, w)) || has_edge(dg, (w, v))
-has_both(dg::DiGraph, v, w) = has_edge(dg, (v, w)) && has_edge(dg, (w, v))
+isadjacent(dg::DiGraph, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
+has_both(dg::DiGraph, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
 
-rem_edge!(dg::DiGraph, e::Pair) = rem_edge!(dg, Edge(e))
-rem_edge!(dg::Graph, e::Tuple) = rem_edge!(dg, Edge(e))
+remove!(dg::DiGraph, e::Pair) = rem_edge!(dg, Edge(e))
+remove!(dg::Graph, e::Tuple) = rem_edge!(dg, Edge(e))
 
 """
     vskel(g)
@@ -96,12 +91,12 @@ function _vskel(n::V, I, par...) where {V}
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
-            rem_edge!(dg, v => u)
-            rem_edge!(g, (v, u))
+            remove!(dg, v => u)
+            remove!(g, (v, u))
         end
         if has_edge(g, (v, w))
-            rem_edge!(dg, v => w)
-            rem_edge!(g, (v, w))
+            remove!(dg, v => w)
+            remove!(g, (v, w))
         end
     end
     dg
@@ -128,12 +123,12 @@ function pcalg(n::V, I, par...) where {V}
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
-            rem_edge!(dg, v => u)
-            rem_edge!(g, (v, u))
+            remove!(dg, v => u)
+            remove!(g, (v, u))
         end
         if has_edge(g, (v, w))
-            rem_edge!(dg, v => w)
-            rem_edge!(g, (v, w))
+            remove!(dg, v => w)
+            remove!(g, (v, w))
         end
     end
 
@@ -141,14 +136,15 @@ function pcalg(n::V, I, par...) where {V}
     removed = Tuple{Int64,Int64}[]
     while true
         for e in edges(g)
-            for (v, w) in (e, reverse(e))
+            for e_ in (e, reverse(e))
+                v, w = Tuple(e_)
                 # Rule 1: Orient v-w into v->w whenever there is u->v
                 # such that u and w are not adjacent
                 for u in in_neighbors(dg, v)
                     has_edge(dg, v => u) && continue # not directed
-                    adjacent(dg, u, w) && continue
+                    isadjacent(dg, u, w) && continue
                     VERBOSE && println("rule 1: ", v => w) 
-                    rem_edge!(dg, w => v)
+                    remove!(dg, w => v)
                     push!(removed, (w, v))
                     @goto ende
                 end
@@ -167,7 +163,7 @@ function pcalg(n::V, I, par...) where {V}
                 
                 if !disjoint_sorted(ins, outs)
                     VERBOSE && println("rule 2: ", v => w) 
-                    rem_edge!(dg, w => v)
+                    remove!(dg, w => v)
                     push!(removed, (w, v))
                     @goto ende
                 end
@@ -179,7 +175,7 @@ function pcalg(n::V, I, par...) where {V}
                     has_edge(dg, k => v) && push!(fulls, k)
                 end
                 for (k, l) in combinations(fulls, 2) # FIXME: 
-                    adjacent(dg, k, l) && continue
+                    isadjacent(dg, k, l) && continue
                     
                     # Skip if not k->w or if not l->w
                     if has_edge(dg, w => k) || !has_edge(dg, k => w)
@@ -189,7 +185,7 @@ function pcalg(n::V, I, par...) where {V}
                         continue
                     end
                     VERBOSE && println("rule 3: ", v => w) 
-                    rem_edge!(dg, w => v)
+                    remove!(dg, w => v)
                     push!(removed, (w, v))
                     @goto ende
                 end
@@ -198,7 +194,7 @@ function pcalg(n::V, I, par...) where {V}
         
         @label ende
         for e in removed
-            rem_edge!(g, e)
+            remove!(g, e)
         end
         isempty(removed) && break 
         empty!(removed)

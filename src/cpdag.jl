@@ -140,7 +140,8 @@ function cpdag(skel::DiGraph)
         i = i - 1
     end
     @label ende
-    for (x, y) in collect(edges(g))
+    for e in collect(edges(g))
+        x, y = Tuple(e)
         if label[x=>y] == reversible
             add_edge!(g, y => x)
         end
