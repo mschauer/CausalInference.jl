@@ -27,7 +27,7 @@ partialcor
 ## Miscellaneous
 ```@docs
 digraph
-pairs
+vpairs
 pc_oracle
 skel_oracle
 randdag

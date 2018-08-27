@@ -1,3 +1,4 @@
+using Random
 """
     digraph(E)
 
@@ -13,11 +14,11 @@ function digraph(E)
 end
 
 """
-    pairs(g)
+    vpairs(g)
 
-Return the edge-list as `Pairs`.
+Return the edge-list as `Pair`s.
 """
-pairs(g) = map(Pair, collect(edges(g)))
+vpairs(g) = map(Pair, collect(edges(g)))
 
 """
     skel_oracle(g)

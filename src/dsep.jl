@@ -33,7 +33,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
     end    
     
     while !isempty(next)
-        for w in in_neighbors(g, shift!(next))
+        for w in inneighbors(g, popfirst!(next))
             if !descendant[w]
                 push!(next, w) # push onto queue
                 descendant[w] = true
@@ -55,8 +55,8 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
         sin && sout && return true # no vertices in the queue
         
         if !sin # some vertex reach backwards in the queue
-            src = shift!(in_next)  
-            for w in out_neighbors(g, src) # possible collider at destination
+            src = popfirst!(in_next)  
+            for w in outneighbors(g, src) # possible collider at destination
                 if !out_seen[w] && (!blocked[w] || descendant[w])
                     verbose && println("<- $src -> $w")
                     w == v && return false
@@ -64,7 +64,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
                     out_seen[w] = true
                 end
             end
-            for w in in_neighbors(g, src)
+            for w in inneighbors(g, src)
                 if !in_seen[w]
                     verbose && println("<- $src <- $w")
                     w == v && return false
@@ -74,8 +74,8 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
             end    
         end
         if !sout # some vertex reach forwards in the queue
-            src = shift!(out_next)  
-            for w in out_neighbors(g, src) # possible collider at destination
+            src = popfirst!(out_next)  
+            for w in outneighbors(g, src) # possible collider at destination
                 if !out_seen[w] && !blocked[src] && (!blocked[w] || descendant[w])
                     verbose && println("-> $src -> $w")
                     w == v && return false
@@ -83,7 +83,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
                     out_seen[w] = true
                 end
             end
-            for w in in_neighbors(g, src) # collider at source
+            for w in inneighbors(g, src) # collider at source
                 if !in_seen[w] && descendant[src] # shielded collider
                     verbose && println("-> $src <- $w")
                     w == v && return false

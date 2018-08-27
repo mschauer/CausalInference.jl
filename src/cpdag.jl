@@ -14,19 +14,18 @@ Iterator of edges of a dag, ordered in Chickering order:
 """
 ordered_edges(g) = OrderedEdges(g)
 
-type OrderedEdges
+struct OrderedEdges
     g
     ys::Vector{Int}
     yp::Vector{Int}
     n::Int
     m::Int
 
-function OrderedEdges(g::DiGraph) 
-    ys = topological_sort_by_dfs(g)
-    yp = sortperm(ys)
-    new(g, ys, yp, nv(g), ne(g))
-end
-
+    function OrderedEdges(g::DiGraph) 
+        ys = topological_sort_by_dfs(g)
+        yp = sortperm(ys)
+        new(g, ys, yp, nv(g), ne(g))
+    end
 end
 
 length(iter::OrderedEdges) = iter.m
@@ -41,7 +40,7 @@ function next(iter::OrderedEdges, state)
     g, ys, yp = iter.g, iter.ys, iter.yp
     while i == 0
         j = j + 1
-        xs = sort(in_neighbors(g, ys[j]), by=x->yp[x])
+        xs = sort(inneighbors(g, ys[j]), by=x->yp[x])
         i = length(xs)
     end
     Edge(xs[i], ys[j]), (i - 1, j, k + 1, xs)
@@ -62,7 +61,7 @@ function chickering_order(g)
             if j > n
                 @goto ende 
             end
-            xs = sort(in_neighbors(g, ys[j]), by=x->yp[x])
+            xs = sort(inneighbors(g, ys[j]), by=x->yp[x])
             i = length(xs)
         end
         x, y = xs[i], ys[j]
@@ -103,17 +102,17 @@ function cpdag(skel::DiGraph)
             if j > n
                 @goto ende 
             end
-            xs = sort(in_neighbors(g, ys[j]), by=x->yp[x])
+            xs = sort(inneighbors(g, ys[j]), by=x->yp[x])
             i = length(xs)
         end
 
         x, y = xs[i], ys[j]
 
         if label[x => y] == unknown
-            for w in in_neighbors(g, x)
+            for w in inneighbors(g, x)
                 label[w => x] == compelled || continue
                 if !has_edge(g, w => y)
-                    for z in in_neighbors(g, y)
+                    for z in inneighbors(g, y)
                         label[z => y] = compelled
                     end
                     @goto next
@@ -123,13 +122,13 @@ function cpdag(skel::DiGraph)
             end
 
             lbl = reversible
-            for z in in_neighbors(g, y)
+            for z in inneighbors(g, y)
                 if x == z || has_edge(g, z => x) 
                     continue
                 end
                 lbl = compelled
             end
-            for z in in_neighbors(g, y)
+            for z in inneighbors(g, y)
                 if label[z => y] == unknown
                     label[z => y] = lbl
                 end

@@ -1,6 +1,6 @@
 using CausalInference
 using LightGraphs
-using Base.Test
+using Test
 
 g = DiGraph(5)
 d = nv(g)
@@ -15,7 +15,7 @@ Z = unshielded(h, s)
 
 for z in Z
     u, v, w = z
-    n = in_neighbors(h, v)
+    n = inneighbors(h, v)
     @test u in n
     @test w in n
     @test !(u in neighbors(h, w))

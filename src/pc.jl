@@ -32,13 +32,6 @@ function disjoint_sorted(u, v)
     end
 end
 
-
-"""
-    unshielded(g, S)
-
-Find unshielded triples in the skeleton. Triples are connected vertices v-w-z where
-z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
-""" 
 #=
 Let e=(v, w).
 Note that each unshielded triple is of type `∨` or `╎` or `∧` of shape
@@ -48,12 +41,18 @@ Note that each unshielded triple is of type `∨` or `╎` or `∧` of shape
         z        |          w
                  z
 where higher nodes have smaller vertex number.
-=#
+=# 
+"""
+    unshielded(g, S)
+
+Find unshielded triples in the skeleton. Triples are connected vertices v-w-z where
+z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
+""" 
 function unshielded(g, S)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
-        assert(v < w)
+        @assert(v < w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
             insorted(neighbors(g, z), v) && continue
@@ -112,7 +111,7 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 Returns the CPDAG as DiGraph.   
 """
 function pcalg(n::V, I, par...) where {V}
-    const VERBOSE = false
+    VERBOSE = false
 
     # Step 1
     g, S = skeleton(n, I, par...)
@@ -140,7 +139,7 @@ function pcalg(n::V, I, par...) where {V}
                 v, w = Tuple(e_)
                 # Rule 1: Orient v-w into v->w whenever there is u->v
                 # such that u and w are not adjacent
-                for u in in_neighbors(dg, v)
+                for u in inneighbors(dg, v)
                     has_edge(dg, v => u) && continue # not directed
                     isadjacent(dg, u, w) && continue
                     VERBOSE && println("rule 1: ", v => w) 
@@ -153,11 +152,11 @@ function pcalg(n::V, I, par...) where {V}
                 # Rule 2: Orient v-w into v->w whenever there is a chain
                 # v->k->w.
                 outs = Int[]
-                for k in out_neighbors(dg, v)
+                for k in outneighbors(dg, v)
                     !has_edge(dg, k => v) && push!(outs, k)
                 end
                 ins = Int[]
-                for k in in_neighbors(dg, w)
+                for k in inneighbors(dg, w)
                     !has_edge(dg, w => k) && push!(ins, k)
                 end
                 
@@ -171,7 +170,7 @@ function pcalg(n::V, I, par...) where {V}
                 # Rule 3: Orient v-w into v->w whenever there are two chains
                 # v-k->w and v-l->w such that k and l are nonadjacent
                 fulls = [] # Find nodes k where v-k
-                for k in out_neighbors(dg, v)
+                for k in outneighbors(dg, v)
                     has_edge(dg, k => v) && push!(fulls, k)
                 end
                 for (k, l) in combinations(fulls, 2) # FIXME: 

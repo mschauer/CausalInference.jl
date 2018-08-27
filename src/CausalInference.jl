@@ -7,7 +7,7 @@ using Base.Iterators
 export dsep, skeleton, gausscitest, dseporacle, partialcor
 export unshielded, pcalg, vskel
 export cpdag
-export digraph, pairs, skel_oracle, pc_oracle, randdag
+export digraph, vpairs, skel_oracle, pc_oracle, randdag
 
 
 include("skeleton.jl")

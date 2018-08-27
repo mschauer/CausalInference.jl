@@ -1,7 +1,10 @@
 
 using CausalInference
 using LightGraphs
-using Base.Test
+using Test
+using Random
+using LinearAlgebra
+using Statistics
 
 function skeleton2(n::V, I, par...) where {V}
     g = CompleteGraph(n)
@@ -43,19 +46,19 @@ qu(x) = x*x'
     d = 10 # 40 disconnected
     n = 10000
     alpha = 0.3
-    srand(5)
+    Random.seed!(5)
     E = LowerTriangular([i > j ? 1*(rand() < alpha) : 0 for i in 1:d, j in 1:d]) 
     L = E .* rand(d,d)
     println("\nVertices: $d, Edges: ", sum(E))
 
     X = (I - L)\randn(d, n)
-    Σ = cov(X,2)
+    Σ = cov(X, dims=2)
     Σtrue = inv(qu((I-L)'))
 
-    @test norm(Σ -  Σtrue)  < .2*d*d/sqrt(n)
+    @test norm(Σ -  Σtrue)  < .25*d*d/sqrt(n)
     di = sqrt.(diag(Σtrue));
     Ctrue = (Σtrue)./(di*di');
-    C = cor(X,2)
+    C = cor(X, dims=2)
 
     gd = DiGraph(E)
     g = Graph(Symmetric(E+E'))
@@ -66,8 +69,8 @@ qu(x) = x*x'
 
     println("Using true correlation")
     @time h, s = skeleton(d, gausscitest, (Ctrue, n*n), 0.05)
-    O = full.(adjacency_matrix.(g)) 
-    a = O +  2*full.(adjacency_matrix.(h))
+    O = Matrix.(adjacency_matrix.(g)) 
+    a = O +  2*Matrix.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.9
@@ -76,7 +79,7 @@ qu(x) = x*x'
     println("Using data (n = $n)")
     @time h, s = skeleton(d, gausscitest, (C,n), 2.5)
 
-    a = O +  2*full.(adjacency_matrix.(h))
+    a = O +  2*Matrix.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
 
@@ -88,19 +91,19 @@ end
     d = 23 # 40 disconnected
     n = 100000
     alpha = 0.2
-    srand(5) 
+    Random.seed!(5) 
     E = LowerTriangular([i > j ? 1*(rand() < alpha) : 0 for i in 1:d, j in 1:d]) 
     L = E .* rand(d,d)
     println("\nVertices: $d, Edges: ", sum(E))
 
     X = (I - L)\randn(d, n)
-    Σ = cov(X,2)
+    Σ = cov(X, dims=2)
     Σtrue = inv(qu((I-L)'))
 
     @test norm(Σ -  Σtrue)  < .2*d*d/sqrt(n)
     di = sqrt.(diag(Σtrue));
     Ctrue = (Σtrue)./(di*di');
-    C = cor(X,2)
+    C = cor(X, dims=2)
     g = Graph(Symmetric(E+E'))
     gd = DiGraph(E)
     
@@ -109,8 +112,8 @@ end
 
     println("Using true correlation")
     @time h, s = skeleton(d, gausscitest, (Ctrue, n*n), 0.05)
-    O = full.(adjacency_matrix.(g)) 
-    a = O +  2*full.(adjacency_matrix.(h))
+    O = Matrix.(adjacency_matrix.(g)) 
+    a = O +  2*Matrix.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.9
@@ -119,7 +122,7 @@ end
     println("Using data (n = $n)")
     @time h, s = skeleton(d, gausscitest, (C,n), 1.96)
 
-    a = O +  2*full.(adjacency_matrix.(h))
+    a = O +  2*Matrix.(adjacency_matrix.(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.85

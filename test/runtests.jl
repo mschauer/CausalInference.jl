@@ -1,6 +1,6 @@
 using CausalInference
 using LightGraphs
-using Base.Test
+using Test
 
 include(joinpath("..", "docs", "make.jl"))
 
