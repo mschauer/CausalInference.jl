@@ -29,11 +29,6 @@ struct OrderedEdges
 end
 
 length(iter::OrderedEdges) = iter.m
-#start(iter::OrderedEdges) = 0, 0, 0, Int[] #i, j
-#function done(iter::OrderedEdges, state) 
-#    i, j, k, xs  = state
-#    k >= iter.m
-#end
 
 function iterate(iter::OrderedEdges, state=(0, 0, 0, Int[]))
     i, j, k, xs  = state

@@ -69,8 +69,8 @@ qu(x) = x*x'
 
     println("Using true correlation")
     @time h, s = skeleton(d, gausscitest, (Ctrue, n*n), 0.05)
-    O = Matrix.(adjacency_matrix.(g)) 
-    a = O +  2*Matrix.(adjacency_matrix.(h))
+    O = Matrix(adjacency_matrix(g)) 
+    a = O +  2*Matrix(adjacency_matrix(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.9
@@ -79,12 +79,12 @@ qu(x) = x*x'
     println("Using data (n = $n)")
     @time h, s = skeleton(d, gausscitest, (C,n), 2.5)
 
-    a = O +  2*Matrix.(adjacency_matrix.(h))
+    a = O +  2*Matrix(adjacency_matrix(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.9
-    @test  div(sum(a .== 2),2)/ne(g) <= 0.1
+    @test div(sum(a .== 2),2)/ne(g) <= 0.1
 end
 
 @testset "d23" begin
@@ -112,21 +112,21 @@ end
 
     println("Using true correlation")
     @time h, s = skeleton(d, gausscitest, (Ctrue, n*n), 0.05)
-    O = Matrix.(adjacency_matrix.(g)) 
-    a = O +  2*Matrix.(adjacency_matrix.(h))
+    O = Matrix(adjacency_matrix(g)) 
+    a = O +  2*Matrix(adjacency_matrix(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.9
-    @test  div(sum(a .== 2),2)/ne(g) <= 0.1
+    @test div(sum(a .== 2),2)/ne(g) <= 0.1
 
     println("Using data (n = $n)")
     @time h, s = skeleton(d, gausscitest, (C,n), 1.96)
 
-    a = O +  2*Matrix.(adjacency_matrix.(h))
+    a = O +  2*Matrix(adjacency_matrix(h))
     println("num edges found ", div(sum(a .== 3),2), " of ", ne(g), ", false edges ", div(sum(a .== 2),2) )
 
     @test div(sum(a .== 3),2)/ne(g) >= 0.85
-    @test  div(sum(a .== 2),2)/ne(g) <= 0.15
+    @test div(sum(a .== 2),2)/ne(g) <= 0.15
 end
 
 
