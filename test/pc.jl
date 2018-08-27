@@ -2,6 +2,19 @@ using CausalInference
 using LightGraphs
 using Test
 
+using CausalInference: disjoint_sorted
+
+@test disjoint_sorted([],[1,2])
+@test disjoint_sorted([1,2],[])
+@test disjoint_sorted([],[])
+@test disjoint_sorted([1,2],[3,4])
+@test disjoint_sorted([1,2],[3])
+@test disjoint_sorted([1],[3,4])
+@test !disjoint_sorted([1,3],[2,3,4])
+@test !disjoint_sorted([1,2,3],[3,4,5])
+
+
+
 g = DiGraph(5)
 d = nv(g)
 for (i,j) in [(1,2), (2,3), (2,4),(4,5), (3,5)]

@@ -14,24 +14,27 @@ Check if the intersection of sorted collections is empty. The intersection
 of empty collectios is empty.
 """
 function disjoint_sorted(u, v)
-    su = start(u)
-    sv = start(v)
-    done(u, su) && return true
-    done(v, sv) && return true
-    x, su = next(u, su)
-    y, sv = next(v, sv)
+    xa = iterate(u)
+    xa === nothing && return true
+    yb = iterate(v)
+    yb === nothing && return true
+
+    x, a = xa
+    y, b = yb
+
     while true
         x == y && return false
         if x > y
-            done(v, sv) && return true
-            y, sv = next(v, sv)
+            yb = iterate(v, b)
+            yb === nothing && return true
+            y, b = yb
         else
-            done(u, su) && return true
-            x, su = next(u, su)
+            xa = iterate(u, a)
+            xa === nothing && return true
+            x, a = xa
         end
     end
 end
-
 #=
 Let e=(v, w).
 Note that each unshielded triple is of type `∨` or `╎` or `∧` of shape

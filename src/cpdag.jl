@@ -1,4 +1,4 @@
-import Base: start, next, done, length
+import Base: iterate, length
 
 """
     ordered_edges(dag)
@@ -29,14 +29,15 @@ struct OrderedEdges
 end
 
 length(iter::OrderedEdges) = iter.m
-start(iter::OrderedEdges) = 0, 0, 0, Int[] #i, j
-function done(iter::OrderedEdges, state) 
-    i, j, k, xs  = state
-    k >= iter.m
-end
+#start(iter::OrderedEdges) = 0, 0, 0, Int[] #i, j
+#function done(iter::OrderedEdges, state) 
+#    i, j, k, xs  = state
+#    k >= iter.m
+#end
 
-function next(iter::OrderedEdges, state)
+function iterate(iter::OrderedEdges, state=(0, 0, 0, Int[]))
     i, j, k, xs  = state
+    k >= iter.m && return nothing
     g, ys, yp = iter.g, iter.ys, iter.yp
     while i == 0
         j = j + 1
