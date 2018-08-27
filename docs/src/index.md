@@ -26,7 +26,7 @@ p = 0.01
 run(`wget http://nugget.unisa.edu.au/ParallelPC/data/real/NCI-60.csv`)
 
 # Read data and compute correlation maxtrix
-X = readcsv("NCI-60.csv")
+X = readdlm("NCI-60.csv")
 d, n = size(X)
 C = Symmetric(cor(X, 2)) 
 
