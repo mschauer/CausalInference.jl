@@ -6,7 +6,7 @@ makedocs(
     format = :html,
     sitename = "CausalInference.jl",
     authors = "Moritz Schauer and contributors",
-    pages = Any[ # Compat: `Any` for 0.4 compat
+    pages = Any[
         "Home" => "index.md",
 #        "Manual" => "manual.md",
         "Library" => "library.md",
@@ -18,7 +18,7 @@ makedocs(
 # for more information.
 deploydocs(
     repo = "github.com/mschauer/CausalInference.jl.git",
-    julia  = "0.6",
+    julia  = "1.0",
     target = "build",
     deps = nothing,
     make = nothing,
