@@ -205,8 +205,13 @@ function pcalg(n::V, I, par...;kwargs...) where {V}
 end
 
 """
-    pcalg(t::T; test=:gausscitest) where{T}
-run PC algorithm for tabular input data t
+    pcalg(t::T, p::Float64; test=:gausscitest, kwargs...) where{T}
+run PC algorithm for tabular input data t using a p-value p to detect 
+conditional independeces. 
+
+keyword arguments:
+test=:gausscitest: conditional independence test to be used
+kwargs...: keyword arguments to be passed to independence test
 """
 function pcalg(t::T, p::Float64; test=:gausscitest, kwargs...) where{T}
 
