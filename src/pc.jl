@@ -1,4 +1,4 @@
-using LightGraphs, Tables, Statistics
+using LightGraphs, Tables, Statistics, Distributions
 
 """
     insorted(a, x)
@@ -113,11 +113,11 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n::V, I, par...) where {V}
+function pcalg(n::V, I, par...;kwargs...) where {V}
     VERBOSE = false
 
     # Step 1
-    g, S = skeleton(n, I, par...)
+    g, S = skeleton(n, I, par...;kwargs...)
 
     # Step 2: Apply Rule 0 once
     Z = unshielded(g, S)
@@ -208,7 +208,7 @@ end
     pcalg(t::T; test=:gausscitest) where{T}
 run PC algorithm for tabular input data t
 """
-function pcalg(t::T;test=:gausscitest) where{T}
+function pcalg(t::T, p::Float64; test=:gausscitest, kwargs...) where{T}
 
     @assert Tables.istable(t)
 
@@ -218,16 +218,13 @@ function pcalg(t::T;test=:gausscitest) where{T}
 
     n = length(sch.names)
 
-    if test==:gausscitest
-    
+    if test==:gausscitest    
         C = Statistics.cor(convert(Array,c))
-
-        return pcalg(n, gausscitest, (C,n), 1.96)
+        return pcalg(n, gausscitest, (C,n), quantile(Normal(), 1-p/2); kwargs...)
     end
     
     if test==:cmitest
-
-        return pcalg(n,cmitest, c, 0.1)
+        return pcalg(n,cmitest, c, p; kwargs...)
     end
         
 end

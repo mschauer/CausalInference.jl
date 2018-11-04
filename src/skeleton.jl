@@ -22,7 +22,7 @@ end
 Perform the undirected PC skeleton algorithm for a set of 1:n variables using the test I.
 Returns skeleton graph and separating set  
 """
-function skeleton(n::V, I, par...) where {V}
+function skeleton(n::V, I, par...;kwargs...) where {V}
     g = CompleteGraph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
@@ -38,7 +38,7 @@ function skeleton(n::V, I, par...) where {V}
                     deleteat!(nb, first(i))
                     isdone = false
                     for s in combinations(nb, d)
-                        if I(src(e), dst(e), s, par...) 
+                        if I(src(e), dst(e), s, par...;kwargs...) 
                             @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
@@ -117,16 +117,16 @@ end
 Test for conditional independence of variables i and j given variables in s with
 permutation test using nearest neighbor conditional mutual information estimates.
 """
-@inline function cmitest(i,j,s,data,crit)
+@inline function cmitest(i,j,s,data,crit;kwargs...)
     
     x=collect(transpose(convert(Array, data[i])))
     y=collect(transpose(convert(Array, data[j])))
     
     if length(s)==0
-        res = kl_perm_mi_test(x,y)
+        res = kl_perm_mi_test(x,y;kwargs...)
     else 
         z = collect(transpose(convert(Array,data[s])))
-        res = kl_perm_cond_mi_test(x,y,z)
+        res = kl_perm_cond_mi_test(x,y,z;kwargs...)
     end
 
     @debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"
