@@ -112,10 +112,15 @@ Gaussian test at the critical value c. C is covariance of n observations.
 end 
 
 
-function cmitest(i,j,s,data,crit)
+"""
+    cmitest(i,j,s,data,crit)
+Test for conditional independence of variables i and j given variables in s with
+permutation test using nearest neighbor conditional mutual information estimates.
+"""
+@inline function cmitest(i,j,s,data,crit)
     
-    x=collect(transpose(data[i]))
-    y=collect(transpose(data[j]))
+    x=collect(transpose(convert(Array, data[i])))
+    y=collect(transpose(convert(Array, data[j])))
     
     if length(s)==0
         res = kl_perm_mi_test(x,y)
@@ -124,6 +129,8 @@ function cmitest(i,j,s,data,crit)
         res = kl_perm_cond_mi_test(x,y,z)
     end
 
+    @debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"
+    
     return res>crit
     
 end

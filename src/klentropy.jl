@@ -1,4 +1,4 @@
-module KLEntropy
+#module KLEntropy
 using SpecialFunctions, NearestNeighbors, Distances, Distributions, Random
 
 """
@@ -286,4 +286,4 @@ function kl_perm_cond_mi_test(x::Array{Float64,2}, y::Array{Float64,2}, z::Array
     
 end
 
-end
+#end

@@ -205,7 +205,7 @@ function pcalg(n::V, I, par...) where {V}
 end
 
 """
-    pcalg(t::T) where{T}
+    pcalg(t::T; test=:gausscitest) where{T}
 run PC algorithm for tabular input data t
 """
 function pcalg(t::T;test=:gausscitest) where{T}
@@ -228,7 +228,6 @@ function pcalg(t::T;test=:gausscitest) where{T}
     if test==:cmitest
 
         return pcalg(n,cmitest, c, 0.1)
-
     end
         
 end

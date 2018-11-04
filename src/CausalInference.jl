@@ -8,15 +8,14 @@ export dsep, skeleton, gausscitest, dseporacle, partialcor
 export unshielded, pcalg, vskel
 export cpdag
 export digraph, vpairs, skel_oracle, pc_oracle, randdag
+export cmitest, kl_entropy
 
-
+include("klentropy.jl")
 include("skeleton.jl")
 include("dsep.jl")
 include("pc.jl")
 include("cpdag.jl")
 
 include("misc.jl")
-
-include("klentropy.jl")
 
 end # module
