@@ -39,6 +39,7 @@ function skeleton(n::V, I, par...) where {V}
                     isdone = false
                     for s in combinations(nb, d)
                         if I(src(e), dst(e), s, par...) 
+                            @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
@@ -106,9 +107,26 @@ Gaussian test at the critical value c. C is covariance of n observations.
     r = clamp(r, -1, 1)
     n - length(s) - 3 <= 0 && return true # remove edges which cannot be tested for
     t = sqrt(n - length(s) - 3)*atanh(r)
+    @debug "testing $(i)-$(j) given $(s): $(abs(t)) -- $(c)"
     abs(t) < c
 end 
 
+
+function cmitest(i,j,s,data,crit)
+    
+    x=collect(transpose(data[i]))
+    y=collect(transpose(data[j]))
+    
+    if length(s)==0
+        res = kl_perm_mi_test(x,y)
+    else 
+        z = collect(transpose(convert(Array,data[s])))
+        res = kl_perm_cond_mi_test(x,y,z)
+    end
+
+    return res>crit
+    
+end
 
 truetest(i, j, s) = true
 falsetest(i, j, s) = false

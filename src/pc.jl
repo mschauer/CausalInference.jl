@@ -1,4 +1,4 @@
-using LightGraphs
+using LightGraphs, Tables, Statistics
 
 """
     insorted(a, x)
@@ -202,4 +202,33 @@ function pcalg(n::V, I, par...) where {V}
         empty!(removed)
     end
     dg
+end
+
+"""
+    pcalg(t::T) where{T}
+run PC algorithm for tabular input data t
+"""
+function pcalg(t::T;test=:gausscitest) where{T}
+
+    @assert Tables.istable(t)
+
+    c = Tables.columns(t)
+    
+    sch = Tables.schema(t)
+
+    n = length(sch.names)
+
+    if test==:gausscitest
+    
+        C = Statistics.cor(convert(Array,c))
+
+        return pcalg(n, gausscitest, (C,n), 1.96)
+    end
+    
+    if test==:cmitest
+
+        return pcalg(n,cmitest, c, 0.1)
+
+    end
+        
 end

@@ -17,4 +17,6 @@ include("cpdag.jl")
 
 include("misc.jl")
 
+include("klentropy.jl")
+
 end # module
