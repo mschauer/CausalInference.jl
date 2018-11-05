@@ -22,7 +22,7 @@ end
 Perform the undirected PC skeleton algorithm for a set of 1:n variables using the test I.
 Returns skeleton graph and separating set  
 """
-function skeleton(n::V, I, par...;kwargs...) where {V}
+function skeleton(n::V, I, par...; kwargs...) where {V}
     g = CompleteGraph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
@@ -38,7 +38,7 @@ function skeleton(n::V, I, par...;kwargs...) where {V}
                     deleteat!(nb, first(i))
                     isdone = false
                     for s in combinations(nb, d)
-                        if I(src(e), dst(e), s, par...;kwargs...) 
+                        if I(src(e), dst(e), s, par...; kwargs...) 
                             @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
