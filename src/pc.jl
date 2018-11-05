@@ -113,11 +113,11 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n::V, I, par...;kwargs...) where {V}
+function pcalg(n::V, I, par...; kwargs...) where {V}
     VERBOSE = false
 
     # Step 1
-    g, S = skeleton(n, I, par...;kwargs...)
+    g, S = skeleton(n, I, par...; kwargs...)
 
     # Step 2: Apply Rule 0 once
     Z = unshielded(g, S)
