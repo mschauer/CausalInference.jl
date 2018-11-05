@@ -33,7 +33,7 @@ end
 
 
 """
-    kl_mutual_information(x::Array{Float64,2}, y::Array{Float64,2}; k=5, bias_correction=true)
+    kl_mutual_information(x, y; k=5, bias_correction=true)
 compute the nearest-neighbor 'KGS' estimate of the mutual information between x and y.
 
 x and y are 2d arrays, with every column representing one data point. 
@@ -53,7 +53,7 @@ keyword arguments:
 k=5: number of nearest neighbors
 bias_correction=true: flag to apply Gao's bias correction
 """
-function kl_mutual_information(x::Array{Float64,2}, y::Array{Float64,2}; k=5, bias_correction=true)
+function kl_mutual_information(x, y; k=5, bias_correction=true)
     dist = bias_correction ? Euclidean() : Chebyshev()
    
     d_x, N = size(x)
@@ -98,7 +98,7 @@ https://projecteuclid.org/euclid.aos/1223908088
 keyword arguments:
 k=5: number of nearest neighbors
 """
-function kl_renyi(data::Array{Float64,2}, q, k=5)
+function kl_renyi(data, q, k=5)
     d, N = size(data)
     Vd = π^(d/2.) / gamma(d/2. + 1.)
     Ck = ( gamma(k)/gamma(k+1-q) )^(1/(1-q))
@@ -111,7 +111,7 @@ end
 
 
 """
-    kl_cond_mi(x::Array{Float64,2}, y::Array{Float64,2}, z::Array{Float64,2}; k=5, bias_correction=true)
+    kl_cond_mi(x, y, z; k=5, bias_correction=true)
 compute the nearest-neighbor 'KGS' estimate of the conditional mutual information between x and y given z.
 
 x, y, and z are 2d arrays, with every column representing one data point. 
@@ -119,7 +119,7 @@ keyword arguments:
 k=5: number of nearest neighbors
 bias_correction=true: flag to apply Gao's bias correction
 """
-function kl_cond_mi(x::Array{Float64,2}, y::Array{Float64,2}, z::Array{Float64,2}; k=5, bias_correction=true)
+function kl_cond_mi(x, y, z; k=5, bias_correction=true)
     dist = bias_correction ? Euclidean() : Chebyshev()    
     
     xz = vcat(x,z)
@@ -156,7 +156,7 @@ end
 
 
 """
-    kl_perm_mi_test(x::Array{Float64,2}, y::Array{Float64,2}; k=5, B=100, bias_correction=true)
+    kl_perm_mi_test(x, y; k=5, B=100, bias_correction=true)
 compute permutation test of independence of x and y.
 
 keyword arguments:
@@ -164,7 +164,7 @@ k=5: number of nearest neighbors to use for mutual information estimate
 B=100: number of permutations
 bias_correction=true: flag to apply Gao's bias correction
 """
-function kl_perm_mi_test(x::Array{Float64,2}, y::Array{Float64,2}; k=5, B=100, bias_correction=true)
+function kl_perm_mi_test(x, y; k=5, B=100, bias_correction=true)
     MI = kl_mutual_information(x, y, k=k, bias_correction=bias_correction)
     samples = Float64[]
 
@@ -178,7 +178,7 @@ end
 
 
 """
-    kl_perm_cond_mi_test(x::Array{Float64,2}, y::Array{Float64,2}, z::Array{Float64,2}; k=5, B=100, kp=5, bias_correction=true)
+    kl_perm_cond_mi_test(x, y, z; k=5, B=100, kp=5, bias_correction=true)
 compute permutation test of conditional independence of x and y given z.
 
 For further information, see:
@@ -193,7 +193,7 @@ B=100: number of permutations
 bias_correction=true: flag to apply Gao's bias correction
 
 """
-function kl_perm_cond_mi_test(x::Array{Float64,2}, y::Array{Float64,2}, z::Array{Float64,2}; k=5, B=100, kp=5, bias_correction=true)
+function kl_perm_cond_mi_test(x, y, z; k=5, B=100, kp=5, bias_correction=true)
     d, N = size(z)
     CMI = kl_cond_mi(x,y,z,k=k,bias_correction=bias_correction)
     samples = Float64[]
