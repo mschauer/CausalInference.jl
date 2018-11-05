@@ -39,7 +39,7 @@ function skeleton(n::V, I, par...; kwargs...) where {V}
                     isdone = false
                     for s in combinations(nb, d)
                         if I(src(e), dst(e), s, par...; kwargs...) 
-                            @debug "Removing edge $(e0) given $(s)"
+                            # @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
@@ -107,13 +107,14 @@ Gaussian test at the critical value c. C is covariance of n observations.
     r = clamp(r, -1, 1)
     n - length(s) - 3 <= 0 && return true # remove edges which cannot be tested for
     t = sqrt(n - length(s) - 3)*atanh(r)
-    @debug "testing $(i)-$(j) given $(s): $(abs(t)) -- $(c)"
+    #@debug "testing $(i)-$(j) given $(s): $(abs(t)) -- $(c)"
     abs(t) < c
 end 
 
 
 """
     cmitest(i,j,s,data,crit; kwargs...)
+
 Test for conditional independence of variables i and j given variables in s with
 permutation test using nearest neighbor conditional mutual information estimates
 at p-value crit.
@@ -132,8 +133,7 @@ kwargs...: keyword arguments passed to independence tests
         res = kl_perm_cond_mi_test(x, y, z; kwargs...)
     end
 
-    @debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"
-    
+    #@debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"    
     return res>crit
 end
 

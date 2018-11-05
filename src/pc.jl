@@ -228,4 +228,8 @@ function pcalg(t, p::Float64; test=:gausscitest, kwargs...)
     if test==:cmitest
         return pcalg(n, cmitest, c, p; kwargs...)
     end
+
+    if test==:dseporacle
+        return pcalg(n, dseporacle; kwargs...)
+    end
 end
