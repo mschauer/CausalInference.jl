@@ -213,23 +213,19 @@ keyword arguments:
 test=:gausscitest: conditional independence test to be used
 kwargs...: keyword arguments to be passed to independence test
 """
-function pcalg(t::T, p::Float64; test=:gausscitest, kwargs...) where{T}
-
+function pcalg(t, p::Float64; test=:gausscitest, kwargs...)
     @assert Tables.istable(t)
 
     c = Tables.columns(t)
-    
     sch = Tables.schema(t)
-
     n = length(sch.names)
 
     if test==:gausscitest    
-        C = Statistics.cor(convert(Array,c))
+        C = Statistics.cor(convert(Array, c))
         return pcalg(n, gausscitest, (C,n), quantile(Normal(), 1-p/2); kwargs...)
     end
     
     if test==:cmitest
-        return pcalg(n,cmitest, c, p; kwargs...)
+        return pcalg(n, cmitest, c, p; kwargs...)
     end
-        
 end

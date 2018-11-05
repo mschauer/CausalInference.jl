@@ -113,7 +113,7 @@ end
 
 
 """
-    cmitest(i,j,s,data,crit;kwargs...)
+    cmitest(i,j,s,data,crit; kwargs...)
 Test for conditional independence of variables i and j given variables in s with
 permutation test using nearest neighbor conditional mutual information estimates
 at p-value crit.
@@ -121,22 +121,20 @@ at p-value crit.
 keyword arguments:
 kwargs...: keyword arguments passed to independence tests
 """
-@inline function cmitest(i,j,s,data,crit;kwargs...)
-    
+@inline function cmitest(i, j, s, data, crit; kwargs...)
     x=collect(transpose(convert(Array, data[i])))
     y=collect(transpose(convert(Array, data[j])))
     
     if length(s)==0
-        res = kl_perm_mi_test(x,y;kwargs...)
+        res = kl_perm_mi_test(x, y; kwargs...)
     else 
-        z = collect(transpose(convert(Array,data[s])))
-        res = kl_perm_cond_mi_test(x,y,z;kwargs...)
+        z = collect(transpose(convert(Array, data[s])))
+        res = kl_perm_cond_mi_test(x, y, z; kwargs...)
     end
 
     @debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"
     
     return res>crit
-    
 end
 
 truetest(i, j, s) = true
