@@ -22,6 +22,17 @@ unshielded
 ```@docs
 gausscitest
 partialcor
+cmitest
+```
+# KL Entropy Estimators
+```@docs
+n_ball
+kl_entropy
+kl_renyi
+kl_mutual_information
+kl_cond_mi
+kl_perm_mi_test
+kl_perm_cond_mi_test
 ```
 
 ## Miscellaneous
