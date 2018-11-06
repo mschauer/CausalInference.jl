@@ -26,10 +26,9 @@ for (i,j) in [(1,2), (1,3), (2,4), (3,4), (4,5)]
 end
 
 h, s = skeleton(d, dseporacle, g)
-# @test Graph(g) == h
-
 Z = unshielded(h, s)
 @testset "unshielded" begin
+    @test Graph(g) == h
     for z in Z
         u, v, w = z
         n = inneighbors(h, v)
@@ -52,7 +51,7 @@ s = z + randn(N)*0.25
 
 X = [x v w z s]
 C = cor(X)
-df = DataFrame(x=x, v=v, w=w, z=z, s=s)
+df = DataFrame(X)
 
 println("Running Gaussian tests")
 @time gaussci_g = pcalg(size(X,2), gausscitest, (C, N), quantile(Normal(), 1-p/2))
