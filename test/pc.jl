@@ -4,7 +4,6 @@ using Test
 using Random
 using LightGraphs
 using Distributions
-using DataFrames
 using CausalInference: disjoint_sorted
 
 @test disjoint_sorted([],[1,2])
@@ -51,7 +50,7 @@ s = z + randn(N)*0.25
 
 X = [x v w z s]
 C = cor(X)
-df = DataFrame(X)
+df = (x=x, v=v, w=w, z=z, s=s)
 
 println("Running Gaussian tests")
 @time gaussci_g = pcalg(size(X,2), gausscitest, (C, N), quantile(Normal(), 1-p/2))

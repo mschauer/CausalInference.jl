@@ -129,7 +129,7 @@ kwargs...: keyword arguments passed to independence tests
     if length(s)==0
         res = kl_perm_mi_test(x, y; kwargs...)
     else 
-        z = collect(transpose(convert(Array, data[s])))
+        z = reduce(vcat, map(c->collect(transpose(convert(Array, data[c]))), s))
         res = kl_perm_cond_mi_test(x, y, z; kwargs...)
     end
 
