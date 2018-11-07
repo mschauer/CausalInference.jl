@@ -104,6 +104,7 @@ function _vskel(n::V, I, par...) where {V}
     dg
 end
 
+
 """
     pcalg(n::V, I, par...)
 
@@ -113,7 +114,7 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n::V, I, par...; kwargs...) where {V}
+function pcalg(n::V, I, par...; kwargs...) where {V<:Integer}
     VERBOSE = false
 
     # Step 1
@@ -205,31 +206,38 @@ function pcalg(n::V, I, par...; kwargs...) where {V}
 end
 
 """
-    pcalg(t::T, p::Float64; test=:gausscitest, kwargs...) where{T}
-run PC algorithm for tabular input data t using a p-value p to detect 
-conditional independeces. 
+    pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
 
-keyword arguments:
-test=:gausscitest: conditional independence test to be used
-kwargs...: keyword arguments to be passed to independence test
+run PC algorithm for tabular input data t using a p-value p to test for 
+conditional independeces using Fisher's z-transformation.
 """
-function pcalg(t, p::Float64; test=:gausscitest, kwargs...)
+function pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     @assert Tables.istable(t)
 
     c = Tables.columns(t)
     sch = Tables.schema(t)
     n = length(sch.names)
+  
+    X = reduce(hcat, map(c->t[c], 1:n))
+    N = size(X,1)
+    C = Statistics.cor(X)
+    return pcalg(n, gausscitest, (C,N), quantile(Normal(), 1-p/2); kwargs...)
+end
 
-    if test==:gausscitest    
-        C = Statistics.cor(convert(Array, c))
-        return pcalg(n, gausscitest, (C,n), quantile(Normal(), 1-p/2); kwargs...)
-    end
-    
-    if test==:cmitest
-        return pcalg(n, cmitest, c, p; kwargs...)
-    end
 
-    if test==:dseporacle
-        return pcalg(n, dseporacle; kwargs...)
-    end
+"""
+    pcalg(t::T, p::Float64; cmitest::typeof(cmitest); kwargs...) where{T}
+
+run PC algorithm for tabular input data t using a p-value p to detect 
+conditional independeces using a conditional mutual information permutation test.
+"""
+function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
+    @assert Tables.istable(t)
+    @assert all(t->t==Float64, Tables.schema(t).types)
+
+    c = Tables.columns(t)
+    sch = Tables.schema(t)
+    n = length(sch.names)
+
+    return pcalg(n, cmitest, c, p; kwargs...)
 end
