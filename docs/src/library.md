@@ -24,7 +24,8 @@ gausscitest
 partialcor
 cmitest
 ```
-# KL Entropy Estimators
+
+## KL Entropy Estimators
 ```@docs
 n_ball
 kl_entropy
@@ -42,9 +43,8 @@ vpairs
 pc_oracle
 skel_oracle
 randdag
-CausalInference.disjoint_sorted 
+CausalInference.disjoint_sorted
 CausalInference.ordered_edges
 CausalInference.insorted
 CausalInference.removesorted!
 ```
-
