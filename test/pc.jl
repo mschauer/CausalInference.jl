@@ -59,6 +59,6 @@ println("Running CMI tests")
 @time cmi_g = pcalg(df, 0.1, cmitest)
 
 @testset "pcalg_edgde_test" begin
-    #@test collect(LightGraphs.edges(cmi_g)) == collect(LightGraphs.edges(dg))
+    @test collect(LightGraphs.edges(cmi_g)) == collect(LightGraphs.edges(dg))
     @test collect(LightGraphs.edges(gaussci_g)) == collect(LightGraphs.edges(dg))
 end
