@@ -18,7 +18,6 @@ makedocs(
 # for more information.
 deploydocs(
     repo = "github.com/mschauer/CausalInference.jl.git",
-    julia  = "1.0",
     target = "build",
     deps = nothing,
     make = nothing,
