@@ -22,7 +22,7 @@ end
 Perform the undirected PC skeleton algorithm for a set of 1:n variables using the test I.
 Returns skeleton graph and separating set  
 """
-function skeleton(n::V, I, par...) where {V}
+function skeleton(n::V, I, par...; kwargs...) where {V}
     g = CompleteGraph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
@@ -38,7 +38,8 @@ function skeleton(n::V, I, par...) where {V}
                     deleteat!(nb, first(i))
                     isdone = false
                     for s in combinations(nb, d)
-                        if I(src(e), dst(e), s, par...) 
+                        if I(src(e), dst(e), s, par...; kwargs...) 
+                            # @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
@@ -106,9 +107,35 @@ Gaussian test at the critical value c. C is covariance of n observations.
     r = clamp(r, -1, 1)
     n - length(s) - 3 <= 0 && return true # remove edges which cannot be tested for
     t = sqrt(n - length(s) - 3)*atanh(r)
+    #@debug "testing $(i)-$(j) given $(s): $(abs(t)) -- $(c)"
     abs(t) < c
 end 
 
+
+"""
+    cmitest(i,j,s,data,crit; kwargs...)
+
+Test for conditional independence of variables i and j given variables in s with
+permutation test using nearest neighbor conditional mutual information estimates
+at p-value crit.
+
+keyword arguments:
+kwargs...: keyword arguments passed to independence tests
+"""
+@inline function cmitest(i, j, s, data, crit; kwargs...)
+    x=collect(transpose(convert(Array, data[i])))
+    y=collect(transpose(convert(Array, data[j])))
+    
+    if length(s)==0
+        res = kl_perm_mi_test(x, y; kwargs...)
+    else 
+        z = reduce(vcat, map(c->collect(transpose(convert(Array, data[c]))), s))
+        res = kl_perm_cond_mi_test(x, y, z; kwargs...)
+    end
+
+    #@debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"    
+    return res>crit
+end
 
 truetest(i, j, s) = true
 falsetest(i, j, s) = false

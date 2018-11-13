@@ -1,4 +1,4 @@
-using LightGraphs
+using LightGraphs, Tables, Statistics, Distributions
 
 """
     insorted(a, x)
@@ -104,6 +104,7 @@ function _vskel(n::V, I, par...) where {V}
     dg
 end
 
+
 """
     pcalg(n::V, I, par...)
 
@@ -113,11 +114,11 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n::V, I, par...) where {V}
+function pcalg(n::V, I, par...; kwargs...) where {V<:Integer}
     VERBOSE = false
 
     # Step 1
-    g, S = skeleton(n, I, par...)
+    g, S = skeleton(n, I, par...; kwargs...)
 
     # Step 2: Apply Rule 0 once
     Z = unshielded(g, S)
@@ -202,4 +203,41 @@ function pcalg(n::V, I, par...) where {V}
         empty!(removed)
     end
     dg
+end
+
+"""
+    pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
+
+run PC algorithm for tabular input data t using a p-value p to test for 
+conditional independeces using Fisher's z-transformation.
+"""
+function pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
+    @assert Tables.istable(t)
+
+    c = Tables.columns(t)
+    sch = Tables.schema(t)
+    n = length(sch.names)
+  
+    X = reduce(hcat, map(c->t[c], 1:n))
+    N = size(X,1)
+    C = Statistics.cor(X)
+    return pcalg(n, gausscitest, (C,N), quantile(Normal(), 1-p/2); kwargs...)
+end
+
+
+"""
+    pcalg(t::T, p::Float64; cmitest::typeof(cmitest); kwargs...) where{T}
+
+run PC algorithm for tabular input data t using a p-value p to detect 
+conditional independeces using a conditional mutual information permutation test.
+"""
+function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
+    @assert Tables.istable(t)
+    @assert all(t->t==Float64, Tables.schema(t).types)
+
+    c = Tables.columns(t)
+    sch = Tables.schema(t)
+    n = length(sch.names)
+
+    return pcalg(n, cmitest, c, p; kwargs...)
 end
