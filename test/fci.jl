@@ -40,6 +40,8 @@ end
     # test that hidden dsep has been found
     @test !has_edge(g_oracle, 1 ,5)
     @test !has_edge(g_gauss, 1 ,5)
+
+    # test that edges remain
     @test has_edge(g_oracle, 2 ,5)
     @test has_edge(g_gauss, 2 ,5)
     @test has_edge(g_oracle, 1 ,4)
