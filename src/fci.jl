@@ -2,7 +2,7 @@ using LightGraphs, MetaGraphs
 using Combinatorics: powerset
 
 function is_collider(dg, v1, v2, v3)
-    return has_edge(dg, v1, v2) && has_edge(dg, v3, v2)
+    return get_prop(dg, v1, v2,:mark)==:arrow && get_prop(dg, v3, v2,:mark)==:arrow
 end
 
 
@@ -18,20 +18,20 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
 
     # Step 2: Apply Rule 0 once
     Z = unshielded(g, S)
-    dg = DiGraph(g) # use g to keep track of unoriented edges
+    dg = MetaDiGraph(g) # use g to keep track of unoriented edges
 
+    for e in edges(dg)
+        set_prop!(dg, e, :mark, :circle)
+    end
+        
     for (u, v, w) in Z
-        if has_edge(g, (u, v))
-            remove!(dg, v => u)
-            remove!(g, (v, u))
+        if has_edge(dg, (u, v))
+            set_prop!(dg, u, v, :mark, :arrow)
         end
-        if has_edge(g, (v, w))
-            remove!(dg, v => w)
-            remove!(g, (v, w))
+        if has_edge(dg, (v, w))
+            set_prop!(dg, v, w, :mark, :arrow)
         end
     end
-
-    println(collect(edges(g)))
     
     # find possible d-separation sets
     pdsep = Dict()
@@ -55,7 +55,6 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
                 end
             end
         end
-        println("$(v): $(pdsep[v])")
     end
     
     for e in collect(edges(g))
@@ -68,12 +67,10 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
         seps1 = Set(powerset([d for d in pdsep[v] if d!=w]))
         seps2 = Set(powerset([d for d in pdsep[w] if d!=v]))
         seps = union(seps1, seps2)
-        println(seps)
+
         for s in seps
             if I(src(e), dst(e), s, par...; kwargs...)
-                println("Found hidden dsep set:")
-                println("$(src(e)) - $(dst(e))")
-                println(s)
+                @debug "Found hidden dsep set: $(src(e)) - $(dst(e)) given $(s)"
                 rem_edge!(g, e)
                 if !(e in keys(S))
                     S[e] = s
@@ -82,7 +79,12 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
             end
         end
     end
-    g
+    dg = MetaDiGraph(g)
+
+    for e in edges(dg)
+        set_prop!(dg, e, :mark, :circle)
+    end
+    dg
 end
 
 function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)

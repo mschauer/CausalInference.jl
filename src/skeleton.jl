@@ -39,7 +39,7 @@ function skeleton(n::V, I, par...; kwargs...) where {V}
                     isdone = false
                     for s in combinations(nb, d)
                         if I(src(e), dst(e), s, par...; kwargs...) 
-                            println("Removing edge $(e0) given $(s)")
+                            @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
