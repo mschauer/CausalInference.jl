@@ -1,14 +1,74 @@
 using LightGraphs, MetaGraphs
 using Combinatorics: powerset
 
+function has_marks(dg, v1, v2, s::String)
+    symbols = ['*', 'o', '>', '<', '-']
+    symDict = Dict('o' => :circle,
+                   '>' => :arrow,
+                   '<' => :arrow,
+                   '-' => :tail)
+    
+    @assert length(s)==3
+    @assert s[1] ∈ symbols
+    @assert s[2] == '-'
+    @assert s[3] ∈ symbols
+
+    if s[1]=='*'
+        check1 = false 
+    else
+        check1 = true
+        mark1 = symDict[s[1]]
+    end
+
+    if s[3]=='*'
+        check2 = false
+    else
+        check2 = true
+        mark2 = symDict[s[3]]
+    end
+    
+    if check2
+        if check1
+            result = get_prop(dg, v2, v1, :mark)==mark1 && get_prop(dg, v1, v2, :mark)==mark2
+        else
+            result = get_prop(dg, v1, v2, :mark)==mark2
+        end
+    else
+        result = get_prop(dg, v2, v1, :mark)==mark1
+    end
+    
+    return result
+end
+
+function set_marks!(dg, v1, v2, s::String)
+ symbols = ['*', 'o', '>', '<', '-']
+    symDict = Dict('o' => :circle,
+                   '>' => :arrow,
+                   '<' => :arrow,
+                   '-' => :tail)
+    
+    @assert length(s)==3
+    @assert s[1] ∈ symbols
+    @assert s[2] == '-'
+    @assert s[3] ∈ symbols
+
+    if s[1]!='*'
+        set_prop!(dg, v2, v1, :mark, symDict[s[1]])
+    end
+
+    if s[3]!='*'
+        set_prop!(dg, v1, v2, :mark, symDict[s[3]])
+    end
+
+    println(props(dg,v1,v2))
+end
+
 function is_collider(dg, v1, v2, v3)
     return get_prop(dg, v1, v2, :mark)==:arrow && get_prop(dg, v3, v2, :mark)==:arrow
 end
 
 function is_parent(dg, v1, v2)
-    return (has_edge(dg, v1, v2) &&
-            get_prop(dg, v1, v2, :mark)==:arrow &&
-            get_prop(dg, v2, v1, :mark)==:tail)
+    return has_edge(dg, v1, v2) && has_marks(dg, v1, v2, "-->")
 end
 function is_triangle(dg, v1, v2, v3)
     return isadjacent(dg, v1, v2) && isadjacent(dg, v2, v3) && isadjacent(dg, v3, v1)
