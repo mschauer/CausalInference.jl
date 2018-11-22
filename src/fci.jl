@@ -59,8 +59,6 @@ function set_marks!(dg, v1, v2, s::String)
     if s[3]!='*'
         set_prop!(dg, v1, v2, :mark, symDict[s[3]])
     end
-
-    println(props(dg,v1,v2))
 end
 
 function is_collider(dg, v1, v2, v3)
