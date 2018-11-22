@@ -2,24 +2,42 @@ using LightGraphs, MetaGraphs
 using Combinatorics: powerset
 
 function is_collider(dg, v1, v2, v3)
-    return get_prop(dg, v1, v2,:mark)==:arrow && get_prop(dg, v3, v2,:mark)==:arrow
+    return get_prop(dg, v1, v2, :mark)==:arrow && get_prop(dg, v3, v2, :mark)==:arrow
 end
 
-
+function is_parent(dg, v1, v2)
+    return (has_edge(dg, v1, v2) &&
+            get_prop(dg, v1, v2, :mark)==:arrow &&
+            get_prop(dg, v2, v1, :mark)==:tail)
+end
 function is_triangle(dg, v1, v2, v3)
     return isadjacent(dg, v1, v2) && isadjacent(dg, v2, v3) && isadjacent(dg, v3, v1)
 end
 
+function is_discriminating_path(dg, path)
+    if length(path)<4 || isadjacent(dg, path[1], path[end])
+        return false
+    end
+    triples = collect(zip(path[1:end-2], path[2:end-1], path[3:end]))[1:end-1]
+    colliders = map(t->is_collider(dg, t...), triples)
+    parents = map(t->is_parent(dg, t[2], path[end]), triples)
+    if all(colliders) && all(parents)
+        return true
+    else
+        return false
+    end
+end
 
 function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
 
-    # Step 1
+    # Step F1 and F2
     g, S = skeleton(n, I, par...; kwargs...)
 
-    # Step 2: Apply Rule 0 once
+    # Apply R0 once
     Z = unshielded(g, S)
     dg = MetaDiGraph(g) # use g to keep track of unoriented edges
 
+    # construct initial PAG
     for e in edges(dg)
         set_prop!(dg, e, :mark, :circle)
     end
@@ -29,7 +47,7 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
             set_prop!(dg, u, v, :mark, :arrow)
         end
         if has_edge(dg, (v, w))
-            set_prop!(dg, v, w, :mark, :arrow)
+            set_prop!(dg, w, v, :mark, :arrow)
         end
     end
     
@@ -79,13 +97,102 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
             end
         end
     end
+
+    #  step F3
+    Z = unshielded(g, S)
     dg = MetaDiGraph(g)
 
     for e in edges(dg)
         set_prop!(dg, e, :mark, :circle)
     end
+    
+    for (u, v, w) in Z
+        if has_edge(dg, (u, v))
+            set_prop!(dg, u, v, :mark, :arrow)
+        end
+        if has_edge(dg, (v, w))
+            set_prop!(dg, w, v, :mark, :arrow)
+        end
+    end
+
+    loop = true
+    while loop
+        loop = false
+        for e in edges(dg)
+            (α, β) = Tuple(e)
+            
+            for γ in inneighbors(dg, β)
+                if γ==α
+                    continue
+                end
+                # R1
+                if !has_edge(dg, α, γ)
+                    if (get_prop(dg, α, β, :mark) == :arrow &&
+                        get_prop(dg, γ, β, :mark) == :circle)
+                        set_prop!(dg, β, γ, :mark, :arrow)
+                        set_prop!(dg, γ, β, :mark, :tail)
+                        loop = true
+                    end
+                end
+                
+                # R2
+                if (has_edge(dg, α, γ) &&
+                    get_prop(dg, α, γ, :mark) == :circle &&
+                    ((get_prop(dg, α, β, :mark) == :arrow &&
+                      get_prop(dg, β, α, :mark) == :tail &&
+                      get_prop(dg, β, γ, :mark) == :arrow) ||
+                     (get_prop(dg, α, β, :mark) == :arrow &&
+                      get_prop(dg, γ, β, :mark) == :tail &&
+                      get_prop(dg, β, γ, :mark) == :arrow)))
+                    
+                    set_prop!(dg, α, γ, :mark, :arrow)
+                    loop = true
+                end
+                
+                #R3
+                if !isadjacent(dg, α, γ)
+                    for θ in inneighbors(dg, γ)
+                        if (θ ∈ inneighbors(dg, α) &&
+                            θ ∈ inneighbors(dg, β) &&
+                            get_prop(dg, α, β, :mark) == :arrow &&
+                            get_prop(dg, γ, β, :mark) == :arrow &&
+                            get_prop(dg, α, θ, :mark) == :circle &&
+                            get_prop(dg, γ, θ, :mark) == :circle &&
+                            get_prop(dg, θ, β, :mark) == :circle)
+                            set_prop!(dg, θ, β, :mark, :arrow)
+                            loop = true
+                        end
+                    end
+                end
+
+            end
+
+            # R4
+            for x in vertices(dg)
+                paths = yen_k_shortest_paths(g, x, α, LightGraphs.weights(g), 100).paths
+                for path in paths
+                    if (is_discriminating_path(dg, path) &&
+                        get_prop(dg, path[end], path[end-1], :mark)==:circle)
+                        if (haskey(S, Edge(path[1], path[end])) &&
+                            path[end-1] ∈ S[Edge(path[1], path[end])])
+                            set_prop!(dg, path[end-1], path[end], :mark, :arrow)
+                            set_prop!(dg, path[end], path[end-1], :mark, :tail)
+                        else
+                            set_prop!(dg, path[end-1], path[end], :mark, :arrow)
+                            set_prop!(dg, path[end], path[end-1], :mark, :arrow)
+                            set_prop!(dg, path[end-1], path[end-2], :mark, :arrow)
+                        set_prop!(dg, path[end-2], path[end-1], :mark, :arrow)
+                        end
+                        loop=true
+                    end
+                end
+            end
+        end
+
+    end
     dg
 end
+
 
 function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     @assert Tables.istable(t)

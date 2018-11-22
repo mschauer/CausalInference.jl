@@ -3,7 +3,9 @@ using CausalInference, LightGraphs, MetaGraphs
 @testset "FCI utils" begin
     dg = MetaDiGraph(4)
     add_edge!(dg, 1, 2)
+    add_edge!(dg, 2, 1)
     set_prop!(dg, 1, 2, :mark, :arrow)
+    set_prop!(dg, 2, 1, :mark, :tail)
     add_edge!(dg, 3, 2)
     set_prop!(dg, 3, 2, :mark, :arrow)
     add_edge!(dg, 3, 4)
@@ -11,6 +13,35 @@ using CausalInference, LightGraphs, MetaGraphs
     @test is_collider(dg, 1, 2, 3)
     @test is_triangle(dg, 2, 3, 4)
     @test !(is_triangle(dg, 1, 2, 3))
+    @test is_parent(dg, 1, 2)
+
+    dg = MetaDiGraph(5)
+    add_edge!(dg, 4, 5)
+
+    add_edge!(dg, 3, 4)
+    add_edge!(dg, 4, 3)
+    set_prop!(dg, 3, 4, :mark, :arrow)
+    set_prop!(dg, 4, 3, :mark, :arrow)
+
+    add_edge!(dg, 3, 5)
+    add_edge!(dg, 5, 3)
+    set_prop!(dg, 3, 5, :mark, :arrow)
+    set_prop!(dg, 5, 3, :mark, :tail)
+    
+    add_edge!(dg, 2, 3)
+    add_edge!(dg, 3, 2)
+    set_prop!(dg, 2, 3, :mark, :arrow)
+    set_prop!(dg, 3, 2, :mark, :arrow)
+    
+    add_edge!(dg, 2, 5)
+    add_edge!(dg, 5, 2)
+    set_prop!(dg, 2, 5, :mark, :arrow)
+    set_prop!(dg, 5, 2, :mark, :tail)
+    
+    add_edge!(dg, 1, 2)
+    set_prop!(dg, 1, 2, :mark, :arrow)
+
+    @test is_discriminating_path(dg, collect(1:5))
 end
 
 @testset "FCI Skeleton" begin
@@ -46,4 +77,30 @@ end
     @test has_edge(g_gauss, 2 ,5)
     @test has_edge(g_oracle, 1 ,4)
     @test has_edge(g_gauss, 1 ,4)
+end
+
+@testset "FCI Orientation" begin
+
+    true_g = DiGraph(4)
+    add_edge!(true_g,1,3)
+    add_edge!(true_g,2,3)
+    add_edge!(true_g,3,4)
+    g_oracle = fcialg(4, dseporacle, true_g)
+
+    @test get_prop(g_oracle, 1, 3, :mark)==:arrow
+    @test get_prop(g_oracle, 3, 1, :mark)==:circle
+    @test get_prop(g_oracle, 3, 4, :mark)==:arrow
+    @test get_prop(g_oracle, 4, 3, :mark)==:tail
+
+    true_g = DiGraph(5)
+    add_edge!(true_g,1,2)
+    add_edge!(true_g,3,4)
+    add_edge!(true_g,5,2)
+    add_edge!(true_g,5,4)
+    g_oracle = fcialg(4, dseporacle, true_g)
+    
+    @test get_prop(g_oracle, 4, 2, :mark)==:arrow
+    @test get_prop(g_oracle, 2, 4, :mark)==:arrow
+    @test get_prop(g_oracle, 1, 2, :mark)==:arrow
+    @test get_prop(g_oracle, 2, 1, :mark)==:circle
 end
