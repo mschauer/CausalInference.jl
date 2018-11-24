@@ -103,6 +103,21 @@ end
     @test has_marks(g_oracle, 2, 4, "<->")
     @test has_marks(g_oracle, 1, 2, "o->")
 
+    # test graph from Figure 11-iv in Richardson & Sprites, 2002
+    true_g = DiGraph(7)
+    add_edge!(true_g, 1, 5)
+    add_edge!(true_g, 5, 2)
+    add_edge!(true_g, 6, 2)
+    add_edge!(true_g, 2, 7)
+    add_edge!(true_g, 7, 3)
+    add_edge!(true_g, 3, 4)
+    add_edge!(true_g, 6, 4)
+    g_oracle = fcialg(4, dseporacle, true_g, sel=[7])
+
+    # test for that weird edge I don't understand...
+    @test has_marks(g_oracle, 1, 4, "o->")
+    
+    # test graph Figure 6 in Zhang, 2008
     true_g = DiGraph(5)
     add_edge!(true_g, 1, 2)
     add_edge!(true_g, 2, 3)

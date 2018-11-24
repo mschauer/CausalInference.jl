@@ -12,7 +12,7 @@ export cmitest, kl_entropy, kl_renyi, kl_mutual_information
 export kl_cond_mi, kl_perm_mi_test, kl_perm_cond_mi_test
 export n_ball
 export fcialg, is_collider, is_triangle, is_parent
-export is_discriminating_path, has_marks, set_marks!
+export is_discriminating_path, has_marks, set_marks!, isUncoveredCirclePath
 
 include("klentropy.jl")
 include("skeleton.jl")
