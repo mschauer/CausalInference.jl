@@ -47,7 +47,7 @@ using CausalInference, LightGraphs, MetaGraphs, Random
 end
 
 @testset "FCI Skeleton" begin
-    Random.seed!(1234)
+    Random.seed!(123)
 
     N = 10000
     t1 = 2*randn(N)
@@ -84,17 +84,14 @@ end
 end
 
 @testset "FCI Orientation" begin
-
     true_g = DiGraph(4)
     add_edge!(true_g,1,3)
     add_edge!(true_g,2,3)
     add_edge!(true_g,3,4)
     g_oracle = fcialg(4, dseporacle, true_g)
 
-    @test get_prop(g_oracle, 1, 3, :mark)==:arrow
-    @test get_prop(g_oracle, 3, 1, :mark)==:circle
-    @test get_prop(g_oracle, 3, 4, :mark)==:arrow
-    @test get_prop(g_oracle, 4, 3, :mark)==:tail
+    @test has_marks(g_oracle, 1, 3, "o->")
+    @test has_marks(g_oracle, 3, 4, "-->")
 
     true_g = DiGraph(5)
     add_edge!(true_g,1,2)
@@ -102,9 +99,7 @@ end
     add_edge!(true_g,5,2)
     add_edge!(true_g,5,4)
     g_oracle = fcialg(4, dseporacle, true_g)
-    
-    @test get_prop(g_oracle, 4, 2, :mark)==:arrow
-    @test get_prop(g_oracle, 2, 4, :mark)==:arrow
-    @test get_prop(g_oracle, 1, 2, :mark)==:arrow
-    @test get_prop(g_oracle, 2, 1, :mark)==:circle
+
+    @test has_marks(g_oracle, 2, 4, "<->")
+    @test has_marks(g_oracle, 1, 2, "o->")
 end

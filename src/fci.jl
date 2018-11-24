@@ -1,5 +1,5 @@
 using LightGraphs, MetaGraphs
-using Combinatorics: powerset
+using Combinatorics: combinations, powerset
 
 function has_marks(dg, v1, v2, s::String)
     symbols = ['*', 'o', '>', '<', '-']
@@ -85,6 +85,34 @@ function is_discriminating_path(dg, path)
     else
         return false
     end
+end
+
+function isUncoveredCirclePath(dg, path)
+    if(length(path)<3)
+        return has_marks(dg, path[1], path[2], "o-o") 
+    end
+    
+    edges = collect(zip(path[1:end-1], path[2:end]))
+    triples = collect(zip(path[1:end-2], path[2:end-1], path[3:end]))
+    unshielded = map(t->!isadjacent(dg, t[1], t[3]), triples)
+    circles = map(e->has_marks(dg, e[1], e[2], "o-o"), edges)
+
+    return all(unshielded) && all(circles)
+end
+
+function isUncoveredPDPath(dg, path)
+    if(length(path)<3)
+        return (!has_marks(dg, path[1], path[2], "<-*") &&
+                !has_marks(dg, path[1], path[2], "*--"))
+    end
+    
+    edges = collect(zip(path[1:end-1], path[2:end]))
+    triples = collect(zip(path[1:end-2], path[2:end-1], path[3:end]))
+    unshielded = map(t->!isadjacent(dg, t[1], t[3]), triples)
+    directions = map(e->(!has_marks(dg, e[1], e[2], "<-*") &&
+                         !has_marks(dg, e[1], e[2], "*--")), edges)
+
+    return all(unshielded) && all(directions)
 end
 
 function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
@@ -246,10 +274,109 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
 
     end
 
-    
-    
+    # rules R5 to R10
+
+    loop = true
+    while loop
+        loop = false
+        for e in edges(dg)
+            (α, β) = Tuple(e)
+
+            # R5
+            if has_marks(dg, α, β, "o-o")
+                paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
+                
+                for path in paths
+                    if (isUncoveredCirclePath(dg, path) &&
+                        !isadjacent(dg, path[1], path[end-1]) &&
+                        !isadjacent(dg, path[2], path[end]))
+                        
+                        set_marks!(dg, α, β, "---")
+                        for (e1, e2) in zip(path[1:end-1], path[2:end])
+                            set_marks!(dg, e1, e2, "---")
+                        end
+                        loop = true
+                        break
+                    end
+                end
+            end
+
+            for γ in inneighbors(dg, β)
+                #R6
+                if has_marks(dg, α, β, "---") && has_marks(dg, β, γ, "o-*")
+                    set_marks!(dg, β, γ, "--*")
+                    loop = true
+                end
+
+                # R7
+                if(!isadjacent(dg, α, γ) &&
+                   has_marks(dg, α, β, "--o") &&
+                   has_marks(dg, β, γ, "o-*"))
+                    set_marks!(dg, β, γ, "--*")
+                    loop = true
+                end
+
+                # R8
+                if(has_edge(dg, α, γ) &&
+                   has_marks(dg, α, γ, "o->") &&
+                   (has_marks(dg, α, β, "-->") || has_marks(dg, α, β, "--o")) &&
+                   has_marks(dg, β, γ, "-->"))
+                    set_marks!(dg, α, γ, "-->")
+                    loop = true
+                end
+            end
+            
+            # R9
+            if has_marks(dg, α, β, "o->")
+                paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
+                for path in paths
+                    if (length(path)>3 &&
+                        isUncoveredPDPath(dg, path) &&
+                        !isadjacent(dg, path[2], path[end]))
+                        set_marks!(dg, α, β, "-->")
+                        loop = true
+                        break
+                    end
+                end
+            end
+            
+            #R10
+            if has_marks(dg, α, β, "o->")
+                for (γ,θ) in combinations(inneighbors(dg, β), 2)
+                    if(θ==α || γ==α)
+                        continue
+                    end
+                    if(has_marks(dg, γ, β, "-->") &&
+                       has_marks(dg, β, θ, "<--"))
+
+                        p1 = yen_k_shortest_paths(g, α, γ, LightGraphs.weights(g), 100).paths
+                        p2 = yen_k_shortest_paths(g, α, θ, LightGraphs.weights(g), 100).paths
+
+                        for path1 in p1
+                            if isUncoveredPDPath(dg, p1)
+                                for path2 in p2
+                                    if isUncoveredPDPath(dg, p2)
+                                        μ = path1[2]
+                                        ω = path2[2]
+                                        if(μ != ω && !isadjacent(dg, μ, ω))
+                                            set_marks!(dg, α, β, "-->")
+                                            loop=true
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end                            
+                end
+            end
+        end
+        
+    end
     dg
 end
+
+        
 
 
 function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
