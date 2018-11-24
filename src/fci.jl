@@ -62,12 +62,13 @@ function set_marks!(dg, v1, v2, s::String)
 end
 
 function is_collider(dg, v1, v2, v3)
-    return get_prop(dg, v1, v2, :mark)==:arrow && get_prop(dg, v3, v2, :mark)==:arrow
+    return has_marks(dg, v1, v2, "*->") && has_marks(dg, v2, v3, "<-*")
 end
 
 function is_parent(dg, v1, v2)
     return has_edge(dg, v1, v2) && has_marks(dg, v1, v2, "-->")
 end
+
 function is_triangle(dg, v1, v2, v3)
     return isadjacent(dg, v1, v2) && isadjacent(dg, v2, v3) && isadjacent(dg, v3, v1)
 end
@@ -102,10 +103,10 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
         
     for (u, v, w) in Z
         if has_edge(dg, (u, v))
-            set_prop!(dg, u, v, :mark, :arrow)
+            set_marks!(dg, u, v, "*->")
         end
         if has_edge(dg, (v, w))
-            set_prop!(dg, w, v, :mark, :arrow)
+            set_marks!(dg, v, w, "<-*")
         end
     end
     
@@ -161,18 +162,20 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
     dg = MetaDiGraph(g)
 
     for e in edges(dg)
-        set_prop!(dg, e, :mark, :circle)
+        set_marks!(dg, src(e), dst(e), "o-o")
     end
     
     for (u, v, w) in Z
         if has_edge(dg, (u, v))
-            set_prop!(dg, u, v, :mark, :arrow)
+            set_marks!(dg, u, v, "*->")
         end
         if has_edge(dg, (v, w))
-            set_prop!(dg, w, v, :mark, :arrow)
+            set_marks!(dg, v, w, "<-*")
         end
     end
 
+    # main loop for rules R1 to R4
+    # loop is repeated until none of them apply
     loop = true
     while loop
         loop = false
@@ -183,27 +186,24 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
                 if γ==α
                     continue
                 end
+
                 # R1
-                if !has_edge(dg, α, γ)
-                    if (get_prop(dg, α, β, :mark) == :arrow &&
-                        get_prop(dg, γ, β, :mark) == :circle)
-                        set_prop!(dg, β, γ, :mark, :arrow)
-                        set_prop!(dg, γ, β, :mark, :tail)
-                        loop = true
-                    end
+                if (!has_edge(dg, α, γ) &&
+                    has_marks(dg, α, β, "*->") &&
+                    has_marks(dg, β, γ, "o-*"))
+
+                    set_marks!(dg, β, γ, "-->")
+                    loop = true
+
                 end
                 
                 # R2
                 if (has_edge(dg, α, γ) &&
-                    get_prop(dg, α, γ, :mark) == :circle &&
-                    ((get_prop(dg, α, β, :mark) == :arrow &&
-                      get_prop(dg, β, α, :mark) == :tail &&
-                      get_prop(dg, β, γ, :mark) == :arrow) ||
-                     (get_prop(dg, α, β, :mark) == :arrow &&
-                      get_prop(dg, γ, β, :mark) == :tail &&
-                      get_prop(dg, β, γ, :mark) == :arrow)))
+                    has_marks(dg, α, γ, "*-o") &&
+                    ((has_marks(dg, α, β, "-->") && has_marks(dg, β, γ, "o-*")) ||
+                     (has_marks(dg, α, β, "o->") && has_marks(dg, β, γ, "-->"))))
                     
-                    set_prop!(dg, α, γ, :mark, :arrow)
+                    set_marks!(dg, α, γ, "*->")
                     loop = true
                 end
                 
@@ -212,12 +212,12 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
                     for θ in inneighbors(dg, γ)
                         if (θ ∈ inneighbors(dg, α) &&
                             θ ∈ inneighbors(dg, β) &&
-                            get_prop(dg, α, β, :mark) == :arrow &&
-                            get_prop(dg, γ, β, :mark) == :arrow &&
-                            get_prop(dg, α, θ, :mark) == :circle &&
-                            get_prop(dg, γ, θ, :mark) == :circle &&
-                            get_prop(dg, θ, β, :mark) == :circle)
-                            set_prop!(dg, θ, β, :mark, :arrow)
+                            has_marks(dg, α, β, "*->") &&
+                            has_marks(dg, β, γ, "<-*") &&
+                            has_marks(dg, α, θ, "*-o") &&
+                            has_marks(dg, γ, θ, "o-*") &&
+                            has_marks(dg, θ, β, "*-o"))
+                            set_marks!(dg, θ, β, "*->")
                             loop = true
                         end
                     end
@@ -230,16 +230,13 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
                 paths = yen_k_shortest_paths(g, x, α, LightGraphs.weights(g), 100).paths
                 for path in paths
                     if (is_discriminating_path(dg, path) &&
-                        get_prop(dg, path[end], path[end-1], :mark)==:circle)
+                        has_marks(dg, path[end-1], path[end], "o-*"))
                         if (haskey(S, Edge(path[1], path[end])) &&
                             path[end-1] ∈ S[Edge(path[1], path[end])])
-                            set_prop!(dg, path[end-1], path[end], :mark, :arrow)
-                            set_prop!(dg, path[end], path[end-1], :mark, :tail)
+                            set_marks!(dg, path[end-1], path[end], "-->")
                         else
-                            set_prop!(dg, path[end-1], path[end], :mark, :arrow)
-                            set_prop!(dg, path[end], path[end-1], :mark, :arrow)
-                            set_prop!(dg, path[end-1], path[end-2], :mark, :arrow)
-                        set_prop!(dg, path[end-2], path[end-1], :mark, :arrow)
+                            set_marks!(dg, path[end-1], path[end], "<->")
+                            set_marks!(dg, path[end-2], path[end-1], "<->")
                         end
                         loop=true
                     end
@@ -248,6 +245,9 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
         end
 
     end
+
+    
+    
     dg
 end
 

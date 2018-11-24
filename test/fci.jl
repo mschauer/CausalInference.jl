@@ -1,4 +1,4 @@
-using CausalInference, LightGraphs, MetaGraphs
+using CausalInference, LightGraphs, MetaGraphs, Random
 
 @testset "FCI utils" begin
     dg = MetaDiGraph(4)
@@ -6,10 +6,16 @@ using CausalInference, LightGraphs, MetaGraphs
     add_edge!(dg, 2, 1)
     set_prop!(dg, 1, 2, :mark, :arrow)
     set_prop!(dg, 2, 1, :mark, :tail)
+
+    @test has_marks(dg, 1, 2, "-->")
+    @test has_marks(dg, 2, 1, "*--")
+
     add_edge!(dg, 3, 2)
-    set_prop!(dg, 3, 2, :mark, :arrow)
+    add_edge!(dg, 2, 3)
+    set_marks!(dg, 2, 3, "<-*")
     add_edge!(dg, 3, 4)
     add_edge!(dg, 4, 2)
+
     @test is_collider(dg, 1, 2, 3)
     @test is_triangle(dg, 2, 3, 4)
     @test !(is_triangle(dg, 1, 2, 3))
@@ -20,31 +26,29 @@ using CausalInference, LightGraphs, MetaGraphs
 
     add_edge!(dg, 3, 4)
     add_edge!(dg, 4, 3)
-    set_prop!(dg, 3, 4, :mark, :arrow)
-    set_prop!(dg, 4, 3, :mark, :arrow)
+    set_marks!(dg, 3, 4, "<->")
 
     add_edge!(dg, 3, 5)
     add_edge!(dg, 5, 3)
-    set_prop!(dg, 3, 5, :mark, :arrow)
-    set_prop!(dg, 5, 3, :mark, :tail)
+    set_marks!(dg, 3, 5, "-->")
     
     add_edge!(dg, 2, 3)
     add_edge!(dg, 3, 2)
-    set_prop!(dg, 2, 3, :mark, :arrow)
-    set_prop!(dg, 3, 2, :mark, :arrow)
+    set_marks!(dg, 2, 3, "<->")
     
     add_edge!(dg, 2, 5)
     add_edge!(dg, 5, 2)
-    set_prop!(dg, 2, 5, :mark, :arrow)
-    set_prop!(dg, 5, 2, :mark, :tail)
+    set_marks!(dg, 2, 5, "-->")
     
     add_edge!(dg, 1, 2)
-    set_prop!(dg, 1, 2, :mark, :arrow)
+    set_marks!(dg, 1, 2, "*->")
 
     @test is_discriminating_path(dg, collect(1:5))
 end
 
 @testset "FCI Skeleton" begin
+    Random.seed!(1234)
+
     N = 10000
     t1 = 2*randn(N)
     t2 = 2*randn(N)
