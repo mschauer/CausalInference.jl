@@ -288,6 +288,7 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
                 
                 for path in paths
                     if (isUncoveredCirclePath(dg, path) &&
+                        length(path)>3 &&
                         !isadjacent(dg, path[1], path[end-1]) &&
                         !isadjacent(dg, path[2], path[end]))
                         
@@ -375,8 +376,6 @@ function fcialg(n::V, I, par...; kwargs...) where {V<:Integer}
     end
     dg
 end
-
-        
 
 
 function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)

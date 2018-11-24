@@ -102,4 +102,17 @@ end
 
     @test has_marks(g_oracle, 2, 4, "<->")
     @test has_marks(g_oracle, 1, 2, "o->")
+
+    true_g = DiGraph(5)
+    add_edge!(true_g, 1, 2)
+    add_edge!(true_g, 2, 3)
+    add_edge!(true_g, 4, 3)
+    add_edge!(true_g, 5, 1)
+    add_edge!(true_g, 5, 4)
+    g_oracle = fcialg(4, dseporacle, true_g)
+
+    @test has_marks(g_oracle, 1, 4, "o-o")
+    @test has_marks(g_oracle, 4, 3, "-->")
+    @test has_marks(g_oracle, 2, 3, "-->")
+    @test has_marks(g_oracle, 1, 2, "o-o")
 end
