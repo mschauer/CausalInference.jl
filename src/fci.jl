@@ -1,72 +1,52 @@
 using LightGraphs, MetaGraphs
 using Combinatorics: combinations, powerset
 
-function has_marks(dg, v1, v2, s::String)
+macro arrow_str(str)
     symbols = ['*', 'o', '>', '<', '-']
     symDict = Dict('o' => :circle,
                    '>' => :arrow,
                    '<' => :arrow,
-                   '-' => :tail)
+                   '-' => :tail,
+                   '*' => :star)
     
-    @assert length(s)==3
-    @assert s[1] ∈ symbols
-    @assert s[2] == '-'
-    @assert s[3] ∈ symbols
+    @assert length(str)==3
+    @assert str[1] ∈ symbols
+    @assert str[2] == '-'
+    @assert str[3] ∈ symbols
 
-    if s[1]=='*'
-        check1 = false 
-    else
-        check1 = true
-        mark1 = symDict[s[1]]
-    end
+    return (symDict[str[1]], symDict[str[3]])
+end
 
-    if s[3]=='*'
-        check2 = false
-    else
-        check2 = true
-        mark2 = symDict[s[3]]
-    end
-    
-    if check2
-        if check1
-            result = get_prop(dg, v2, v1, :mark)==mark1 && get_prop(dg, v1, v2, :mark)==mark2
+function has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol})    
+    if t[2]!=:star
+        if t[1]!=:star
+            result = get_prop(dg, v2, v1, :mark)==t[1] && get_prop(dg, v1, v2, :mark)==t[2]
         else
-            result = get_prop(dg, v1, v2, :mark)==mark2
+            result = get_prop(dg, v1, v2, :mark)==t[2]
         end
     else
-        result = get_prop(dg, v2, v1, :mark)==mark1
+        result = get_prop(dg, v2, v1, :mark)==t[1]
     end
     
     return result
 end
 
-function set_marks!(dg, v1, v2, s::String)
- symbols = ['*', 'o', '>', '<', '-']
-    symDict = Dict('o' => :circle,
-                   '>' => :arrow,
-                   '<' => :arrow,
-                   '-' => :tail)
-    
-    @assert length(s)==3
-    @assert s[1] ∈ symbols
-    @assert s[2] == '-'
-    @assert s[3] ∈ symbols
-
-    if s[1]!='*'
-        set_prop!(dg, v2, v1, :mark, symDict[s[1]])
+function set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
+    if t[1]!=:star
+        set_prop!(dg, v2, v1, :mark, t[1])
     end
 
-    if s[3]!='*'
-        set_prop!(dg, v1, v2, :mark, symDict[s[3]])
+    if t[2]!=:star
+        set_prop!(dg, v1, v2, :mark, t[2])
     end
 end
 
 function is_collider(dg, v1, v2, v3)
-    return has_marks(dg, v1, v2, "*->") && has_marks(dg, v2, v3, "<-*")
+    return has_marks(dg, v1, v2, arrow"*->") && has_marks(dg, v2, v3, arrow"<-*")
 end
 
 function is_parent(dg, v1, v2)
-    return has_edge(dg, v1, v2) && has_marks(dg, v1, v2, "-->")
+    return has_edge(dg, v1, v2) && has_marks(dg, v1, v2, arrow"-->")
 end
 
 function is_triangle(dg, v1, v2, v3)
@@ -89,34 +69,34 @@ end
 
 function isUncoveredCirclePath(dg, path)
     if(length(path)==2)
-        #return has_marks(dg, path[1], path[2], "o-o")
+        #return has_marks(dg, path[1], path[2], arrow"o-o")
         return false
     end
 
     if(length(path)==3)
-        return (has_marks(dg, path[1], path[2], "o-o") &&
-                has_marks(dg, path[2], path[3], "o-o"))
+        return (has_marks(dg, path[1], path[2], arrow"o-o") &&
+                has_marks(dg, path[2], path[3], arrow"o-o"))
     end
     
     edges = collect(zip(path[1:end-1], path[2:end]))
     triples = collect(zip(path[1:end-2], path[3:end]))
     unshielded = map(t->!isadjacent(dg, t[1], t[2]), triples)
-    circles = map(e->has_marks(dg, e[1], e[2], "o-o"), edges)
+    circles = map(e->has_marks(dg, e[1], e[2], arrow"o-o"), edges)
 
     return all(unshielded) && all(circles)
 end
 
 function isUncoveredPDPath(dg, path)
     if(length(path)<3)
-        return (!has_marks(dg, path[1], path[2], "<-*") &&
-                !has_marks(dg, path[1], path[2], "*--"))
+        return (!has_marks(dg, path[1], path[2], arrow"<-*") &&
+                !has_marks(dg, path[1], path[2], arrow"*--"))
     end
     
     edges = collect(zip(path[1:end-1], path[2:end]))
-    triples = collect(zip(path[1:end-2], path[2:end-1], path[3:end]))
-    unshielded = map(t->!isadjacent(dg, t[1], t[3]), triples)
-    directions = map(e->(!has_marks(dg, e[1], e[2], "<-*") &&
-                         !has_marks(dg, e[1], e[2], "*--")), edges)
+    triples = collect(zip(path[1:end-2], path[3:end]))
+    unshielded = map(t->!isadjacent(dg, t[1], t[2]), triples)
+    directions = map(e->(!has_marks(dg, e[1], e[2], arrow"<-*") &&
+                         !has_marks(dg, e[1], e[2], arrow"*--")), edges)
 
     return all(unshielded) && all(directions)
 end
@@ -139,10 +119,10 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
 
     for (u, v, w) in Z
         if has_edge(dg, (u, v))
-            set_marks!(dg, u, v, "*->")
+            set_marks!(dg, u, v, arrow"*->")
         end
         if has_edge(dg, (v, w))
-            set_marks!(dg, v, w, "<-*")
+            set_marks!(dg, v, w, arrow"<-*")
         end
     end
     
@@ -198,15 +178,15 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
     dg = MetaDiGraph(g)
 
     for e in edges(dg)
-        set_marks!(dg, src(e), dst(e), "o-o")
+        set_marks!(dg, src(e), dst(e), arrow"o-o")
     end
     
     for (u, v, w) in Z
         if has_edge(dg, (u, v))
-            set_marks!(dg, u, v, "*->")
+            set_marks!(dg, u, v, arrow"*->")
         end
         if has_edge(dg, (v, w))
-            set_marks!(dg, v, w, "<-*")
+            set_marks!(dg, v, w, arrow"<-*")
         end
     end
 
@@ -225,21 +205,21 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
 
                 # R1
                 if (!has_edge(dg, α, γ) &&
-                    has_marks(dg, α, β, "*->") &&
-                    has_marks(dg, β, γ, "o-*"))
+                    has_marks(dg, α, β, arrow"*->") &&
+                    has_marks(dg, β, γ, arrow"o-*"))
 
-                    set_marks!(dg, β, γ, "-->")
+                    set_marks!(dg, β, γ, arrow"-->")
                     loop = true
 
                 end
                 
                 # R2
                 if (has_edge(dg, α, γ) &&
-                    has_marks(dg, α, γ, "*-o") &&
-                    ((has_marks(dg, α, β, "-->") && has_marks(dg, β, γ, "o-*")) ||
-                     (has_marks(dg, α, β, "o->") && has_marks(dg, β, γ, "-->"))))
+                    has_marks(dg, α, γ, arrow"*-o") &&
+                    ((has_marks(dg, α, β, arrow"-->") && has_marks(dg, β, γ, arrow"o-*")) ||
+                     (has_marks(dg, α, β, arrow"o->") && has_marks(dg, β, γ, arrow"-->"))))
                     
-                    set_marks!(dg, α, γ, "*->")
+                    set_marks!(dg, α, γ, arrow"*->")
                     loop = true
                 end
                 
@@ -248,12 +228,12 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                     for θ in inneighbors(dg, γ)
                         if (θ ∈ inneighbors(dg, α) &&
                             θ ∈ inneighbors(dg, β) &&
-                            has_marks(dg, α, β, "*->") &&
-                            has_marks(dg, β, γ, "<-*") &&
-                            has_marks(dg, α, θ, "*-o") &&
-                            has_marks(dg, γ, θ, "o-*") &&
-                            has_marks(dg, θ, β, "*-o"))
-                            set_marks!(dg, θ, β, "*->")
+                            has_marks(dg, α, β, arrow"*->") &&
+                            has_marks(dg, β, γ, arrow"<-*") &&
+                            has_marks(dg, α, θ, arrow"*-o") &&
+                            has_marks(dg, γ, θ, arrow"o-*") &&
+                            has_marks(dg, θ, β, arrow"*-o"))
+                            set_marks!(dg, θ, β, arrow"*->")
                             loop = true
                         end
                     end
@@ -266,13 +246,13 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                 paths = yen_k_shortest_paths(g, x, α, LightGraphs.weights(g), 100).paths
                 for path in paths
                     if (is_discriminating_path(dg, path) &&
-                        has_marks(dg, path[end-1], path[end], "o-*"))
+                        has_marks(dg, path[end-1], path[end], arrow"o-*"))
                         if (haskey(S, Edge(path[1], path[end])) &&
                             path[end-1] ∈ S[Edge(path[1], path[end])])
-                            set_marks!(dg, path[end-1], path[end], "-->")
+                            set_marks!(dg, path[end-1], path[end], arrow"-->")
                         else
-                            set_marks!(dg, path[end-1], path[end], "<->")
-                            set_marks!(dg, path[end-2], path[end-1], "<->")
+                            set_marks!(dg, path[end-1], path[end], arrow"<->")
+                            set_marks!(dg, path[end-2], path[end-1], arrow"<->")
                         end
                         loop=true
                     end
@@ -295,7 +275,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
             (α, β) = Tuple(e)
 
             # R5
-            if has_marks(dg, α, β, "o-o")
+            if has_marks(dg, α, β, arrow"o-o")
                 paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
                 
                 for path in paths
@@ -304,9 +284,9 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                         !isadjacent(dg, path[1], path[end-1]) &&
                         !isadjacent(dg, path[2], path[end]))
                         
-                        set_marks!(dg, α, β, "---")
+                        set_marks!(dg, α, β, arrow"---")
                         for (e1, e2) in zip(path[1:end-1], path[2:end])
-                            set_marks!(dg, e1, e2, "---")
+                            set_marks!(dg, e1, e2, arrow"---")
                         end
                         loop = true
                         break
@@ -316,37 +296,37 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
 
             for γ in inneighbors(dg, β)
                 #R6
-                if has_marks(dg, α, β, "---") && has_marks(dg, β, γ, "o-*")
-                    set_marks!(dg, β, γ, "--*")
+                if has_marks(dg, α, β, arrow"---") && has_marks(dg, β, γ, arrow"o-*")
+                    set_marks!(dg, β, γ, arrow"--*")
                     loop = true
                 end
 
                 # R7
                 if(!isadjacent(dg, α, γ) &&
-                   has_marks(dg, α, β, "--o") &&
-                   has_marks(dg, β, γ, "o-*"))
-                    set_marks!(dg, β, γ, "--*")
+                   has_marks(dg, α, β, arrow"--o") &&
+                   has_marks(dg, β, γ, arrow"o-*"))
+                    set_marks!(dg, β, γ, arrow"--*")
                     loop = true
                 end
 
                 # R8
                 if(has_edge(dg, α, γ) &&
-                   has_marks(dg, α, γ, "o->") &&
-                   (has_marks(dg, α, β, "-->") || has_marks(dg, α, β, "--o")) &&
-                   has_marks(dg, β, γ, "-->"))
-                    set_marks!(dg, α, γ, "-->")
+                   has_marks(dg, α, γ, arrow"o->") &&
+                   (has_marks(dg, α, β, arrow"-->") || has_marks(dg, α, β, arrow"--o")) &&
+                   has_marks(dg, β, γ, arrow"-->"))
+                    set_marks!(dg, α, γ, arrow"-->")
                     loop = true
                 end
             end
             
             # R9
-            if has_marks(dg, α, β, "o->")
+            if has_marks(dg, α, β, arrow"o->")
                 paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
                 for path in paths
                     if (length(path)>3 &&
                         isUncoveredPDPath(dg, path) &&
                         !isadjacent(dg, path[2], path[end]))
-                        set_marks!(dg, α, β, "-->")
+                        set_marks!(dg, α, β, arrow"-->")
                         loop = true
                         break
                     end
@@ -354,13 +334,13 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
             end
             
             #R10
-            if has_marks(dg, α, β, "o->")
+            if has_marks(dg, α, β, arrow"o->")
                 for (γ,θ) in combinations(inneighbors(dg, β), 2)
                     if(θ==α || γ==α)
                         continue
                     end
-                    if(has_marks(dg, γ, β, "-->") &&
-                       has_marks(dg, β, θ, "<--"))
+                    if(has_marks(dg, γ, β, arrow"-->") &&
+                       has_marks(dg, β, θ, arrow"<--"))
 
                         p1 = yen_k_shortest_paths(g, α, γ, LightGraphs.weights(g), 100).paths
                         p2 = yen_k_shortest_paths(g, α, θ, LightGraphs.weights(g), 100).paths
@@ -372,7 +352,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                                         μ = path1[2]
                                         ω = path2[2]
                                         if(μ != ω && !isadjacent(dg, μ, ω))
-                                            set_marks!(dg, α, β, "-->")
+                                            set_marks!(dg, α, β, arrow"-->")
                                             loop=true
                                             break
                                         end

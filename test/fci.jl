@@ -7,12 +7,12 @@ using CausalInference, LightGraphs, MetaGraphs, Random
     set_prop!(dg, 1, 2, :mark, :arrow)
     set_prop!(dg, 2, 1, :mark, :tail)
 
-    @test has_marks(dg, 1, 2, "-->")
-    @test has_marks(dg, 2, 1, "*--")
+    @test has_marks(dg, 1, 2, arrow"-->")
+    @test has_marks(dg, 2, 1, arrow"*--")
 
     add_edge!(dg, 3, 2)
     add_edge!(dg, 2, 3)
-    set_marks!(dg, 2, 3, "<-*")
+    set_marks!(dg, 2, 3, arrow"<-*")
     add_edge!(dg, 3, 4)
     add_edge!(dg, 4, 2)
 
@@ -26,22 +26,22 @@ using CausalInference, LightGraphs, MetaGraphs, Random
 
     add_edge!(dg, 3, 4)
     add_edge!(dg, 4, 3)
-    set_marks!(dg, 3, 4, "<->")
+    set_marks!(dg, 3, 4, arrow"<->")
 
     add_edge!(dg, 3, 5)
     add_edge!(dg, 5, 3)
-    set_marks!(dg, 3, 5, "-->")
+    set_marks!(dg, 3, 5, arrow"-->")
     
     add_edge!(dg, 2, 3)
     add_edge!(dg, 3, 2)
-    set_marks!(dg, 2, 3, "<->")
+    set_marks!(dg, 2, 3, arrow"<->")
     
     add_edge!(dg, 2, 5)
     add_edge!(dg, 5, 2)
-    set_marks!(dg, 2, 5, "-->")
+    set_marks!(dg, 2, 5, arrow"-->")
     
     add_edge!(dg, 1, 2)
-    set_marks!(dg, 1, 2, "*->")
+    set_marks!(dg, 1, 2, arrow"*->")
 
     @test is_discriminating_path(dg, collect(1:5))
 end
@@ -90,8 +90,8 @@ end
     add_edge!(true_g,3,4)
     g_oracle = fcialg(4, dseporacle, true_g)
 
-    @test has_marks(g_oracle, 1, 3, "o->")
-    @test has_marks(g_oracle, 3, 4, "-->")
+    @test has_marks(g_oracle, 1, 3, arrow"o->")
+    @test has_marks(g_oracle, 3, 4, arrow"-->")
 
     true_g = DiGraph(5)
     add_edge!(true_g,1,2)
@@ -100,8 +100,8 @@ end
     add_edge!(true_g,5,4)
     g_oracle = fcialg(4, dseporacle, true_g)
 
-    @test has_marks(g_oracle, 2, 4, "<->")
-    @test has_marks(g_oracle, 1, 2, "o->")
+    @test has_marks(g_oracle, 2, 4, arrow"<->")
+    @test has_marks(g_oracle, 1, 2, arrow"o->")
 
     # test graph from Figure 11-iv in Richardson & Sprites, 2002
     true_g = DiGraph(7)
@@ -115,7 +115,7 @@ end
     g_oracle = fcialg(4, dseporacle, true_g, sel=[7])
 
     # test for that weird edge I don't understand...
-    @test has_marks(g_oracle, 1, 4, "o->")
+    @test has_marks(g_oracle, 1, 4, arrow"o->")
     
     # test graph Figure 6 in Zhang, 2008
     true_g = DiGraph(5)
@@ -126,8 +126,8 @@ end
     add_edge!(true_g, 5, 4)
     g_oracle = fcialg(4, dseporacle, true_g)
 
-    @test has_marks(g_oracle, 1, 4, "o-o")
-    @test has_marks(g_oracle, 4, 3, "-->")
-    @test has_marks(g_oracle, 2, 3, "-->")
-    @test has_marks(g_oracle, 1, 2, "o-o")
+    @test has_marks(g_oracle, 1, 4, arrow"o-o")
+    @test has_marks(g_oracle, 4, 3, arrow"-->")
+    @test has_marks(g_oracle, 2, 3, arrow"-->")
+    @test has_marks(g_oracle, 1, 2, arrow"o-o")
 end
