@@ -6,18 +6,14 @@ Check  whether `u` and `v` are d-separated given set `s`.
 Algorithm: unrolled https://arxiv.org/abs/1304.1505
 
 """
-function dsep(g::AbstractGraph, u::Integer, v::Integer, S; sel=[], verbose = false)
-    S_internal = copy(S)
-    append!(S_internal, sel)
-    unique!(S_internal)
-
+function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
     T = eltype(g)
     in_seen = falses(nv(g)) # nodes reached earlier backwards
     out_seen = falses(nv(g)) # nodes reached earlier forwards
     descendant = falses(nv(g)) # descendant in s
     blocked = falses(nv(g))
     
-    for ve in S_internal
+    for ve in S
         in_seen[ve] = true
         blocked[ve] = true
     end
@@ -31,7 +27,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; sel=[], verbose = fal
     
     # mark vertices with descendants in S
     next = Vector{T}()
-    for w in S_internal
+    for w in S
         push!(next, w)
         descendant[w] = true
     end    

@@ -64,7 +64,7 @@ end
 Oracle for the `skeleton` and `pcalg` functions using [`dsep`](@ref) on the true graph `g`     
 """
 function dseporacle(i, j, s, g; sel=[])
-    dsep(g, i, j, s; sel=sel)
+    dsep(g, i, j, vcat(s,sel))
 end        
 
 """
