@@ -54,9 +54,11 @@ function is_triangle(dg, v1, v2, v3)
 end
 
 function is_discriminating_path(dg, path)
-    if length(path)<4 || isadjacent(dg, path[1], path[end])
+    # a discriminating path consists of at least four edges
+    if length(path)<4
         return false
     end
+    
     triples = collect(zip(path[1:end-2], path[2:end-1], path[3:end]))[1:end-1]
     colliders = map(t->is_collider(dg, t...), triples)
     parents = map(t->is_parent(dg, t[2], path[end]), triples)
@@ -69,10 +71,11 @@ end
 
 function isUncoveredCirclePath(dg, path)
     if(length(path)==2)
-        #return has_marks(dg, path[1], path[2], arrow"o-o")
         return false
     end
 
+    # are uncovered circle paths with 2 edges a thing? I personally think they are,
+    # but I could be wrong
     if(length(path)==3)
         return (has_marks(dg, path[1], path[2], arrow"o-o") &&
                 has_marks(dg, path[2], path[3], arrow"o-o"))
@@ -80,6 +83,7 @@ function isUncoveredCirclePath(dg, path)
     
     edges = collect(zip(path[1:end-1], path[2:end]))
     triples = collect(zip(path[1:end-2], path[3:end]))
+    
     unshielded = map(t->!isadjacent(dg, t[1], t[2]), triples)
     circles = map(e->has_marks(dg, e[1], e[2], arrow"o-o"), edges)
 
@@ -87,7 +91,7 @@ function isUncoveredCirclePath(dg, path)
 end
 
 function isUncoveredPDPath(dg, path)
-    if(length(path)<3)
+    if(length(path)==2)
         return (!has_marks(dg, path[1], path[2], arrow"<-*") &&
                 !has_marks(dg, path[1], path[2], arrow"*--"))
     end
@@ -101,7 +105,7 @@ function isUncoveredPDPath(dg, path)
     return all(unshielded) && all(directions)
 end
 
-function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
+function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where {V<:Integer}
 
     # Step F1 and F2
     g, S = skeleton(n, I, par...; kwargs...)
@@ -114,10 +118,9 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
     for e in edges(dg)
         set_prop!(dg, e, :mark, :circle)
     end
-    println(S)
-    println(Z)
 
     for (u, v, w) in Z
+        # is this check actually needed?
         if has_edge(dg, (u, v))
             set_marks!(dg, u, v, arrow"*->")
         end
@@ -126,7 +129,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
         end
     end
     
-    # find possible d-separation sets
+    # find possible d-separation sets (MAGs are trickier than DAGs...)
     pdsep = Dict()
     
     for v in vertices(g)
@@ -149,7 +152,8 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
             end
         end
     end
-    
+
+    # need to collect edges here since graph will be changed while looping
     for e in collect(edges(g))
         v = src(e)
         w = dst(e)
@@ -182,6 +186,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
     end
     
     for (u, v, w) in Z
+        verbose && println("R0 with ($(u), $(v), $(w))")
         if has_edge(dg, (u, v))
             set_marks!(dg, u, v, arrow"*->")
         end
@@ -210,7 +215,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
 
                     set_marks!(dg, β, γ, arrow"-->")
                     loop = true
-
+                    verbose && println("R1 with $(α)-$(β)-$(γ)")
                 end
                 
                 # R2
@@ -221,6 +226,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                     
                     set_marks!(dg, α, γ, arrow"*->")
                     loop = true
+                    verbose && println("R1 with $(α)-$(β)-$(γ)")
                 end
                 
                 #R3
@@ -235,6 +241,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                             has_marks(dg, θ, β, arrow"*-o"))
                             set_marks!(dg, θ, β, arrow"*->")
                             loop = true
+                            verbose && println("R3 with $(α)-$(β)-$(γ)")
                         end
                     end
                 end
@@ -255,6 +262,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                             set_marks!(dg, path[end-2], path[end-1], arrow"<->")
                         end
                         loop=true
+                        verbose && println("R4 with $(α) and $(path)")
                     end
                 end
             end
@@ -280,25 +288,35 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                 
                 for path in paths
                     if (isUncoveredCirclePath(dg, path) &&
-                        length(path)>2 &&
-                        !isadjacent(dg, path[1], path[end-1]) &&
-                        !isadjacent(dg, path[2], path[end]))
-                        
-                        set_marks!(dg, α, β, arrow"---")
-                        for (e1, e2) in zip(path[1:end-1], path[2:end])
-                            set_marks!(dg, e1, e2, arrow"---")
+                        length(path)>2)
+                        if ((length(path)>3 &&
+                             !isadjacent(dg, path[1], path[end-1]) &&
+                             !isadjacent(dg, path[2], path[end])) ||
+                            length(path)==3)
+
+                            verbose && println("R5: $(α)-$(β) with $(path)")
+                            set_marks!(dg, α, β, arrow"---")
+                            for (e1, e2) in zip(path[1:end-1], path[2:end])
+                                set_marks!(dg, e1, e2, arrow"---")
+                            end
+                            loop = true
+                            break
                         end
-                        loop = true
-                        break
                     end
                 end
             end
 
             for γ in inneighbors(dg, β)
+
+                if γ == α
+                    continue
+                end
+                
                 #R6
                 if has_marks(dg, α, β, arrow"---") && has_marks(dg, β, γ, arrow"o-*")
                     set_marks!(dg, β, γ, arrow"--*")
                     loop = true
+                    verbose && println("R6: $(α)-$(β)-$(γ)")
                 end
 
                 # R7
@@ -307,6 +325,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                    has_marks(dg, β, γ, arrow"o-*"))
                     set_marks!(dg, β, γ, arrow"--*")
                     loop = true
+                    verbose && println("R7: $(α)-$(β)-$(γ)")
                 end
 
                 # R8
@@ -316,6 +335,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                    has_marks(dg, β, γ, arrow"-->"))
                     set_marks!(dg, α, γ, arrow"-->")
                     loop = true
+                    verbose && println("R8: $(α)-$(β)-$(γ)")
                 end
             end
             
@@ -328,6 +348,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                         !isadjacent(dg, path[2], path[end]))
                         set_marks!(dg, α, β, arrow"-->")
                         loop = true
+                        verbose && println("R9: $(α)-$(β) with $(path)")
                         break
                     end
                 end
@@ -354,6 +375,7 @@ function fcialg(n::V, I, par...; augmented=true, kwargs...) where {V<:Integer}
                                         if(μ != ω && !isadjacent(dg, μ, ω))
                                             set_marks!(dg, α, β, arrow"-->")
                                             loop=true
+                                            verbose && println("R10: $(α)-$(β) with $(p1) and $(p2)")
                                             break
                                         end
                                     end

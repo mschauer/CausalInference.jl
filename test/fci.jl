@@ -88,7 +88,7 @@ end
     add_edge!(true_g,1,3)
     add_edge!(true_g,2,3)
     add_edge!(true_g,3,4)
-    g_oracle = fcialg(4, dseporacle, true_g)
+    g_oracle = fcialg(4, dseporacle, true_g, verbose=true)
 
     @test has_marks(g_oracle, 1, 3, arrow"o->")
     @test has_marks(g_oracle, 3, 4, arrow"-->")
@@ -98,7 +98,7 @@ end
     add_edge!(true_g,3,4)
     add_edge!(true_g,5,2)
     add_edge!(true_g,5,4)
-    g_oracle = fcialg(4, dseporacle, true_g)
+    g_oracle = fcialg(4, dseporacle, true_g, verbose=true)
 
     @test has_marks(g_oracle, 2, 4, arrow"<->")
     @test has_marks(g_oracle, 1, 2, arrow"o->")
@@ -112,12 +112,12 @@ end
     add_edge!(true_g, 7, 3)
     add_edge!(true_g, 3, 4)
     add_edge!(true_g, 6, 4)
-    g_oracle = fcialg(4, dseporacle, true_g, sel=[7])
+    g_oracle = fcialg(4, dseporacle, true_g, sel=[7], verbose=true)
 
     # test for that weird edge I don't understand...
     @test has_marks(g_oracle, 1, 4, arrow"o->")
 
-    g_oracle = fcialg(6, dseporacle, true_g, sel=[7])
+    g_oracle = fcialg(6, dseporacle, true_g, sel=[7], verbose=true)
 
     # test for undirected triangle
     @test has_marks(g_oracle, 2, 5, arrow"---")
@@ -126,7 +126,7 @@ end
 
     # all arrows have to be oriented out of the undirected
     # component of an ancestral graph (rule R6)
-    @test has_marks(g_oracle, 6, 4, arrow"---")
+    @test has_marks(g_oracle, 6, 4, arrow"-->")
     
     # test graph Figure 6 in Zhang, 2008
     true_g = DiGraph(5)
@@ -135,7 +135,7 @@ end
     add_edge!(true_g, 4, 3)
     add_edge!(true_g, 5, 1)
     add_edge!(true_g, 5, 4)
-    g_oracle = fcialg(4, dseporacle, true_g)
+    g_oracle = fcialg(4, dseporacle, true_g, verbose=true)
 
     @test has_marks(g_oracle, 1, 4, arrow"o-o")
     @test has_marks(g_oracle, 4, 3, arrow"-->")
