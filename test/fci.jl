@@ -116,17 +116,6 @@ end
 
     # test for that weird edge I don't understand...
     @test has_marks(g_oracle, 1, 4, arrow"o->")
-
-    g_oracle = fcialg(6, dseporacle, true_g, sel=[7], verbose=true)
-
-    # test for undirected triangle
-    @test has_marks(g_oracle, 2, 5, arrow"---")
-    @test has_marks(g_oracle, 5, 6, arrow"---")
-    @test has_marks(g_oracle, 6, 2, arrow"---")
-
-    # all arrows have to be oriented out of the undirected
-    # component of an ancestral graph (rule R6)
-    @test has_marks(g_oracle, 6, 4, arrow"-->")
     
     # test graph Figure 6 in Zhang, 2008
     true_g = DiGraph(5)

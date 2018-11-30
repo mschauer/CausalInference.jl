@@ -70,15 +70,8 @@ function is_discriminating_path(dg, path)
 end
 
 function isUncoveredCirclePath(dg, path)
-    if(length(path)==2)
+    if length(path)<4 
         return false
-    end
-
-    # are uncovered circle paths with 2 edges a thing? I personally think they are,
-    # but I could be wrong
-    if(length(path)==3)
-        return (has_marks(dg, path[1], path[2], arrow"o-o") &&
-                has_marks(dg, path[2], path[3], arrow"o-o"))
     end
     
     edges = collect(zip(path[1:end-1], path[2:end]))
@@ -86,12 +79,12 @@ function isUncoveredCirclePath(dg, path)
     
     unshielded = map(t->!isadjacent(dg, t[1], t[2]), triples)
     circles = map(e->has_marks(dg, e[1], e[2], arrow"o-o"), edges)
-
+    
     return all(unshielded) && all(circles)
 end
 
 function isUncoveredPDPath(dg, path)
-    if(length(path)==2)
+    if length(path)==2
         return (!has_marks(dg, path[1], path[2], arrow"<-*") &&
                 !has_marks(dg, path[1], path[2], arrow"*--"))
     end
