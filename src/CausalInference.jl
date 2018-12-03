@@ -13,7 +13,7 @@ export kl_cond_mi, kl_perm_mi_test, kl_perm_cond_mi_test
 export n_ball
 export fcialg, is_collider, is_triangle, is_parent
 export is_discriminating_path, has_marks, set_marks!, isUncoveredCirclePath
-export @arrow_str
+export isUncoveredPDPath, @arrow_str
 
 include("klentropy.jl")
 include("skeleton.jl")

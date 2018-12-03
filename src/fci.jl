@@ -17,6 +17,15 @@ macro arrow_str(str)
     return (symDict[str[1]], symDict[str[3]])
 end
 
+"""
+    has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol}
+
+test if the edge between node v1 and v2 has the edge markers given by the tuple t (use
+the arrow macro to simplify use)
+
+Example:
+has_marks(dg, 1, 2, arrow"o->")
+"""
 function has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol})    
     if t[2]!=:star
         if t[1]!=:star
@@ -31,6 +40,14 @@ function has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol})
     return result
 end
 
+"""
+    set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
+
+set edge marks between node v1 and v2.
+
+Example:
+set_marks!(dg, 1, 2, arrow"*->")
+"""
 function set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
     if t[1]!=:star
         set_prop!(dg, v2, v1, :mark, t[1])
@@ -41,18 +58,38 @@ function set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
     end
 end
 
+"""
+    is_collider(dg, v1, v2, v3)
+
+check if egde v1, v2 and v3 form a collider
+"""
 function is_collider(dg, v1, v2, v3)
     return has_marks(dg, v1, v2, arrow"*->") && has_marks(dg, v2, v3, arrow"<-*")
 end
 
+"""
+    is_parent(dg, v1, v2)
+
+check if v1 is a parent of v2
+"""
 function is_parent(dg, v1, v2)
     return has_edge(dg, v1, v2) && has_marks(dg, v1, v2, arrow"-->")
 end
 
+"""
+    is_triangle(dg, v1, v2, v3)
+
+check if v1, v2 and v3 form a triangle
+"""
 function is_triangle(dg, v1, v2, v3)
     return isadjacent(dg, v1, v2) && isadjacent(dg, v2, v3) && isadjacent(dg, v3, v1)
 end
 
+"""
+    is_discriminating_path(dg, path)
+
+check if `path` is a discriminating path
+"""
 function is_discriminating_path(dg, path)
     # a discriminating path consists of at least four edges
     if length(path)<4
@@ -69,6 +106,11 @@ function is_discriminating_path(dg, path)
     end
 end
 
+"""
+    isUncoveredCirclePath(dg, path)
+
+check if `path` is an uncovered circle path
+"""
 function isUncoveredCirclePath(dg, path)
     if length(path)<4 
         return false
@@ -83,10 +125,14 @@ function isUncoveredCirclePath(dg, path)
     return all(unshielded) && all(circles)
 end
 
+"""
+    isUncoveredPDPath(dg, path)
+
+check if `path` is an uncovered potentially directed path
+"""
 function isUncoveredPDPath(dg, path)
-    if length(path)==2
-        return (!has_marks(dg, path[1], path[2], arrow"<-*") &&
-                !has_marks(dg, path[1], path[2], arrow"*--"))
+    if length(path)<4
+        return false
     end
     
     edges = collect(zip(path[1:end-1], path[2:end]))
@@ -98,6 +144,15 @@ function isUncoveredPDPath(dg, path)
     return all(unshielded) && all(directions)
 end
 
+"""
+    fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...)
+
+Perform the FCI algorithm for a set of `n` variables using the test
+
+    I(u, v, [s1, ..., sn], par...)
+
+Returns the PAG as a MetaDiGraph
+"""
 function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where {V<:Integer}
 
     # Step F1 and F2
@@ -146,7 +201,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
         end
     end
 
-    # need to collect edges here since graph will be changed while looping
+    # need to collect edges here since graph could change while looping
     for e in collect(edges(g))
         v = src(e)
         w = dst(e)
@@ -281,20 +336,15 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 
                 for path in paths
                     if (isUncoveredCirclePath(dg, path) &&
-                        length(path)>2)
-                        if ((length(path)>3 &&
-                             !isadjacent(dg, path[1], path[end-1]) &&
-                             !isadjacent(dg, path[2], path[end])) ||
-                            length(path)==3)
-
-                            verbose && println("R5: $(α)-$(β) with $(path)")
-                            set_marks!(dg, α, β, arrow"---")
-                            for (e1, e2) in zip(path[1:end-1], path[2:end])
-                                set_marks!(dg, e1, e2, arrow"---")
-                            end
-                            loop = true
-                            break
+                        !isadjacent(dg, path[1], path[end-1]) &&
+                        !isadjacent(dg, path[2], path[end]))
+                        verbose && println("R5: $(α)-$(β) with $(path)")
+                        set_marks!(dg, α, β, arrow"---")
+                        for (e1, e2) in zip(path[1:end-1], path[2:end])
+                            set_marks!(dg, e1, e2, arrow"---")
                         end
+                        loop = true
+                        break
                     end
                 end
             end
