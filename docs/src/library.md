@@ -43,8 +43,8 @@ is_collider
 is_parent
 is_triangle
 is_discriminating_path
-isUncoveredCirclePath
-isUncoveredPDPath
+is_uncovered_circle_path
+is_uncovered_PD_path
 fcialg
 ```
 

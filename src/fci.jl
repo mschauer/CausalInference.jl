@@ -107,11 +107,11 @@ function is_discriminating_path(dg, path)
 end
 
 """
-    isUncoveredCirclePath(dg, path)
+    is_uncovered_circle_path(dg, path)
 
 check if `path` is an uncovered circle path
 """
-function isUncoveredCirclePath(dg, path)
+function is_uncovered_circle_path(dg, path)
     if length(path)<4 
         return false
     end
@@ -126,11 +126,11 @@ function isUncoveredCirclePath(dg, path)
 end
 
 """
-    isUncoveredPDPath(dg, path)
+    is_uncovered_PD_path(dg, path)
 
 check if `path` is an uncovered potentially directed path
 """
-function isUncoveredPDPath(dg, path)
+function is_uncovered_PD_path(dg, path)
     if length(path)<4
         return false
     end
@@ -335,7 +335,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
                 
                 for path in paths
-                    if (isUncoveredCirclePath(dg, path) &&
+                    if (is_uncovered_circle_path(dg, path) &&
                         !isadjacent(dg, path[1], path[end-1]) &&
                         !isadjacent(dg, path[2], path[end]))
                         verbose && println("R5: $(α)-$(β) with $(path)")
@@ -387,7 +387,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
                 for path in paths
                     if (length(path)>3 &&
-                        isUncoveredPDPath(dg, path) &&
+                        is_uncovered_PD_path(dg, path) &&
                         !isadjacent(dg, path[2], path[end]))
                         set_marks!(dg, α, β, arrow"-->")
                         loop = true
@@ -410,9 +410,9 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                         p2 = yen_k_shortest_paths(g, α, θ, LightGraphs.weights(g), 100).paths
 
                         for path1 in p1
-                            if isUncoveredPDPath(dg, path1)
+                            if is_uncovered_PD_path(dg, path1)
                                 for path2 in p2
-                                    if isUncoveredPDPath(dg, path2)
+                                    if is_uncovered_PD_path(dg, path2)
                                         μ = path1[2]
                                         ω = path2[2]
                                         if(μ != ω && !isadjacent(dg, μ, ω))
