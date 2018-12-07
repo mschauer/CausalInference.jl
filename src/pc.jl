@@ -70,8 +70,8 @@ function unshielded(g, S)
     Z
 end
 
-isadjacent(dg::DiGraph, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
-has_both(dg::DiGraph, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
+isadjacent(dg, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
+has_both(dg, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
 
 remove!(dg::DiGraph, e::Pair) = rem_edge!(dg, Edge(e))
 remove!(dg::Graph, e::Tuple) = rem_edge!(dg, Edge(e))

@@ -13,7 +13,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
     descendant = falses(nv(g)) # descendant in s
     blocked = falses(nv(g))
     
-    for ve in S 
+    for ve in S
         in_seen[ve] = true
         blocked[ve] = true
     end

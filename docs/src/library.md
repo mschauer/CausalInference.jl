@@ -35,6 +35,18 @@ kl_cond_mi
 kl_perm_mi_test
 kl_perm_cond_mi_test
 ```
+## FCI algorithm
+```@docs
+has_marks
+set_marks!
+is_collider
+is_parent
+is_triangle
+is_discriminating_path
+is_uncovered_circle_path
+is_uncovered_PD_path
+fcialg
+```
 
 ## Miscellaneous
 ```@docs

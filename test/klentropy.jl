@@ -1,6 +1,8 @@
-using CausalInference, Distributions
+using CausalInference, Distributions, Random
 
 @testset "Entropy" begin
+    Random.seed!(123)
+    
     @test isapprox(n_ball(2), π)
     @test isapprox(n_ball(3), 4/3. * π)
     N = 250000
@@ -34,6 +36,7 @@ using CausalInference, Distributions
 end
 
 @testset "Permutation tests" begin
+    Random.seed!(123)
     N = 10000
     p = 0.05
     x = randn(N)

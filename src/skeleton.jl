@@ -26,6 +26,7 @@ function skeleton(n::V, I, par...; kwargs...) where {V}
     g = CompleteGraph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
+    
     while true
         isdone = true
         for e0 in collect(edges(g)) # cannot remove edges while iterating
@@ -39,7 +40,7 @@ function skeleton(n::V, I, par...; kwargs...) where {V}
                     isdone = false
                     for s in combinations(nb, d)
                         if I(src(e), dst(e), s, par...; kwargs...) 
-                            # @debug "Removing edge $(e0) given $(s)"
+                            @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
@@ -62,8 +63,8 @@ end
 
 Oracle for the `skeleton` and `pcalg` functions using [`dsep`](@ref) on the true graph `g`     
 """
-function dseporacle(i, j, s, g)
-    dsep(g, i, j, s)
+function dseporacle(i, j, s, g; sel=[])
+    dsep(g, i, j, vcat(s,sel))
 end        
 
 """
