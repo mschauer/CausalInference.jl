@@ -233,6 +233,86 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "library/#CausalInference.has_marks",
+    "page": "Library",
+    "title": "CausalInference.has_marks",
+    "category": "function",
+    "text": "has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol}\n\ntest if the edge between node v1 and v2 has the edge markers given by the tuple t (use the arrow macro to simplify use)\n\nExample: has_marks(dg, 1, 2, arrow\"o->\")\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.set_marks!",
+    "page": "Library",
+    "title": "CausalInference.set_marks!",
+    "category": "function",
+    "text": "set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})\n\nset edge marks between node v1 and v2.\n\nExample: set_marks!(dg, 1, 2, arrow\"*->\")\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.is_collider",
+    "page": "Library",
+    "title": "CausalInference.is_collider",
+    "category": "function",
+    "text": "is_collider(dg, v1, v2, v3)\n\ncheck if egde v1, v2 and v3 form a collider\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.is_parent",
+    "page": "Library",
+    "title": "CausalInference.is_parent",
+    "category": "function",
+    "text": "is_parent(dg, v1, v2)\n\ncheck if v1 is a parent of v2\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.is_triangle",
+    "page": "Library",
+    "title": "CausalInference.is_triangle",
+    "category": "function",
+    "text": "is_triangle(dg, v1, v2, v3)\n\ncheck if v1, v2 and v3 form a triangle\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.is_discriminating_path",
+    "page": "Library",
+    "title": "CausalInference.is_discriminating_path",
+    "category": "function",
+    "text": "is_discriminating_path(dg, path)\n\ncheck if path is a discriminating path\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.is_uncovered_circle_path",
+    "page": "Library",
+    "title": "CausalInference.is_uncovered_circle_path",
+    "category": "function",
+    "text": "is_uncovered_circle_path(dg, path)\n\ncheck if path is an uncovered circle path\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.is_uncovered_PD_path",
+    "page": "Library",
+    "title": "CausalInference.is_uncovered_PD_path",
+    "category": "function",
+    "text": "is_uncovered_PD_path(dg, path)\n\ncheck if path is an uncovered potentially directed path\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#CausalInference.fcialg",
+    "page": "Library",
+    "title": "CausalInference.fcialg",
+    "category": "function",
+    "text": "fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...)\n\nPerform the FCI algorithm for a set of n variables using the test\n\nI(u, v, [s1, ..., sn], par...)\n\nReturns the PAG as a MetaDiGraph\n\n\n\n\n\n"
+},
+
+{
+    "location": "library/#FCI-algorithm-1",
+    "page": "Library",
+    "title": "FCI algorithm",
+    "category": "section",
+    "text": "has_marks\nset_marks!\nis_collider\nis_parent\nis_triangle\nis_discriminating_path\nis_uncovered_circle_path\nis_uncovered_PD_path\nfcialg"
+},
+
+{
     "location": "library/#CausalInference.digraph",
     "page": "Library",
     "title": "CausalInference.digraph",
