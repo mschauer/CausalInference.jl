@@ -53,3 +53,18 @@ end
                                collect(transpose(x)))>p
     
 end
+
+@testset "Categorical Variables" begin
+    Random.seed!(123)
+    N = 1000
+    p = 0.05
+    
+    x = rand(1:5, N)
+    @test abs((cat_H(x) - log(5))/log(5)) < 0.01
+
+    x = rand(1:4, N)
+    v = map(d->floor(d/2), x) .+ rand(1:2, N)
+    w = map(d->floor(d/2), x) .+ rand(1:2, N)
+    @test perm_cat_MI_test(v,w) < p
+    @test perm_cat_CMI_test(v,w,x) > p
+end

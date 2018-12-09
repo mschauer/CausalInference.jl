@@ -233,11 +233,12 @@ conditional independeces using a conditional mutual information permutation test
 """
 function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
     @assert Tables.istable(t)
-    @assert all(t->t==Float64, Tables.schema(t).types)
+    # @assert all(t->t==Float64, Tables.schema(t).types)
 
+    
     c = Tables.columns(t)
     sch = Tables.schema(t)
     n = length(sch.names)
 
-    return pcalg(n, cmitest, c, p; kwargs...)
+    return pcalg(n, cmitest, c, sch, p; kwargs...)
 end

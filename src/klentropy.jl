@@ -1,5 +1,6 @@
-using SpecialFunctions, NearestNeighbors, Distances, Distributions, Random
-
+using SpecialFunctions, NearestNeighbors, Distances, Distributions, Random, CategoricalArrays
+using DataStructures: counter
+using Lazy: @>>
 """
     n_ball(n::Number)
 Computes the volume of a n-dimensional unit sphere.
@@ -223,5 +224,86 @@ function kl_perm_cond_mi_test(x, y, z; k=5, B=100, kp=5, bias_correction=true)
 
     p = length(filter(d->CMI<d, samples))/B 
     
+    return p
+end
+
+"""
+    cat_H(x)
+
+estimate entropy of categorical variable x
+
+For further information, see:
+
+"Entropy Estimates from Insufficient Samplings"
+Peter Grassberger
+https://arxiv.org/abs/physics/0307138v2
+"""
+function cat_H(x)
+    N = length(x)
+    counts = values(counter(x))
+    return log(N) - 1/N * sum(map(n->n*(digamma(n) + (-1)^n * 1/(n*(n+1))), counts))
+end
+
+"""
+    cat_MI(x, y)
+
+estimate mutual information of categorical variables x and y
+"""
+function cat_MI(x, y)
+    return cat_H(x) + cat_H(y) - cat_H(zip(x,y))
+end
+
+"""
+    cat_MI(x, y, z)
+
+estimate conditional mutual information of categorical variables x and y given z
+"""
+function cat_CMI(x, y, z)
+    return cat_H(zip(x,z)) + cat_H(zip(y,z)) - cat_H(zip(x,y,z)) - cat_H(z)
+end
+
+"""
+    perm_cat_MI_test(x, y; B=100)
+
+perform permutation-based independence test of x and y
+"""
+function perm_cat_MI_test(x, y; B=100)
+    samples = Float64[]
+    MI = cat_MI(x,y)
+    
+    for i in 1:B
+        push!(samples, cat_MI(shuffle(x), y))
+    end
+
+    p = length(filter(d->MI<d, samples))/B 
+    return p
+end
+
+"""
+    perm_cat_CMI_test(x, y, z; B=100)
+
+perform permutation-based conditional independence test of x and y given z
+"""
+function perm_cat_CMI_test(x, y, z; B=100)
+    samples = Float64[]
+    CMI = cat_CMI(x,y,z)
+
+    xz = collect(zip(x,z))
+    
+    for i in 1:B
+        x_shuffle_dict = Dict()
+        for level in unique(z)
+            x_shuffle_dict[level] = @>> xz filter(d->d[2]==level) map(d->d[1]) shuffle
+        end
+        
+        x_shuffle = []
+        for zs in z
+            push!(x_shuffle, pop!(x_shuffle_dict[zs]))
+        end
+        
+        push!(samples, cat_CMI(x_shuffle, y, z))
+    end
+
+    p = length(filter(d->CMI<d, samples))/B 
     return p
 end

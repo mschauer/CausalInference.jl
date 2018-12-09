@@ -14,6 +14,7 @@ export n_ball
 export fcialg, is_collider, is_triangle, is_parent
 export is_discriminating_path, has_marks, set_marks!, is_uncovered_circle_path
 export is_uncovered_PD_path, @arrow_str
+export cat_H, cat_MI, cat_CMI, perm_cat_MI_test, perm_cat_CMI_test
 
 include("klentropy.jl")
 include("skeleton.jl")

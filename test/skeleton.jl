@@ -1,4 +1,3 @@
-
 using CausalInference
 using LightGraphs
 using Test
