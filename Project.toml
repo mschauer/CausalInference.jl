@@ -1,5 +1,8 @@
 name = "CausalInference"
 uuid = "8e462317-f959-576b-b3c1-403f26cec956"
+authors = ["Moritz Schauer <moritzschauer@web.de>"]
+version = "0.5.0"
+
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
