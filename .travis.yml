@@ -4,7 +4,6 @@ os:
   - linux
   - osx
 julia:
-  - 0.7
   - 1.0
   - nightly
 notifications:
@@ -43,4 +42,3 @@ jobs:
 after_success:
   # push coverage results to Coveralls, Codecov
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())'
-
