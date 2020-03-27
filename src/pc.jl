@@ -243,10 +243,6 @@ function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
     return pcalg(n, cmitest, c, p; kwargs...)
 end
 
-function plot_pc_graph(g)
-    
-end
-
 
 """
     plot_pc_graph(g, df)
