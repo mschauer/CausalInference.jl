@@ -23,7 +23,7 @@ Perform the undirected PC skeleton algorithm for a set of 1:n variables using th
 Returns skeleton graph and separating set  
 """
 function skeleton(n::V, I, par...; kwargs...) where {V}
-    g = CompleteGraph(n)
+    g = complete_graph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
     
