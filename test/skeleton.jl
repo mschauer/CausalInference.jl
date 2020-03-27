@@ -7,7 +7,7 @@ using LinearAlgebra
 using Statistics
 
 function skeleton2(n::V, I, par...) where {V}
-    g = CompleteGraph(n)
+    g = complete_graph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
     while true
