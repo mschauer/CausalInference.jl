@@ -458,3 +458,41 @@ function fcialg(t, p::Float64, test::typeof(cmitest); kwargs...)
 
     return fcialg(n, cmitest, c, p; kwargs...)
 end
+
+
+function plot_fci_graph(g, node_labels::Array=[])
+    plot_g = DiGraph(nv(g))
+
+    if length(node_labels) != nv(g) 
+        node_labels = map(string, 1:nv(g))
+    end
+        
+    node_style = "draw, rounded corners, fill=blue!10"
+    options = "scale=2"
+    
+    styles_dict = Dict()
+        
+    for e in edges(g)
+       if e.src < e.dst
+           add_edge!(plot_g, e.src, e.dst)
+
+           if has_marks(g, e.src, e.dst, arrow"o-o")
+               push!(styles_dict, (e.src, e.dst)=>"o-o")
+           elseif has_marks(g, e.src, e.dst, arrow"o->")
+               push!(styles_dict, (e.src, e.dst)=>"o->")
+           elseif has_marks(g, e.src, e.dst, arrow"<-o")
+               push!(styles_dict, (e.src, e.dst)=>"<-o")
+           elseif has_marks(g, e.src, e.dst, arrow"-->")
+               push!(styles_dict, (e.src, e.dst)=>"->")
+           elseif has_marks(g, e.src, e.dst, arrow"<--")
+               push!(styles_dict, (e.src, e.dst)=>"<-")
+           elseif has_marks(g, e.src, e.dst, arrow"---")
+               push!(styles_dict, (e.src, e.dst)=>"--")
+           end
+            
+        end
+    end
+    
+    TikzGraphs.plot(plot_g, node_labels, edge_styles=styles_dict,
+                    node_style=node_style, options=options)
+end
