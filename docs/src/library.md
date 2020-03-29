@@ -15,6 +15,7 @@ pcalg
 skeleton
 dseporacle
 unshielded
+plot_pc_graph
 ```
 
 ## Statistics
@@ -46,6 +47,7 @@ is_discriminating_path
 is_uncovered_circle_path
 is_uncovered_PD_path
 fcialg
+plot_fci_graph
 ```
 
 ## Miscellaneous

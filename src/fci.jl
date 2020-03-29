@@ -459,7 +459,11 @@ function fcialg(t, p::Float64, test::typeof(cmitest); kwargs...)
     return fcialg(n, cmitest, c, p; kwargs...)
 end
 
+"""
+    plot_fci_graph(g, node_labels)
 
+plot the output of the FCI algorithm.
+"""
 function plot_fci_graph(g, node_labels::Array=[])
     plot_g = DiGraph(nv(g))
 
