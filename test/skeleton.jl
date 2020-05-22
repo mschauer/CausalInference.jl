@@ -46,7 +46,7 @@ qu(x) = x*x'
     d = 10 # 40 disconnected
     n = 10000
     alpha = 0.3
-    Random.seed!(5)
+    Random.seed!(6)
     E = LowerTriangular([i > j ? 1*(rand() < alpha) : 0 for i in 1:d, j in 1:d]) 
     L = E .* rand(d,d)
     println("\nVertices: $d, Edges: ", sum(E))
