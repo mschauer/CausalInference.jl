@@ -16,6 +16,7 @@ export is_discriminating_path, has_marks, set_marks!, is_uncovered_circle_path
 export is_uncovered_PD_path, @arrow_str
 export plot_pc_graph, plot_fci_graph
 
+include("combinations_without.jl")
 include("klentropy.jl")
 include("skeleton.jl")
 include("dsep.jl")
