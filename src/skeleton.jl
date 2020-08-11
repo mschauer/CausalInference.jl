@@ -2,12 +2,12 @@ using LightGraphs
 using LightGraphs.SimpleGraphs
 using Combinatorics
 using LinearAlgebra
- 
+
 
 """
     removesorted(collection, item) -> contains(collection, item)
-    
-Remove item from sorted collection. 
+
+Remove item from sorted collection.
 """
 function removesorted!(n, v)
     i = searchsorted(n, v)
@@ -20,52 +20,50 @@ end
     skeleton(n, I) -> g, S
 
 Perform the undirected PC skeleton algorithm for a set of 1:n variables using the test I.
-Returns skeleton graph and separating set  
+Returns skeleton graph and separating set
 """
 function skeleton(n::V, I, par...; kwargs...) where {V}
-    g = CompleteGraph(n)
+    g = complete_graph(n)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
-    
+
     while true
         isdone = true
         for e0 in collect(edges(g)) # cannot remove edges while iterating
             for e in (e0, reverse(e0))
-                nb0 = neighbors(g, src(e))
-                if length(nb0) > d  # i.e. |nb\{dst(e)}| >= d 
-                    i = searchsorted(nb0, dst(e))
-                    isempty(i) && continue # the edge does not exist anymore
-                    nb = copy(nb0)
-                    deleteat!(nb, first(i))
+                nb = neighbors(g, src(e))
+                if length(nb) > d  # i.e. |nb\{dst(e)}| >= d
+                    r = searchsorted(nb, dst(e))
+                    isempty(r) && continue # the edge does not exist anymore
                     isdone = false
-                    for s in combinations(nb, d)
-                        if I(src(e), dst(e), s, par...; kwargs...) 
+                    for s in combinations_without(nb, d,  first(r)) # do not modify s!                nb0 = neighbors(g, src(e))
+                        if I(src(e), dst(e), s, par...; kwargs...)
                             @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
                             end
-                            break 
+                            break
                         end
                     end
                 end
             end
-        end 
+        end
         d = d + 1
         if isdone
             return g, S
         end
-    end    
+    end
 end
 
 """
     dseporacle(i, j, s, g)
 
-Oracle for the `skeleton` and `pcalg` functions using [`dsep`](@ref) on the true graph `g`     
+Oracle for the `skeleton` and `pcalg` functions using [`dsep`](@ref) on the true graph `g`
 """
 function dseporacle(i, j, s, g; sel=[])
     dsep(g, i, j, vcat(s,sel))
-end        
+end
 
 """
     partialcor(i, j, s, C)
@@ -80,7 +78,7 @@ function partialcor(i, j, s, C)
     elseif n == 1
         k = s[1]
         (C[i, j] - C[i, k]*C[j, k])/sqrt((1 - C[j, k]^2)*(1 - C[i, k]^2))
-    else 
+    else
         is = zeros(Int, n+2)
         is[1] = i
         is[2] = j
@@ -90,7 +88,7 @@ function partialcor(i, j, s, C)
         C0 = C[is, is]
         P = pinv(C0, 1.5e-8)
         -P[1, 2]/sqrt(P[1, 1]*P[2, 2])
-    end    
+    end
 end
 
 
@@ -98,7 +96,7 @@ end
 """
     gausscitest(i, j, s, (C,n), c)
 
-Test for conditional independence of variable no i and j given variables in s with 
+Test for conditional independence of variable no i and j given variables in s with
 Gaussian test at the critical value c. C is covariance of n observations.
 
 """
@@ -110,11 +108,11 @@ Gaussian test at the critical value c. C is covariance of n observations.
     t = sqrt(n - length(s) - 3)*atanh(r)
     #@debug "testing $(i)-$(j) given $(s): $(abs(t)) -- $(c)"
     abs(t) < c
-end 
+end
 
 
 """
-    cmitest(i,j,s,data,crit; kwargs...)
+    cmitest(i, j, s, data, [schema,] crit; kwargs...)
 
 Test for conditional independence of variables i and j given variables in s with
 permutation test using nearest neighbor conditional mutual information estimates
@@ -149,6 +147,20 @@ kwargs...: keyword arguments passed to independence tests
         end
         return res>crit
     end
+end
+@inline function cmitest(i, j, s, data, crit; kwargs...)
+    x=collect(transpose(convert(Array, data[i])))
+    y=collect(transpose(convert(Array, data[j])))
+
+    if length(s)==0
+        res = kl_perm_mi_test(x, y; kwargs...)
+    else
+        z = reduce(vcat, map(c->collect(transpose(convert(Array, data[c]))), s))
+        res = kl_perm_cond_mi_test(x, y, z; kwargs...)
+    end
+
+    #@debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"
+    return res>crit
 end
 
 truetest(i, j, s) = true

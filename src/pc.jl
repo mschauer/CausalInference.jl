@@ -1,4 +1,5 @@
 using LightGraphs, Tables, Statistics, Distributions
+using TikzGraphs
 
 """
     insorted(a, x)
@@ -241,4 +242,37 @@ function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
     n = length(sch.names)
 
     return pcalg(n, cmitest, c, sch, p; kwargs...)
+end
+
+
+"""
+    plot_pc_graph(g, df)
+
+plot the output of the PC algorithm.
+"""
+function plot_pc_graph(g, node_labels::Array=[])
+    plot_g = DiGraph(nv(g))
+
+    if length(node_labels) != nv(g) 
+        node_labels = map(string, 1:nv(g))
+    end
+        
+    node_style = "draw, rounded corners, fill=blue!10"
+    options = "scale=2"
+    
+    styles_dict = Dict()
+        
+    for e in edges(g)
+       if e.src < e.dst
+            add_edge!(plot_g, e.src, e.dst)
+            if has_edge(g, e.dst, e.src)
+                push!(styles_dict, (e.src, e.dst)=>"--")
+            else
+                push!(styles_dict, (e.src, e.dst)=>"->")
+            end
+        end
+    end
+    
+    TikzGraphs.plot(plot_g, node_labels, edge_styles=styles_dict,
+                    node_style=node_style, options=options)
 end

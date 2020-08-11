@@ -3,7 +3,6 @@ using CausalInference
 
 makedocs(
     modules = [CausalInference],
-    format = :html,
     sitename = "CausalInference.jl",
     authors = "Moritz Schauer and contributors",
     pages = Any[
@@ -17,8 +16,5 @@ makedocs(
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
 deploydocs(
-    repo = "github.com/mschauer/CausalInference.jl.git",
-    target = "build",
-    deps = nothing,
-    make = nothing,
+    repo = "github.com/mschauer/CausalInference.jl.git"
 )
