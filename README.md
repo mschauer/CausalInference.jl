@@ -50,6 +50,8 @@ save(PDF("estdag"), tp)
 
 Not all causal directions are indentified (and identifiable) in this example, and visualized by edges with circled/unknown arrow marks.
 
+But we can conclude without intervention from observations alone that for example `W` and `V` are causal for `Z` and `Z` for `S`.
+
 # FAQ
 
 **Q:** I looked for "causal inference" and found [CausalInference.jl](.) and [Omega.jl](http://www.zenna.org/Omega.jl/latest/causal/)... **A:** CausalInference.jl is about causal discovery, you observe the data and want to infer the causal structure. Omega lets you reason what happens then: when you intervene ("do calculus") and want to cause changes.
