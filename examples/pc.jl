@@ -26,7 +26,8 @@ df = (x=x, v=v, w=w, z=z, s=s)
 println("Running Gaussian tests")
 @time est_g = pcalg(df, p, gausscitest)
 
-tp = plot_dag(est_g, String.(keys((x=x, v=v, w=w, z=z, s=s))))
+variables = [String(k) for k in keys(df)]
+tp = plot_dag(est_g, variables)
 save(PDF("estdag"), tp)
 
 
@@ -39,13 +40,13 @@ for (i,j) in [(1,2), (1,3), (2,4), (3,4), (4,5)]
    add_edge!(g, i, j)
 end
 
-tp = plot_dag(g)
+tp = plot_dag(g, variables)
 save(PDF("truedag"), tp)
 
 # Use the oracle to tell about a graph what can be learned from observations
 dg = pcalg(d, dseporacle, g)
 
-tp = plot_dag(dg)
+tp = plot_dag(dg, variables)
 save(PDF("equivalencedag"), tp)
 
 @testset "pctest" begin
