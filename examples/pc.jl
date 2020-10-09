@@ -26,7 +26,7 @@ df = (x=x, v=v, w=w, z=z, s=s)
 println("Running Gaussian tests")
 @time est_g = pcalg(df, p, gausscitest)
 
-tp = plot_dag(est_g)
+tp = plot_dag(est_g, String.(keys((x=x, v=v, w=w, z=z, s=s))))
 save(PDF("estdag"), tp)
 
 
