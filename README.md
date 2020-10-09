@@ -16,6 +16,40 @@ The PC algorithm is tested on random DAGs by comparing the result of the PC algo
 
 See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) for other implemented functionality and [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInference.jl/issues/1) for coordination of the development.
 
+# Example
+
+After examples discussed in chapter 2 of Pearl, Judea. Causality. Cambridge University Press, 2009.
+
+See `pc.jl` in the example directory.
+
+```Julia
+using CausalInference
+using LightGraphs
+include("plotdag.jl")
+
+# Generate some data
+
+N = 1000
+p = 0.01
+x = randn(N)
+v = x + randn(N)*0.25
+w = x + randn(N)*0.25
+z = v + w + randn(N)*0.25
+s = z + randn(N)*0.25
+
+df = (x=x, v=v, w=w, z=z, s=s)
+
+println("Running Gaussian tests")
+@time est_g = pcalg(df, p, gausscitest)
+
+tp = plot_dag(est_g)
+save(PDF("estdag"), tp)
+```
+
+![Dag from the example](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/exampledag.png)
+
+Not all causal directions are indentified (and identifiable) in this example, and visualized by edges with circled/unknown arrow marks.
+
 # FAQ
 
 **Q:** I looked for "causal inference" and found [CausalInference.jl](.) and [Omega.jl](http://www.zenna.org/Omega.jl/latest/causal/)... **A:** CausalInference.jl is about causal discovery, you observe the data and want to infer the causal structure. Omega lets you reason what happens then: when you intervene ("do calculus") and want to cause changes.
