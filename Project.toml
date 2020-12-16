@@ -20,7 +20,7 @@ TikzGraphs = "b4f28e30-c73f-5eaf-a395-8a9db949a742"
 
 [compat]
 Combinatorics = "1.0"
-Distances = "0.8, 0.9"
+Distances = "0.8, 0.9, 0.10"
 Distributions = "0.22, 0.23, 0.24"
 LightGraphs = "1.3"
 MetaGraphs = "0.6"
