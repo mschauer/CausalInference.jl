@@ -11,7 +11,7 @@ Both types of graphs are represented by sorted adjacency lists (vectors of vecto
 
 CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
 
-## Example
+## Basic Example
 
 A few example data sets can be useful to illustrate how to work with the PC algorithm and the different independence tests implemented in this package. The examples discussed here are based on the example models discussed in chapter 2 of Judea Pearl's book. The causal model we are going to study can be represented using the following DAG:
 
