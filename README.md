@@ -7,15 +7,17 @@ Julia package for causal inference, graphical models and structure learning.
 
 This package contains code for the stable version of the PC algorithm and the FCI algorithm as described in Zhang's article.
 
-The algorithms use the Julia packagea [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl) and [MetaGraphs](https://github.com/JuliaGraphs/MetaGraphs.jl). Graphs are represented by sorted adjacency lists (vectors in the implemention). CPDAGs are just `DiGraph`s where unoriented edges are represented by both a forward and a backward directed edge. PAGs are `MetaDiGraph`s where every edge is represented by a forward and a backward edge. The marks of the endpoint of an edge are stored in the `:marks` property. Marks can be checked and set using the `has_marks` and `set_marks!` functions (see documentation for details).
+The algorithms use the Julia packages [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl) and [MetaGraphs](https://github.com/JuliaGraphs/MetaGraphs.jl). Graphs are represented by sorted adjacency lists (vectors in the implementation). CPDAGs are just `DiGraph`s where unoriented edges are represented by both a forward and a backward directed edge. PAGs are `MetaDiGraph`s where every edge is represented by a forward and a backward edge. The marks of the endpoint of an edge are stored in the `:marks` property. Marks can be checked and set using the `has_marks` and `set_marks!` functions (see documentation for details).
 
 The PC algorithm is tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle with CPDAGs computed with Chickering's DAG->CPDAG conversion algorithm (implemented as `dsep` and `cpdag` in this package).
 
 See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) for other implemented functionality and [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInference.jl/issues/1) for coordination of the development.
 
-# Example
+# Examples
 
-After examples discussed in chapter 2 of Pearl, Judea. Causality. Cambridge University Press, 2009.
+A few example data sets can be useful to illustrate how to work with the PC algorithm and the different independence tests implemented in this package. The examples discussed here as based on the example DAGS discussed in chapter 2 of Judea Pearl's book. The structural model we are going to study can be represented using the following DAG:
+
+![True example DAG](true_graph.png)
 
 See `pc.jl` in the example directory.
 
