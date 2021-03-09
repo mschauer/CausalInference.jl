@@ -36,7 +36,7 @@ s = z + randn(N)*0.25
 df = (x=x, v=v, w=w, z=z, s=s)
 ```
 
-With this data ready, we can now see to what extent we can back out the underlying causal structure from the data using the PC algorithm. Under the hood, the PC algorithm uses repeated conditional independence tests to determine the causal influence between different variables in a data set. In order to run the PC algorithm on our test data set, we need to specify not only the data set we want to use, but also the conditional independence test alongside a p-value. For now, let's use a simple Gaussian conditional independence test with a p-value of 0.01. 
+With this data ready, we can now see to what extent we can back out the underlying causal structure from the data using the PC algorithm. Under the hood, the PC algorithm uses repeated conditional independence tests to determine the causal relationships between different variables in a given data set. In order to run the PC algorithm on our test data set, we need to specify not only the data set we want to use, but also the conditional independence test alongside a p-value. For now, let's use a simple Gaussian conditional independence test with a p-value of 0.01. 
 
 ```Julia
 est_g = pcalg(df, 0.01, gausscitest)
@@ -50,13 +50,34 @@ tp = plot_pc_dag(est_g, [String(k) for k in keys(df)])
 
 ![Example output of PC algorithm](assets/pc_graph_linear.png)
 
-The first thing that stands out in this plot is that only some edges have arrow marks, while others don't.
+The first thing that stands out in this plot is that only some edges have arrow marks, while others don't. For example, the edge going from `v` to `z` is pointing from `v` to `z`, indicating that that `v` influences `z` and not the other way around. On the other hand, the edge going from `x` to `w` has no arrows on either end, meaning that the direction of causal influence has not been identified and is in fact not identifiable based on the available data alone. Both causal directions, `x` influencing `w` and `w` influencing `x`, are compatible with the observed data. We can illustrate this directly by switching the direction of influence in the data generating process used above and running the PC algorithm for this new data set:
 
-But we can conclude without intervention from observations alone that for example `W` and `V` are causal for `Z` and `Z` for `S`.
+```Julia
+# Generate some additional sample data with different causal relationships
+
+N = 1000 # number of data points
+
+# define simple linear model with added noise
+v = randn(N)
+x = v + randn(N)*0.25
+w = x + randn(N)*0.25
+z = v + w + randn(N)*0.25
+s = z + randn(N)*0.25
+
+df = (x=x, v=v, w=w, z=z, s=s)
+
+plot_pc_dag(pcalg(df, 0.01, gausscitest), [String(k) for k in keys(df)])
+
+```
+
+![PC results for alternative DAG](assets/pc_graph_linear_xw_switched.png)
+
+We can, however, conclude unequivocally from the available (observational) data alone that `w` and `v` are causal for `z` and `z` for `s`. At no point did we have to resort to things like direct interventions, experiments or A/B tests to arrive at these conclusions!
 
 # FAQ
 
-**Q:** I looked for "causal inference" and found [CausalInference.jl](.) and [Omega.jl](http://www.zenna.org/Omega.jl/latest/causal/)... **A:** CausalInference.jl is about causal discovery, you observe the data and want to infer the causal structure. Omega lets you reason what happens then: when you intervene ("do calculus") and want to cause changes.
+**Q:** I looked for "causal inference" and found [CausalInference.jl](.) and [Omega.jl](http://www.zenna.org/Omega.jl/latest/causal/)... 
+**A:** CausalInference.jl is about causal discovery; you observe the data and want to infer the causal structure. Omega lets you reason what happens then: when you intervene ("do calculus") and want to cause changes.
 
 # References
 
