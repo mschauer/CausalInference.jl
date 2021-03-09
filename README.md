@@ -15,21 +15,18 @@ See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) f
 
 # Examples
 
-A few example data sets can be useful to illustrate how to work with the PC algorithm and the different independence tests implemented in this package. The examples discussed here as based on the example DAGS discussed in chapter 2 of Judea Pearl's book. The structural model we are going to study can be represented using the following DAG:
+A few example data sets can be useful to illustrate how to work with the PC algorithm and the different independence tests implemented in this package. The examples discussed here are based on the example models discussed in chapter 2 of Judea Pearl's book. The causal model we are going to study can be represented using the following DAG:
 
 ![True example DAG](true_graph.png)
 
-See `pc.jl` in the example directory.
+We can easily create some sample data that corresponds to the causal structure described by the DAG. For the sake of simplicity, let's create data from a simple linear model that follows the structure defined by the DAG shown above:
 
 ```Julia
-using CausalInference
-using LightGraphs
-include("plotdag.jl")
+# Generate some sample data to use with the PC algorithm
 
-# Generate some data
+N = 1000 # number of data points
 
-N = 1000
-p = 0.01
+# define simple linear model with added noise
 x = randn(N)
 v = x + randn(N)*0.25
 w = x + randn(N)*0.25
@@ -37,14 +34,22 @@ z = v + w + randn(N)*0.25
 s = z + randn(N)*0.25
 
 df = (x=x, v=v, w=w, z=z, s=s)
-
-println("Running Gaussian tests")
-@time est_g = pcalg(df, p, gausscitest)
-
-variables = [String(k) for k in keys(df)]
-tp = plot_dag(est_g, variables)
-save(PDF("estdag"), tp)
 ```
+
+With this data ready, we can now see to what extent we can back out the underlying causal structure from the data using the PC algorithm. Under the hood, the PC algorithm uses repeated conditional independence tests to determine the causal influence between different variables in a data set. In order to run the PC algorithm on our test data set, we need to specify not only the data set we want to use, but also the conditional independence test alongside a p-value. For now, let's use a simple Gaussian conditional independence test with a p-value of 0.01. 
+
+```Julia
+est_g = pcalg(df, 0.01, gausscitest)
+```
+
+In order to investigate the output of the PC algorithm, this package also provides a function to easily plot and visually analyse this output.
+
+```Julia
+variables = [String(k) for k in keys(df)]
+tp = plot_pc_dag(est_g, variables)
+```
+
+
 
 ![Dag from the example](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/exampledag.png)
 
