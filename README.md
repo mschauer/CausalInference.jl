@@ -17,7 +17,7 @@ See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) f
 
 A few example data sets can be useful to illustrate how to work with the PC algorithm and the different independence tests implemented in this package. The examples discussed here are based on the example models discussed in chapter 2 of Judea Pearl's book. The causal model we are going to study can be represented using the following DAG:
 
-![True example DAG](true_graph.png)
+![True example DAG](assets/true_graph.png)
 
 We can easily create some sample data that corresponds to the causal structure described by the DAG. For the sake of simplicity, let's create data from a simple linear model that follows the structure defined by the DAG shown above:
 
@@ -45,15 +45,12 @@ est_g = pcalg(df, 0.01, gausscitest)
 In order to investigate the output of the PC algorithm, this package also provides a function to easily plot and visually analyse this output.
 
 ```Julia
-variables = [String(k) for k in keys(df)]
-tp = plot_pc_dag(est_g, variables)
+tp = plot_pc_dag(est_g, [String(k) for k in keys(df)])
 ```
 
+![Example output of PC algorithm](assets/pc_graph_linear.png)
 
-
-![Dag from the example](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/exampledag.png)
-
-Not all causal directions are indentified (and identifiable) in this example, and visualized by edges with circled/unknown arrow marks.
+The first thing that stands out in this plot is that only some edges have arrow marks, while others don't.
 
 But we can conclude without intervention from observations alone that for example `W` and `V` are causal for `Z` and `Z` for `S`.
 
