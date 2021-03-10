@@ -442,7 +442,7 @@ function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     sch = Tables.schema(t)
     n = length(sch.names)
   
-    X = reduce(hcat, map(c->t[c], 1:n))
+    X = reduce(hcat, map(c->Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
     N = size(X,1)
     C = Statistics.cor(X)
     return fcialg(n, gausscitest, (C,N), quantile(Normal(), 1-p/2); kwargs...)

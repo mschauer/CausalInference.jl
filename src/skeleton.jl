@@ -2,7 +2,7 @@ using LightGraphs
 using LightGraphs.SimpleGraphs
 using Combinatorics
 using LinearAlgebra
-
+using Tables
 
 """
     removesorted(collection, item) -> contains(collection, item)
@@ -122,13 +122,15 @@ keyword arguments:
 kwargs...: keyword arguments passed to independence tests
 """
 @inline function cmitest(i, j, s, data, crit; kwargs...)
-    x=collect(transpose(convert(Array, data[i])))
-    y=collect(transpose(convert(Array, data[j])))
+    columns = Tables.columns(data)
+
+    x=collect(transpose(convert(Array, Tables.getcolumn(columns,i))))
+    y=collect(transpose(convert(Array, Tables.getcolumn(columns,j))))
 
     if length(s)==0
         res = kl_perm_mi_test(x, y; kwargs...)
     else
-        z = reduce(vcat, map(c->collect(transpose(convert(Array, data[c]))), s))
+        z = reduce(vcat, map(c->collect(transpose(convert(Array, Tables.getcolumn(columns,c)))), s))
         res = kl_perm_cond_mi_test(x, y, z; kwargs...)
     end
 
