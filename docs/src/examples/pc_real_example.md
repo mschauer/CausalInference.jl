@@ -27,6 +27,6 @@ This dataframe can be used as input to the PC algorithm just like the dataframes
 plot_pc_graph(pcalg(df, 0.025, gausscitest), variables)
 ```
 
-![Plot of PC output for true data](../../../assets/pc_gauss_real.png)
+![Plot of PC output for true data](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/pc_gauss_real.png)
 
 At first glance, the output of the PC algorithm looks sensible and appears to provide some first insight into the data we are working with. In particular, the causal factors influencing faculty pay appear rather sensible. However, before drawing any further conclusions, different versions of the PC algorithm (e.g., different p-values, different independence tests, etc.) should be explored.
