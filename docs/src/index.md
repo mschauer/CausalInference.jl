@@ -105,6 +105,7 @@ plot_pc_dag(pcalg(df, 0.01, cmitest), [String(k) for k in keys(df)])
 ![PC algorithm on nonlinear data with cmitest](../../assets/pc_graph_nonlinear_cmi.png)
 
 The result of the PC algorithm using the CMI test again look like what we'd expect to see. 
+It should be pointed out here that using `cmitest` is significantly more computationally demanding and takes **a lot** longer than using `gausscitest`.
 
 ## Performance
 
