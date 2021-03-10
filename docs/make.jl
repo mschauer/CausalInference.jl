@@ -7,7 +7,9 @@ makedocs(
     authors = "Moritz Schauer and contributors",
     pages = Any[
         "Home" => "index.md",
-#        "Manual" => "manual.md",
+        "Examples" => Any["examples/pc_basic_examples.md",
+                          "examples/pc_cmi_examples.md"
+                          ],
         "Library" => "library.md",
         ],
 )
