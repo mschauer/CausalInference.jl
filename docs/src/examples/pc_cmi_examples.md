@@ -1,4 +1,4 @@
-# PC Algorithm: further examples
+# PC Algorithm: Further examples
 
 In the previous examples, we used a basic test data set to illustrate how to use the PC algorithm and how to visualise and interpret the results. The test data set was created using a simple linear model that followed the structure of the test DAG shown above. Depending on the field or discipline we are working in, we may encounter data sets whose components are not necessarily linearly related. It is hence worthwhile to analyse how the PC algorithm performs when working with more complex, nonlinear data sets:
 
