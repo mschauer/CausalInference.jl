@@ -93,16 +93,16 @@ The data set created above exhibits the same causal structure, but now the indiv
 plot_pc_dag(pcalg(df, 0.01, gausscitest), [String(k) for k in keys(df)])
 ```
 
-![PC algorithm on nonlinear data with gaussci](../../assets/pc_graph_nonlinear_gauss.png)
+![PC algorithm on nonlinear data with gaussci](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/pc_graph_nonlinear_gauss.png)
 
 Interestingly enough, the resulting graph bears no resemblance to the true graph we would expect to see. To understand what's happening here, we need to remind ourselves that the PC algorithm uses conditional independence tests to determine the causal relationships between different parts of our data set. It seems as if the Gaussian conditional independence test we are using here can't quite handle the nonlinear relationships present in the data (note that increasing the number of data points won't change this!). 
-To handle cases like this, we implemented additional conditional independence tests based on the concept of [conditional mutual information (CMI)](https://en.wikipedia.org/wiki/Conditional_mutual_information). These tests have the benefit of being independent of the type of relationship between different parts of the analysed data. Using these tests instead of the Gaussian test is achieved by simply passing `cmitest` instead of `gaussci` as the conditional independence test to use to the PC algorithm:
+To handle cases like this, we implemented additional conditional independence tests based on the concept of [conditional mutual information (CMI)](https://en.wikipedia.org/wiki/Conditional_mutual_information). These tests have the benefit of being independent of the type of relationship between different parts of the analysed data. Using these tests instead of the Gaussian test we used previously is achieved by simply passing `cmitest` instead of `gaussci` as the conditional independence test to use to the PC algorithm:
 
 ```Julia
 plot_pc_dag(pcalg(df, 0.01, cmitest), [String(k) for k in keys(df)])
 ```
 
-![PC algorithm on nonlinear data with cmitest](../../assets/pc_graph_nonlinear_cmi.png)
+![PC algorithm on nonlinear data with cmitest](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/pc_graph_nonlinear_cmi.png)
 
 The result of the PC algorithm using the CMI test again look like what we'd expect to see. 
 It should be pointed out here that using `cmitest` is significantly more computationally demanding and takes **a lot** longer than using `gausscitest`.
