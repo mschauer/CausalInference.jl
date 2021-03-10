@@ -2,14 +2,7 @@
 
 A Julia package for causal inference, graphical models and structure learning with the PC and FCI algorithms. This package contains for now the stable PC algorithm [`pcalg`](@ref) as well as the FCI algorithm as described by Zhang, 2008. 
 
-The PC algorithm was tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle with the CPDAG computed with Chickering's DAG->CPDAG conversion algorithm (implemented as [`dsep`](@ref) and [`cpdag`](@ref) in this package).
-
-See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for other implemented functionality.
-
-The algorithms use the `SimpleGraph` and `SimpleDiGraph` graph representation of the Julia package [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl).
-Both types of graphs are represented by sorted adjacency lists (vectors of vectors in the LightGraphs implementation).
-
-CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
+# Examples
 
 ## PC Algorithm: Basic Examples
 
