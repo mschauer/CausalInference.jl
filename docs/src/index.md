@@ -1,6 +1,16 @@
 # CausalInference.jl
 
-A Julia package for causal inference, graphical models and structure learning with the PC and FCI algorithms. This package contains for now the stable PC algorithm [`pcalg`](@ref) as well as the FCI algorithm as described by Zhang, 2008. 
+A Julia package for causal inference, graphical models and structure learning with the PC and FCI algorithms. This package contains for now the stable PC algorithm [`pcalg`](@ref) as well as the extended FCI algorithm. 
+
+## Introduction
+
+The aim of this package is to provide Julia implementations of two popular algorithms for causal structure identification, the PC algorithm and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data.
+
+Causal inference is by no means an easy subject. Readers without any prior exposure to these topics are encouraged to go over the following resources in order to get a basic idea of what's involved in causal inference:
+
+- [Causal Inference in Statistics: A Primer](https://www.wiley.com/en-gb/Causal+Inference+in+Statistics%3A+A+Primer-p-9781119186847)
+- [Review of Causal Discovery Methods Based on Graphical Models](https://www.frontiersin.org/articles/10.3389/fgene.2019.00524/full)
+- [On Pearl’s Hierarchy and the Foundations of Causal Inference](https://causalai.net/r60.pdf)
 
 ## Implementation Details
 
