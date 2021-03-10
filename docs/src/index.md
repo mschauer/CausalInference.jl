@@ -107,6 +107,17 @@ plot_pc_dag(pcalg(df, 0.01, cmitest), [String(k) for k in keys(df)])
 The result of the PC algorithm using the CMI test again look like what we'd expect to see. 
 It should be pointed out here that using `cmitest` is significantly more computationally demanding and takes **a lot** longer than using `gausscitest`.
 
+## Implementation Details
+
+The PC algorithm was tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle with the CPDAG computed with Chickering's DAG->CPDAG conversion algorithm (implemented as [`dsep`](@ref) and [`cpdag`](@ref) in this package).
+
+See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for other implemented functionality.
+
+The algorithms use the `SimpleGraph` and `SimpleDiGraph` graph representation of the Julia package [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl).
+Both types of graphs are represented by sorted adjacency lists (vectors of vectors in the LightGraphs implementation).
+
+CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
+
 ## Performance
 
 The speed of the algorithm is comparable with the C++ code of the R package `pcalg` after some pending optimisations.
