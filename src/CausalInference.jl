@@ -24,5 +24,6 @@ include("pc.jl")
 include("cpdag.jl")
 include("fci.jl")
 include("misc.jl")
+include("recantingwitness.jl")
 
 end # module
