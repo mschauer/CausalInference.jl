@@ -34,29 +34,29 @@ end
         add_edge!(g, i, j)
     end
 
-    g_blocked = DiGraph(6)
+    g_blocked = DiGraph(6) # 2a
     for (i,j) in [(1,2),(1,3)]
         add_edge!(g_blocked, i, j)
     end
     @test has_recanting_witness(g, 1, 6, g_blocked) == false
 
-    g_blocked = DiGraph(6)
+    g_blocked = DiGraph(6) # 2b
     for (i,j) in [(1,6)]
         add_edge!(g_blocked, i, j)
     end
     @test has_recanting_witness(g, 1, 6, g_blocked) == false
 
-    g_blocked = DiGraph(6)
+    g_blocked = DiGraph(6) # 3a
     for (i,j) in [(5,6)]
         add_edge!(g_blocked, i, j)
     end
-    @test_broken has_recanting_witness(g, 1, 6, g_blocked) == true
+    @test has_recanting_witness(g, 1, 6, g_blocked) == true
 
-    g_blocked = DiGraph(6)
+    g_blocked = DiGraph(6) # 3b
     for (i,j) in [(4,6)]
         add_edge!(g_blocked, i, j)
     end
-    @test_broken has_recanting_witness(g, 1, 6, g_blocked) == true
+    @test has_recanting_witness(g, 1, 6, g_blocked) == false
 
     
 end

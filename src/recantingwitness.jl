@@ -22,17 +22,18 @@ function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blo
         while !isempty(next_open) # find all reachable via direct neighbour
             src = popfirst!(next_open) # get new element from queue
             for vertex in outneighbors(g, src)
-                if !on_open[vertex]
-                    if may_blocked[src] && has_edge(blocked_edges, src, vertex)
+                if may_blocked[src] && has_edge(blocked_edges, src, vertex)
+                    if !on_blocked[vertex]
                         on_blocked[vertex] = true
                         if vertex != v 
                             push!(next_blocked, vertex)  # push onto blocked queue
                         end
-                    else
-                        on_open[vertex] = true
-                        if vertex != v 
-                            push!(next_open, vertex) # push onto queue
-                        end
+                    end
+                elseif !on_open[vertex]
+                
+                    on_open[vertex] = true
+                    if vertex != v 
+                        push!(next_open, vertex) # push onto queue
                     end
                 end
             end
