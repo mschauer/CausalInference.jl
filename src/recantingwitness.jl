@@ -3,7 +3,7 @@ function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blo
     on_blocked = zeros(Bool, nv(g))
     on_open = zeros(Bool, nv(g))
     may_blocked = zeros(Bool, nv(g))
-    for e in edges(blocked_edges) # mark excluded vertices as seen
+    for e in edges(blocked_edges) # mark sources of blocked edges
         may_blocked[src(e)] = true
     end
     u == v && error("u == v")
