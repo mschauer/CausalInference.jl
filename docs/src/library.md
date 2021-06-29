@@ -6,6 +6,7 @@
 dsep
 cpdag
 vskel
+CausalInference.has_recanting_witness
 ```
 
 ## PC algorithm
