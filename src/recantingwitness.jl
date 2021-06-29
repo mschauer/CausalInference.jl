@@ -1,4 +1,18 @@
 export has_recanting_witness
+
+
+"""
+    has_recanting_witness(g::AbstractGraph, u, v,  blocked_edges::AbstractGraph) -> Bool
+
+In a causal DAG with edges `g`, determine whether path-specific from vertex `u` to `v`
+with edges in `blocked_edges` can be can be computed uniquely from the data available to the investigator,
+which is the case if there is no "recanting witness".
+Essentially this means that `blocked_edges` could equivalently be replaced by a blocking only
+outgoing edges of `u`. 
+
+See Alvin, Shpitser, Pearl (2005): "Identifiability of Path-Specific Effects", 
+https://ftp.cs.ucla.edu/pub/stat_ser/r321-L.pdf.    
+"""
 function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blocked_edges::AbstractGraph{T}) where T
     on_blocked = zeros(Bool, nv(g))
     on_open = zeros(Bool, nv(g))
