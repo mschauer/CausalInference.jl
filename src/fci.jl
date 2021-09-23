@@ -159,7 +159,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
     g, S = skeleton(n, I, par...; kwargs...)
 
     # Apply R0 once
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
     dg = MetaDiGraph(g) # use g to keep track of unoriented edges
 
     # construct initial PAG
@@ -226,7 +226,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
     end
 
     #  step F3
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
     dg = MetaDiGraph(g)
 
     for e in edges(dg)
