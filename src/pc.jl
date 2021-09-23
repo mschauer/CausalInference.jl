@@ -47,12 +47,12 @@ Note that each unshielded triple is of type `∨` or `╎` or `∧` of shape
 where higher nodes have smaller vertex number.
 =# 
 """
-    unshielded(g, S)
+    orientable_unshielded(g, S)
 
-Find unshielded triples in the skeleton. Triples are connected vertices v-w-z where
+Find the orientable unshielded triples in the skeleton. Triples are connected vertices v-w-z where
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
 """ 
-function unshielded(g, S)
+function orientable_unshielded(g, S)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
@@ -70,6 +70,13 @@ function unshielded(g, S)
     end
     Z
 end
+
+"""
+    unshielded(g)
+
+Find the unshielded triples in the cyclefree skeleton. Triples are connected vertices v-w-z where
+z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
+""" 
 function unshielded(g)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
@@ -78,12 +85,12 @@ function unshielded(g)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
             insorted(neighbors(g, z), v) && continue
-            insorted(neighbors(g, z), w) || push!(Z, (v, w, z))
+            push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
             insorted(neighbors(g, z), w) && continue
-            insorted(neighbors(g, z), w) || push!(Z, (z, v, w))
+            push!(Z, (z, v, w))
         end
     end
     Z
@@ -108,7 +115,7 @@ function _vskel(n::V, I, par...) where {V}
     g, S = skeleton(n, I, par...)
 
     # Step 2: Apply Rule 0 once
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
     dg = DiGraph(g) # use g to keep track of unoriented edges
 
     for (u, v, w) in Z
@@ -163,7 +170,7 @@ function orient_unshielded(g, dg, S)
     n = nv(g)
 
     # Step 2: Apply Rule 0 once
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
 
 
     for (u, v, w) in Z

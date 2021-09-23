@@ -25,7 +25,7 @@ for (i,j) in [(1,2), (1,3), (2,4), (3,4), (4,5)]
 end
 
 h, s = skeleton(d, dseporacle, g)
-Z = unshielded(h, s)
+Z = orientable_unshielded(h, s)
 @testset "unshielded" begin
     @test Graph(g) == h
     for z in Z
