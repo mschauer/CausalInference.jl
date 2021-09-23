@@ -13,6 +13,8 @@ CausalInference.has_recanting_witness
 
 ```@docs
 pcalg
+orient_unshielded
+apply_pc_rules
 skeleton
 dseporacle
 unshielded
