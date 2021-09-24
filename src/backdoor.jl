@@ -24,8 +24,8 @@ end
 Test that given directed graph `g`, no node in `Z` is descendant of `u` and `Z` d-separates `u` from `v` 
 in the subgraph that only has the backdoors of `u` left (outgoing edges of `u` removed)
 """
-function backdoor_criterion(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
-    T = eltype(g)
+function backdoor_criterion(g::AbstractGraph{T}, u::Integer, v::Integer, S = T[]; verbose = false) where {T}
+
     in_seen = falses(nv(g)) # nodes reached earlier backwards
     out_seen = falses(nv(g)) # nodes reached earlier forwards
     descendant = falses(nv(g)) # descendant in s

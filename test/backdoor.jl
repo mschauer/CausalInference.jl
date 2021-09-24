@@ -42,4 +42,26 @@ for j in 1:100
         
     end    
 end
+
+# Pearl Causality Figure 3.4
+dg = digraph([
+    1 => 3
+    3 => 7
+    #
+    2 => 5
+    5 => 8
+    #
+    7 => 6
+    6 => 8
+    #
+    1 => 4
+    2 => 4
+    4 => 7
+    4 => 8])
+
+    @test !backdoor_criterion(dg, 7, 8)
+    @test backdoor_criterion(dg, 7, 8, [3,4])
+    @test backdoor_criterion(dg, 7, 8, [4,5])
+
+
 end

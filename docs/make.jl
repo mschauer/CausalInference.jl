@@ -9,7 +9,8 @@ makedocs(
         "Home" => "index.md",
         "Examples" => Any["examples/pc_basic_examples.md",
                           "examples/pc_cmi_examples.md",
-                          "examples/pc_real_example.md"
+                          "examples/pc_real_example.md",
+                          "examples/backdoor_example.md",
                           ],
         "Library" => "library.md",
         ],
