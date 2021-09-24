@@ -12,6 +12,8 @@ Causal inference is by no means an easy subject. Readers without any prior expos
 - [Review of Causal Discovery Methods Based on Graphical Models](https://www.frontiersin.org/articles/10.3389/fgene.2019.00524/full)
 - [On Pearl’s Hierarchy and the Foundations of Causal Inference](https://causalai.net/r60.pdf)
 
+There are also tutorials and examples linked in the navigation bar of this package.
+
 ## Implementation Details
 
 The PC algorithm was tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle with the CPDAG computed with Chickering's DAG->CPDAG conversion algorithm (implemented as [`dsep`](@ref) and [`cpdag`](@ref) in this package).

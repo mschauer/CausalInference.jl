@@ -6,7 +6,9 @@
 dsep
 cpdag
 vskel
-CausalInference.has_recanting_witness
+has_recanting_witness
+backdoor_criterion
+has_a_path
 ```
 
 ## PC algorithm

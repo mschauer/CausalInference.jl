@@ -14,6 +14,21 @@ function digraph(E)
 end
 
 """
+    graph(E)
+
+Create `Graph` from edge-list.
+"""
+function graph(E)
+    d = maximum(flatten(E))
+    g = Graph(d)
+    for (i, j) in E
+        add_edge!(g, i, j)
+    end
+    g
+end
+
+
+"""
     vpairs(g)
 
 Return the edge-list as `Pair`s.

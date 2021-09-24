@@ -323,13 +323,14 @@ function plot_pc_graph(g, node_labels::Array=[])
     styles_dict = Dict()
         
     for e in edges(g)
-       if e.src < e.dst
-            add_edge!(plot_g, e.src, e.dst)
-            if has_edge(g, e.dst, e.src)
+        if has_edge(g, e.dst, e.src)
+            if e.src < e.dst # if both, plot once
+                add_edge!(plot_g, e.src, e.dst)
                 push!(styles_dict, (e.src, e.dst)=>"--")
-            else
-                push!(styles_dict, (e.src, e.dst)=>"->")
             end
+        else # this is the only edge
+            add_edge!(plot_g, e.src, e.dst)
+            push!(styles_dict, (e.src, e.dst)=>"->")
         end
     end
     
