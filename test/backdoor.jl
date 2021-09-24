@@ -63,5 +63,33 @@ dg = digraph([
     @test backdoor_criterion(dg, 7, 8, [3,4])
     @test backdoor_criterion(dg, 7, 8, [4,5])
 
+    # more test examples
+    # http://causality.cs.ucla.edu/blog/index.php/category/back-door-criterion/
 
+    dg = digraph([2=>3, 3=>4, 1=>3])
+    @test backdoor_criterion(dg, 2, 4)
+    @test backdoor_criterion(dg, 2, 4, [1])
+    
+    dg = digraph([1=>3, 1=>5, 2=>3, 2=>4, 4=>5])
+    @test backdoor_criterion(dg, 2, 3)
+    @test !backdoor_criterion(dg, 2, 3, [4])
+    
+    dg = digraph([1=>3, 1=>4, 2=>3, 2=>4])
+    @test backdoor_criterion(dg, 2, 3)
+    @test !backdoor_criterion(dg, 2, 3, [4])
+    
+    dg = digraph([1=>2, 2=>3])
+    @test backdoor_criterion(dg, 1, 2)
+    @test !backdoor_criterion(dg, 1, 2, [3])
+    @test !backdoor_criterion(dg, 1, 3, [2])
+    @test backdoor_criterion(dg, 1, 3)
+    
+    @test backdoor_criterion(dg, 2, 3)
+    @test backdoor_criterion(dg, 2, 3, [1])
+    
+    dg = digraph([1=>3, 2=>3])
+    @test backdoor_criterion(dg, 1, 3)
+    @test backdoor_criterion(dg, 1, 3, [2])
+    
+    
 end
