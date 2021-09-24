@@ -17,6 +17,7 @@ export is_uncovered_PD_path, @arrow_str
 export plot_pc_graph, plot_fci_graph
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 
+include("graphs.jl")
 include("combinations_without.jl")
 include("klentropy.jl")
 include("skeleton.jl")
@@ -26,5 +27,6 @@ include("cpdag.jl")
 include("fci.jl")
 include("misc.jl")
 include("recantingwitness.jl")
+include("backdoor.jl")
 
 end # module
