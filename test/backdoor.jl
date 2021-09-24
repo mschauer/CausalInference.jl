@@ -91,5 +91,16 @@ dg = digraph([
     @test backdoor_criterion(dg, 1, 3)
     @test backdoor_criterion(dg, 1, 3, [2])
     
+    dg = digraph([2=>3, 1=>2, 1=>3])
+    @test !backdoor_criterion(dg, 2, 3)
+    @test backdoor_criterion(dg, 2, 3, [1])
     
+    dg = digraph([2=>3, 1=>4, 4=>2, 1=>3])
+    @test !backdoor_criterion(dg, 2, 3)
+    @test backdoor_criterion(dg, 2, 3, [4])
+    
+    dg = digraph([2=>3, 1=>2, 1=>4, 4=>3])
+    @test !backdoor_criterion(dg, 2, 3)
+    @test backdoor_criterion(dg, 2, 3, [4])
+  
 end
