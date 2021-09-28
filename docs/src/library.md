@@ -41,7 +41,13 @@ kl_mutual_information
 kl_cond_mi
 kl_perm_mi_test
 kl_perm_cond_mi_test
+cat_H
+cat_MI
+cat_CMI
+perm_cat_MI_test
+perm_cat_CMI_test
 ```
+
 ## FCI algorithm
 ```@docs
 has_marks

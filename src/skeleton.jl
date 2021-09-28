@@ -116,7 +116,7 @@ end
 
 
 """
-    cmitest(i,j,s,data,crit; kwargs...)
+    cmitest(i, j, s, data, [schema,] crit; kwargs...)
 
 Test for conditional independence of variables i and j given variables in s with
 permutation test using nearest neighbor conditional mutual information estimates
@@ -125,6 +125,33 @@ at p-value crit.
 keyword arguments:
 kwargs...: keyword arguments passed to independence tests
 """
+@inline function cmitest(i, j, s, data, schema, crit; kwargs...)
+    if all(t -> t==Float64, schema.types)
+        x=collect(transpose(convert(Array, data[i])))
+        y=collect(transpose(convert(Array, data[j])))
+    
+        if length(s)==0
+            res = kl_perm_mi_test(x, y; kwargs...)
+        else 
+            z = reduce(vcat, map(c->collect(transpose(convert(Array, data[c]))), s))
+            res = kl_perm_cond_mi_test(x, y, z; kwargs...)
+        end
+
+        #@debug "CMI test for $(i)-$(j) given $(s): $(res) compared to $(crit)"    
+        return res>crit
+    elseif all(t -> t<:CategoricalValue, schema.types)
+        x = data[i]
+        y = data[j]
+
+        if length(s)==0
+            res = perm_cat_MI_test(x, y; kwargs...)
+        else 
+            z = zip(map(c->data[c], s)...)
+            res = perm_cat_CMI_test(x, y, z; kwargs...)
+        end
+        return res>crit
+    end
+end
 @inline function cmitest(i, j, s, data, crit; kwargs...)
     columns = Tables.columns(data)
 

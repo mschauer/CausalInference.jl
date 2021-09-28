@@ -7,3 +7,6 @@ SpecialFunctions
 NearestNeighbors
 Distances
 MetaGraphs
+DataStructures
+CategoricalArrays
+Lazy

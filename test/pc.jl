@@ -4,6 +4,7 @@ using Test
 using Random
 using LightGraphs
 using Distributions
+using CategoricalArrays
 using CausalInference: disjoint_sorted
 
 @test disjoint_sorted([],[1,2])
@@ -58,7 +59,22 @@ println("Running Gaussian tests")
 println("Running CMI tests")
 @time cmi_g = pcalg(df, 0.1, cmitest)
 
-@testset "pcalg_edgde_test" begin
+@testset "continuous pcalg_edge_test" begin
     @test collect(LightGraphs.edges(cmi_g)) == collect(LightGraphs.edges(dg))
     @test collect(LightGraphs.edges(gaussci_g)) == collect(LightGraphs.edges(dg))
+end
+
+x = rand(1:5, N)
+v = x + rand(1:2, N)
+w = x + rand(1:2, N)
+z = ((v + w)/2) + rand(1:2, N)
+s = z + rand(1:2, N)
+
+df = (x=CategoricalArray(x), v=CategoricalArray(v),
+      w=CategoricalArray(w), z=CategoricalArray(z),
+      s=CategoricalArray(s))
+
+@time cmi_cat_g = pcalg(df, 0.1, cmitest)
+@testset "categorical pcalg_edge_test" begin
+    @test collect(LightGraphs.edges(cmi_cat_g)) == collect(LightGraphs.edges(dg))
 end
