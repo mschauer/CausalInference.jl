@@ -47,12 +47,12 @@ Note that each unshielded triple is of type `∨` or `╎` or `∧` of shape
 where higher nodes have smaller vertex number.
 =# 
 """
-    unshielded(g, S)
+    orientable_unshielded(g, S)
 
-Find unshielded triples in the skeleton. Triples are connected vertices v-w-z where
+Find the orientable unshielded triples in the skeleton. Triples are connected vertices v-w-z where
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
 """ 
-function unshielded(g, S)
+function orientable_unshielded(g, S)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
@@ -70,6 +70,32 @@ function unshielded(g, S)
     end
     Z
 end
+
+"""
+    unshielded(g)
+
+Find the unshielded triples in the cyclefree skeleton. Triples are connected vertices v-w-z where
+z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
+""" 
+function unshielded(g)
+    Z = Tuple{Int64,Int64,Int64}[]
+    for e in edges(g)
+        v, w = Tuple(e)
+        @assert(v < w)
+        for z in neighbors(g, w) # case `∨` or `╎`
+            z <= v && continue   # longer arm of `∨` is visited first
+            insorted(neighbors(g, z), v) && continue
+            push!(Z, (v, w, z))
+        end
+        for z in neighbors(g, v) # case `∧` 
+            (z <= w) && continue # shorter arm is visited first
+            insorted(neighbors(g, z), w) && continue
+            push!(Z, (z, v, w))
+        end
+    end
+    Z
+end
+
 
 isadjacent(dg, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
 has_both(dg, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
@@ -89,7 +115,7 @@ function _vskel(n::V, I, par...) where {V}
     g, S = skeleton(n, I, par...)
 
     # Step 2: Apply Rule 0 once
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
     dg = DiGraph(g) # use g to keep track of unoriented edges
 
     for (u, v, w) in Z
@@ -108,6 +134,7 @@ end
 
 """
     pcalg(n::V, I, par...)
+    pcalg(g, I, par...)
 
 Perform the PC algorithm for a set of 1:n variables using the tests
 
@@ -115,15 +142,36 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n::V, I, par...; kwargs...) where {V<:Integer}
+function pcalg(n, I, par...; kwargs...) 
+    g = complete_graph(n)
     VERBOSE = false
-
     # Step 1
-    g, S = skeleton(n, I, par...; kwargs...)
+    g, S = skeleton(g, I, par...; kwargs...)
+    dg = DiGraph(g) # use g to keep track of unoriented edges
+    g, dg = orient_unshielded(g, dg, S) 
+    apply_pc_rules(g, dg; kwargs...)
+end
+
+
+"""
+    orient_unshielded(g, dg, S)
+
+Orient unshielded triples using the seperating sets.
+`g` is an undirected graph containing edges of unknown direction,
+`dg` is an directed graph containing edges of known direction and 
+both `v=>w` and `w=>v `if the direction of `Edge(v,w)`` is unknown.
+`S` are the separating sets of edges.
+
+Returns `g, dg`.
+"""
+function orient_unshielded(g, dg, S)
+    VERBOSE = false
+    V = eltype(g)
+    n = nv(g)
 
     # Step 2: Apply Rule 0 once
-    Z = unshielded(g, S)
-    dg = DiGraph(g) # use g to keep track of unoriented edges
+    Z = orientable_unshielded(g, S)
+
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
@@ -135,7 +183,20 @@ function pcalg(n::V, I, par...; kwargs...) where {V<:Integer}
             remove!(g, (v, w))
         end
     end
+    g, dg
+end
 
+"""
+    apply_pc_rules(g, dg)
+
+
+`g` is an undirected graph containing edges of unknown direction,
+`dg` is an directed graph containing edges of known direction and 
+both `v=>w` and `w=>v `if the direction of `Edge(v,w)`` is unknown.
+
+Returns the CPDAG as DiGraph. 
+"""  
+function apply_pc_rules(g, dg; VERBOSE = false)
     # Step 3: Apply Rule 1-3 consecutively
     removed = Tuple{Int64,Int64}[]
     while true
@@ -219,7 +280,7 @@ function pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     sch = Tables.schema(t)
     n = length(sch.names)
   
-    X = reduce(hcat, map(c->t[c], 1:n))
+    X = reduce(hcat, map(c->Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
     N = size(X,1)
     C = Statistics.cor(X)
     return pcalg(n, gausscitest, (C,N), quantile(Normal(), 1-p/2); kwargs...)
@@ -263,13 +324,14 @@ function plot_pc_graph(g, node_labels::Array=[])
     styles_dict = Dict()
         
     for e in edges(g)
-       if e.src < e.dst
-            add_edge!(plot_g, e.src, e.dst)
-            if has_edge(g, e.dst, e.src)
+        if has_edge(g, e.dst, e.src)
+            if e.src < e.dst # if both, plot once
+                add_edge!(plot_g, e.src, e.dst)
                 push!(styles_dict, (e.src, e.dst)=>"--")
-            else
-                push!(styles_dict, (e.src, e.dst)=>"->")
             end
+        else # this is the only edge
+            add_edge!(plot_g, e.src, e.dst)
+            push!(styles_dict, (e.src, e.dst)=>"->")
         end
     end
     

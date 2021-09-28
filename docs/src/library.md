@@ -6,15 +6,21 @@
 dsep
 cpdag
 vskel
+has_recanting_witness
+backdoor_criterion
+has_a_path
 ```
 
 ## PC algorithm
 
 ```@docs
 pcalg
+orient_unshielded
+apply_pc_rules
 skeleton
 dseporacle
 unshielded
+orientable_unshielded
 plot_pc_graph
 ```
 

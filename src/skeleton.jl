@@ -2,7 +2,7 @@ using LightGraphs
 using LightGraphs.SimpleGraphs
 using Combinatorics
 using LinearAlgebra
-
+using Tables
 
 """
     removesorted(collection, item) -> contains(collection, item)
@@ -17,13 +17,17 @@ function removesorted!(n, v)
 end
 
 """
-    skeleton(n, I) -> g, S
+    skeleton(n::Integer, I) -> g, S
+    skeleton(g, I) -> g, S
 
-Perform the undirected PC skeleton algorithm for a set of 1:n variables using the test I.
-Returns skeleton graph and separating set
+Perform the undirected PC skeleton algorithm for a set of `1:n` variables using the test `I`.
+Start with a subgraph `g` or the complete undirected graph on `n` vertices.
+Returns skeleton graph and separating set.
 """
-function skeleton(n::V, I, par...; kwargs...) where {V}
-    g = complete_graph(n)
+skeleton(n::Integer, I, par...; kwargs...) = skeleton(complete_graph(n), I, par...; kwargs...)
+function skeleton(g, I, par...; kwargs...) 
+    V = eltype(g)
+    n = nv(g)
     S = Dict{edgetype(g),Vector{V}}()
     d = 0 # depth
 
@@ -149,13 +153,15 @@ kwargs...: keyword arguments passed to independence tests
     end
 end
 @inline function cmitest(i, j, s, data, crit; kwargs...)
-    x=collect(transpose(convert(Array, data[i])))
-    y=collect(transpose(convert(Array, data[j])))
+    columns = Tables.columns(data)
+
+    x=collect(transpose(convert(Array, Tables.getcolumn(columns,i))))
+    y=collect(transpose(convert(Array, Tables.getcolumn(columns,j))))
 
     if length(s)==0
         res = kl_perm_mi_test(x, y; kwargs...)
     else
-        z = reduce(vcat, map(c->collect(transpose(convert(Array, data[c]))), s))
+        z = reduce(vcat, map(c->collect(transpose(convert(Array, Tables.getcolumn(columns,c)))), s))
         res = kl_perm_cond_mi_test(x, y, z; kwargs...)
     end
 

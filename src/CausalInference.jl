@@ -16,7 +16,9 @@ export is_discriminating_path, has_marks, set_marks!, is_uncovered_circle_path
 export is_uncovered_PD_path, @arrow_str
 export cat_H, cat_MI, cat_CMI, perm_cat_MI_test, perm_cat_CMI_test
 export plot_pc_graph, plot_fci_graph
+export orient_unshielded, orientable_unshielded, apply_pc_rules
 
+include("graphs.jl")
 include("combinations_without.jl")
 include("klentropy.jl")
 include("skeleton.jl")
@@ -25,5 +27,7 @@ include("pc.jl")
 include("cpdag.jl")
 include("fci.jl")
 include("misc.jl")
+include("recantingwitness.jl")
+include("backdoor.jl")
 
 end # module

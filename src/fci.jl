@@ -159,7 +159,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
     g, S = skeleton(n, I, par...; kwargs...)
 
     # Apply R0 once
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
     dg = MetaDiGraph(g) # use g to keep track of unoriented edges
 
     # construct initial PAG
@@ -226,7 +226,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
     end
 
     #  step F3
-    Z = unshielded(g, S)
+    Z = orientable_unshielded(g, S)
     dg = MetaDiGraph(g)
 
     for e in edges(dg)
@@ -442,7 +442,7 @@ function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     sch = Tables.schema(t)
     n = length(sch.names)
   
-    X = reduce(hcat, map(c->t[c], 1:n))
+    X = reduce(hcat, map(c->Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
     N = size(X,1)
     C = Statistics.cor(X)
     return fcialg(n, gausscitest, (C,N), quantile(Normal(), 1-p/2); kwargs...)
