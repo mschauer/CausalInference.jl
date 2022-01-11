@@ -1,5 +1,5 @@
 using CausalInference
-using LightGraphs
+using Graphs
 using Test
 
 @testset "chickering" begin

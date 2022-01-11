@@ -1,6 +1,6 @@
 module CausalInference
-using LightGraphs
-using LightGraphs.SimpleGraphs
+using Graphs
+using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
 

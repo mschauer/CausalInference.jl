@@ -7,7 +7,7 @@ version = "0.7.0"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MetaGraphs = "626554b9-1ddb-594c-aa3c-2596fe9399a5"
 NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
@@ -21,8 +21,6 @@ TikzGraphs = "b4f28e30-c73f-5eaf-a395-8a9db949a742"
 Combinatorics = "1.0"
 Distances = "0.8, 0.9, 0.10"
 Distributions = "0.22, 0.23, 0.24, 0.25"
-LightGraphs = "1.3"
-MetaGraphs = "0.6"
 NearestNeighbors = "0.4"
 SpecialFunctions = "0.8, 0.9, 0.10, 1.0"
 Tables = "1.0"
@@ -30,8 +28,8 @@ TikzGraphs = "1.1"
 julia = "1"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "StatsBase"]

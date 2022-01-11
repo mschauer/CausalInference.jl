@@ -1,4 +1,4 @@
-using LightGraphs, Tables, Statistics, Distributions
+using Graphs, Tables, Statistics, Distributions
 using TikzGraphs
 
 """

@@ -1,6 +1,6 @@
 using Distributions
 using CausalInference
-using LightGraphs
+using Graphs
 using DelimitedFiles
 using LinearAlgebra
 

@@ -1,4 +1,4 @@
-using CausalInference, LightGraphs, MetaGraphs, Random
+using CausalInference, Graphs, MetaGraphs, Random
 
 @testset "FCI utils" begin
     dg = MetaDiGraph(4)

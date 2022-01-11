@@ -20,8 +20,8 @@ The PC algorithm was tested on random DAGs by comparing the result of the PC alg
 
 See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for other implemented functionality.
 
-The algorithms use the `SimpleGraph` and `SimpleDiGraph` graph representation of the Julia package [LightGraphs](https://github.com/JuliaGraphs/LightGraphs.jl).
-Both types of graphs are represented by sorted adjacency lists (vectors of vectors in the LightGraphs implementation).
+The algorithms use the `SimpleGraph` and `SimpleDiGraph` graph representation of the Julia package [Graphs](https://github.com/JuliaGraphs/Graphs.jl).
+Both types of graphs are represented by sorted adjacency lists (vectors of vectors in the Graphs implementation).
 
 CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
 

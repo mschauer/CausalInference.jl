@@ -1,4 +1,4 @@
-using LightGraphs
+using Graphs
 using CausalInference
 using StatsBase
 using Random
