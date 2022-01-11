@@ -2,12 +2,12 @@ export has_a_path
 
 
 """
-    has_a_path(g::AbstractGraph, U::Vector, V::Vector, exclude_vertices::AbstractVector = T[], nbs=LightGraphs.outneighbors)
+    has_a_path(g::AbstractGraph, U::Vector, V::Vector, exclude_vertices::AbstractVector = T[], nbs=Graphs.outneighbors)
 
-Find if there is a path connecting U with V not passing `exclude_vertices`, where ` nbs=LightGraphs.outneighbors`
+Find if there is a path connecting U with V not passing `exclude_vertices`, where ` nbs=Graphs.outneighbors`
 determines the direction of traversal. 
 """
-function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector, exclude_vertices::AbstractVector = T[], nbs=LightGraphs.outneighbors) where {T}
+function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector, exclude_vertices::AbstractVector = T[], nbs=Graphs.outneighbors) where {T}
     seen = zeros(Bool, nv(g))
     target = zeros(Bool, nv(g))
     for ve in V

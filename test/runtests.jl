@@ -1,5 +1,5 @@
 using CausalInference
-using LightGraphs
+using Graphs
 using Test
 
 

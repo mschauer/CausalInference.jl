@@ -1,5 +1,5 @@
-using LightGraphs
-using LightGraphs.SimpleGraphs
+using Graphs
+using Graphs.SimpleGraphs
 using Combinatorics
 using LinearAlgebra
 using Tables

@@ -1,4 +1,4 @@
-using LightGraphs, MetaGraphs
+using Graphs, MetaGraphs
 using Combinatorics: combinations, powerset
 
 macro arrow_str(str)
@@ -186,7 +186,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
             if w == v
                 continue
             end
-            paths = yen_k_shortest_paths(g, v, w, LightGraphs.weights(g), 100).paths
+            paths = yen_k_shortest_paths(g, v, w, Graphs.weights(g), 100).paths
             for path in paths
                 if length(path)==2
                     push!(pdsep[v], w)
@@ -298,7 +298,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
 
             # R4
             for x in vertices(dg)
-                paths = yen_k_shortest_paths(g, x, α, LightGraphs.weights(g), 100).paths
+                paths = yen_k_shortest_paths(g, x, α, Graphs.weights(g), 100).paths
                 for path in paths
                     if (is_discriminating_path(dg, path) &&
                         has_marks(dg, path[end-1], path[end], arrow"o-*"))
@@ -332,7 +332,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
 
             # R5
             if has_marks(dg, α, β, arrow"o-o")
-                paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
+                paths = yen_k_shortest_paths(g, α, β, Graphs.weights(g), 100).paths
                 
                 for path in paths
                     if (is_uncovered_circle_path(dg, path) &&
@@ -384,7 +384,7 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
             
             # R9
             if has_marks(dg, α, β, arrow"o->")
-                paths = yen_k_shortest_paths(g, α, β, LightGraphs.weights(g), 100).paths
+                paths = yen_k_shortest_paths(g, α, β, Graphs.weights(g), 100).paths
                 for path in paths
                     if (length(path)>3 &&
                         is_uncovered_PD_path(dg, path) &&
@@ -406,8 +406,8 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                     if(has_marks(dg, γ, β, arrow"-->") &&
                        has_marks(dg, β, θ, arrow"<--"))
 
-                        p1 = yen_k_shortest_paths(g, α, γ, LightGraphs.weights(g), 100).paths
-                        p2 = yen_k_shortest_paths(g, α, θ, LightGraphs.weights(g), 100).paths
+                        p1 = yen_k_shortest_paths(g, α, γ, Graphs.weights(g), 100).paths
+                        p2 = yen_k_shortest_paths(g, α, θ, Graphs.weights(g), 100).paths
 
                         for path1 in p1
                             if is_uncovered_PD_path(dg, path1)

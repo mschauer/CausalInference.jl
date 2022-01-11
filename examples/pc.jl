@@ -1,5 +1,5 @@
 using CausalInference
-using LightGraphs
+using Graphs
 using Test
 using Random
 using Statistics
@@ -50,5 +50,5 @@ tp = plot_dag(dg, variables)
 save(PDF("equivalencedag"), tp)
 
 @testset "pctest" begin
-    @test collect(LightGraphs.edges(est_g)) == collect(LightGraphs.edges(dg))
+    @test collect(Graphs.edges(est_g)) == collect(Graphs.edges(dg))
 end

@@ -1,8 +1,8 @@
 using CausalInference
-using LightGraphs
+using Graphs
 using Test
 using Random
-using LightGraphs
+using Graphs
 using Distributions
 using CausalInference: disjoint_sorted
 
@@ -59,6 +59,6 @@ println("Running CMI tests")
 @time cmi_g = pcalg(df, 0.1, cmitest)
 
 @testset "pcalg_edgde_test" begin
-    @test collect(LightGraphs.edges(cmi_g)) == collect(LightGraphs.edges(dg))
-    @test collect(LightGraphs.edges(gaussci_g)) == collect(LightGraphs.edges(dg))
+    @test collect(Graphs.edges(cmi_g)) == collect(Graphs.edges(dg))
+    @test collect(Graphs.edges(gaussci_g)) == collect(Graphs.edges(dg))
 end

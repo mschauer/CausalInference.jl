@@ -1,4 +1,4 @@
-using Distributions, CausalInference, LightGraphs
+using Distributions, CausalInference, Graphs
 using Test, Random
 # Example from Pearl, Judea. Causality. Cambridge University Press, 2009.
 
@@ -16,7 +16,7 @@ X = [x v w z s]
 C = cor(X)
 g = pcalg(size(X,2), gausscitest, (C, N), quantile(Normal(), 1-p/2))
 
-@test collect(LightGraphs.edges(g)) == map(x->Edge(x...), [1 => 2
+@test collect(Graphs.edges(g)) == map(x->Edge(x...), [1 => 2
  1 => 3
  2 => 1
  2 => 4
