@@ -26,8 +26,7 @@ Both types of graphs are represented by sorted adjacency lists (vectors of vecto
 CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
 
 ## Performance
-
-The speed of the algorithm is comparable with the C++ code of the R package `pcalg` after some pending optimisations.
+The speed of the algorithm is comparable with the C++ code of the R package `pcalg`.
 
 ## Contribution
 See [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInference.jl/issues/1) for questions and coordination of the development.
