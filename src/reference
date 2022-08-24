@@ -125,3 +125,62 @@ def pdag2dag(G: GeneralGraph) -> GeneralGraph:
                     inde[i] = 1
 
     return Gd
+
+    def pdag_to_dag(P, debug=False):
+    """
+    Find a consistent extension of the given PDAG. Return a ValueError
+    exception if the PDAG does not admit a consistent extension.
+    Parameters
+    ----------
+    P : np.array
+        adjacency matrix representing the PDAG connectivity, where
+        P[i,j] = 1 => i->j
+    debug : bool, optional
+        if debugging traces should be printed
+    Returns
+    -------
+    G : np.array
+        the adjacency matrix of a DAG which is a consistent extension
+        (i.e. same v-structures and skeleton) of P.
+    """
+    G = only_directed(P)
+    indexes = list(range(len(P)))  # To keep track of the real variable
+    # indexes as we remove nodes from P
+    while P.size > 0:
+        print(P) if debug else None
+        print(indexes) if debug else None
+        # Select a node which
+        #   1. has no outgoing edges in P (i.e. childless, is a sink)
+        #   2. all its neighbors are adjacent to all its adjacent nodes
+        found = False
+        i = 0
+        while not found and i < len(P):
+            # Check condition 1
+            sink = len(ch(i, P)) == 0
+            # Check condition 2
+            n_i = neighbors(i, P)
+            adj_i = adj(i, P)
+            adj_neighbors = np.all([adj_i - {y} <= adj(y, P) for y in n_i])
+            print("   i:", i, ": n=", n_i, "adj=", adj_i, "ch=", ch(i, P)) if debug else None
+            found = sink and adj_neighbors
+            # If found, orient all incident undirected edges and
+            # remove i from the subgraph
+            if found:
+                print("  Found candidate %d (%d)" % (i, indexes[i])) if debug else None
+                # Orient all incident undirected edges
+                real_i = indexes[i]
+                real_neighbors = [indexes[j] for j in n_i]
+                for j in real_neighbors:
+                    G[j, real_i] = 1
+                # Remove i and its incident (directed and undirected edges)
+                all_but_i = list(set(range(len(P))) - {i})
+                P = P[all_but_i, :][:, all_but_i]
+                indexes.remove(real_i)  # to keep track of the real
+                # variable indices
+            else:
+                i += 1
+        # A node which satisfies conditions 1,2 exists iff the
+        # PDAG admits a consistent extension
+        if not found:
+            raise ValueError("PDAG does not admit consistent extension")
+    return G
