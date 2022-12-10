@@ -29,4 +29,17 @@ include("misc.jl")
 include("recantingwitness.jl")
 include("backdoor.jl")
 
+# Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
+const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)
+
+if !EXTENSIONS_SUPPORTED
+    using Requires: @require
+end
+
+function __init__()
+    @static if !EXTENSIONS_SUPPORTED
+        @require GraphRecipes = "5ae59095-9a9b-59fe-a467-6f913c188581" include("../ext/GraphRecipesExt.jl")
+        @require TikzGraphs = "b4f28e30-c73f-5eaf-a395-8a9db949a742" include("../ext/TikzGraphsExt.jl")
+    end
+end
 end # module

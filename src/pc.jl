@@ -1,5 +1,4 @@
 using Graphs, Tables, Statistics, Distributions
-using TikzGraphs
 
 """
     insorted(a, x)
@@ -45,13 +44,13 @@ Note that each unshielded triple is of type `∨` or `╎` or `∧` of shape
         z        |          w
                  z
 where higher nodes have smaller vertex number.
-=# 
+=#
 """
     orientable_unshielded(g, S)
 
 Find the orientable unshielded triples in the skeleton. Triples are connected vertices v-w-z where
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
-""" 
+"""
 function orientable_unshielded(g, S)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
@@ -60,7 +59,7 @@ function orientable_unshielded(g, S)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
             insorted(neighbors(g, z), v) && continue
-            w in S[Edge(v,z)] || push!(Z, (v, w, z))
+            w in S[Edge(v, z)] || push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
@@ -76,7 +75,7 @@ end
 
 Find the unshielded triples in the cyclefree skeleton. Triples are connected vertices v-w-z where
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
-""" 
+"""
 function unshielded(g)
     Z = Tuple{Int64,Int64,Int64}[]
     for e in edges(g)
@@ -142,13 +141,13 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n, I, par...; kwargs...) 
+function pcalg(n, I, par...; kwargs...)
     g = complete_graph(n)
     VERBOSE = false
     # Step 1
     g, S = skeleton(g, I, par...; kwargs...)
     dg = DiGraph(g) # use g to keep track of unoriented edges
-    g, dg = orient_unshielded(g, dg, S) 
+    g, dg = orient_unshielded(g, dg, S)
     apply_pc_rules(g, dg; kwargs...)
 end
 
@@ -195,8 +194,8 @@ end
 both `v=>w` and `w=>v `if the direction of `Edge(v,w)`` is unknown.
 
 Returns the CPDAG as DiGraph. 
-"""  
-function apply_pc_rules(g, dg; VERBOSE = false)
+"""
+function apply_pc_rules(g, dg; VERBOSE=false)
     # Step 3: Apply Rule 1-3 consecutively
     removed = Tuple{Int64,Int64}[]
     while true
@@ -208,12 +207,12 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                 for u in inneighbors(dg, v)
                     has_edge(dg, v => u) && continue # not directed
                     isadjacent(dg, u, w) && continue
-                    VERBOSE && println("rule 1: ", v => w) 
+                    VERBOSE && println("rule 1: ", v => w)
                     remove!(dg, w => v)
                     push!(removed, (w, v))
                     @goto ende
                 end
-            
+
 
                 # Rule 2: Orient v-w into v->w whenever there is a chain
                 # v->k->w.
@@ -225,9 +224,9 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                 for k in inneighbors(dg, w)
                     !has_edge(dg, w => k) && push!(ins, k)
                 end
-                
+
                 if !disjoint_sorted(ins, outs)
-                    VERBOSE && println("rule 2: ", v => w) 
+                    VERBOSE && println("rule 2: ", v => w)
                     remove!(dg, w => v)
                     push!(removed, (w, v))
                     @goto ende
@@ -241,7 +240,7 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                 end
                 for (k, l) in combinations(fulls, 2) # FIXME: 
                     isadjacent(dg, k, l) && continue
-                    
+
                     # Skip if not k->w or if not l->w
                     if has_edge(dg, w => k) || !has_edge(dg, k => w)
                         continue
@@ -249,19 +248,19 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                     if has_edge(dg, w => l) || !has_edge(dg, l => w)
                         continue
                     end
-                    VERBOSE && println("rule 3: ", v => w) 
+                    VERBOSE && println("rule 3: ", v => w)
                     remove!(dg, w => v)
                     push!(removed, (w, v))
                     @goto ende
                 end
             end
         end
-        
+
         @label ende
         for e in removed
             remove!(g, e)
         end
-        isempty(removed) && break 
+        isempty(removed) && break
         empty!(removed)
     end
     dg
@@ -279,11 +278,11 @@ function pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     c = Tables.columns(t)
     sch = Tables.schema(t)
     n = length(sch.names)
-  
-    X = reduce(hcat, map(c->Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
-    N = size(X,1)
+
+    X = reduce(hcat, map(c -> Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
+    N = size(X, 1)
     C = Statistics.cor(X)
-    return pcalg(n, gausscitest, (C,N), quantile(Normal(), 1-p/2); kwargs...)
+    return pcalg(n, gausscitest, (C, N), quantile(Normal(), 1 - p / 2); kwargs...)
 end
 
 
@@ -295,7 +294,7 @@ conditional independeces using a conditional mutual information permutation test
 """
 function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
     @assert Tables.istable(t)
-    @assert all(t->t==Float64, Tables.schema(t).types)
+    @assert all(t -> t == Float64, Tables.schema(t).types)
 
     c = Tables.columns(t)
     sch = Tables.schema(t)
@@ -304,36 +303,46 @@ function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
     return pcalg(n, cmitest, c, p; kwargs...)
 end
 
-
 """
-    plot_pc_graph(g, df)
+    prepare_pc_graph(g, node_labels::Array=[])
 
-plot the output of the PC algorithm.
+prepare resulting graph for plotting with various backends
 """
-function plot_pc_graph(g, node_labels::Array=[])
+function prepare_pc_graph(g, node_labels::Array=[])
     plot_g = DiGraph(nv(g))
 
-    if length(node_labels) != nv(g) 
+    if length(node_labels) != nv(g)
         node_labels = map(string, 1:nv(g))
     end
-        
+
     node_style = "draw, rounded corners, fill=blue!10"
     options = "scale=2"
-    
+
     styles_dict = Dict()
-        
+
     for e in edges(g)
         if has_edge(g, e.dst, e.src)
             if e.src < e.dst # if both, plot once
                 add_edge!(plot_g, e.src, e.dst)
-                push!(styles_dict, (e.src, e.dst)=>"--")
+                push!(styles_dict, (e.src, e.dst) => "--")
             end
         else # this is the only edge
             add_edge!(plot_g, e.src, e.dst)
-            push!(styles_dict, (e.src, e.dst)=>"->")
+            push!(styles_dict, (e.src, e.dst) => "->")
         end
     end
-    
-    TikzGraphs.plot(plot_g, node_labels, edge_styles=styles_dict,
-                    node_style=node_style, options=options)
+
+    (; plot_g, node_labels, edge_styles=styles_dict,
+        node_style=node_style, options=options)
 end
+
+# Removed to avoid redefinition
+# """
+#     plot_pc_graph(g, df)
+
+# plot the output of the PC algorithm (Text-based backend)
+# """
+# function plot_pc_graph(g, node_labels::Array=[])
+#     objs = CausalInference.prepare_fci_graph(g, node_labels)
+#     graph_to_text(objs.plot_g, objs.node_labels)
+# end
