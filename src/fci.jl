@@ -513,3 +513,24 @@ function plot_fci_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:Abs
     objs = prepare_fci_graph(g, node_labels)
     graph_to_text(objs.plot_g, objs.node_labels, edge_styles=objs.edge_styles)
 end
+
+# methods to extend conditionally
+"""
+    plot_fci_graph_recipes(g, node_labels::AbstractVector{<:AbstractString}=String[])
+
+plot the output of the FCI algorithm (GraphRecipes backend)
+
+Requires GraphRecipes and Plots to be imported
+"""
+function plot_fci_graph_recipes end
+"""
+    plot_fci_graph_tikz(g, node_labels::AbstractVector{<:AbstractString}=String[])
+
+plot the output of the FCI algorithm (TikzGraphs backend)
+
+Requires TikzGraphs to be imported
+"""
+function plot_fci_graph_tikz end
+
+# for backward compatibility, default to TikzGraphs when available
+plot_fci_graph = plot_fci_graph_tikz

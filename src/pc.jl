@@ -347,3 +347,25 @@ function plot_pc_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:Abst
     objs = prepare_pc_graph(g, node_labels)
     graph_to_text(objs.plot_g, objs.node_labels, edge_styles=objs.edge_styles)
 end
+
+# methods to extend conditionally
+"""
+    plot_pc_graph_recipes(g, node_labels::AbstractVector{<:AbstractString}=String[])
+
+plot the output of the PC algorithm (GraphRecipes backend)
+
+Requires GraphRecipes and Plots to be imported
+"""
+function plot_pc_graph_recipes end
+
+"""
+    CausalInference.plot_pc_graph_tikz(g, node_labels::AbstractVector{<:AbstractString}=String[])
+
+plot the output of the PC algorithm (TikzGraphs backend)
+
+Requires TikzGraphs to be imported
+"""
+function plot_pc_graph_tikz end
+
+# for backward compatibility, default to TikzGraphs when available
+plot_pc_graph = plot_pc_graph_tikz
