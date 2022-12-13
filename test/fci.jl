@@ -131,3 +131,30 @@ end
     @test has_marks(g_oracle, 2, 3, arrow"-->")
     @test has_marks(g_oracle, 1, 2, arrow"o-o")
 end
+
+@testset "FCI alg plotting utils" begin
+    mg = MetaDiGraph(3)
+    add_edge!(mg, 1, 2)
+    add_edge!(mg, 2, 1)
+    set_prop!(mg, 1, 2, :mark, :arrow)
+    set_prop!(mg, 2, 1, :mark, :tail)
+    add_edge!(mg, 2, 3)
+    add_edge!(mg, 3, 2)
+    set_prop!(mg, 2, 3, :mark, :circle)
+    set_prop!(mg, 3, 2, :mark, :circle)
+    objs = CausalInference.prepare_fci_graph(mg)
+    @test keys(objs)==(:plot_g, :node_labels, :edge_styles, :node_style, :options)
+    @test nv(objs.plot_g) == nv(mg)
+    @test ne(objs.plot_g) == (ne(mg) - 2) # bi-directional edges removed
+    @test objs.edge_styles[(1, 2)] == "->"
+    @test objs.edge_styles[(2, 3)] == "o-o"
+    @test objs.node_labels == string.(1:nv(mg))
+
+    objs = CausalInference.prepare_fci_graph(mg, collect(string.('a':'c')))
+    @test keys(objs)==(:plot_g, :node_labels, :edge_styles, :node_style, :options)
+    @test nv(objs.plot_g) == nv(mg)
+    @test ne(objs.plot_g) == (ne(mg) - 2) # bi-directional edges removed
+    @test objs.edge_styles[(1, 2)] == "->"
+    @test objs.edge_styles[(2, 3)] == "o-o"
+    @test objs.node_labels == collect(string.('a':'c'))
+end

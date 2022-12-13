@@ -304,11 +304,11 @@ function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
 end
 
 """
-    prepare_pc_graph(g, node_labels::Array=[])
+    prepare_pc_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
 prepare resulting graph for plotting with various backends
 """
-function prepare_pc_graph(g, node_labels::Array=[])
+function prepare_pc_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
     plot_g = DiGraph(nv(g))
 
     if length(node_labels) != nv(g)
@@ -336,13 +336,14 @@ function prepare_pc_graph(g, node_labels::Array=[])
         node_style=node_style, options=options)
 end
 
-# Removed to avoid redefinition
-# """
-#     plot_pc_graph(g, df)
+"""
+    plot_pc_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
-# plot the output of the PC algorithm (Text-based backend)
-# """
-# function plot_pc_graph(g, node_labels::Array=[])
-#     objs = CausalInference.prepare_fci_graph(g, node_labels)
-#     graph_to_text(objs.plot_g, objs.node_labels)
-# end
+plot the output of the PG algorithm (Text-based output)
+
+See also: `plot_pc_graph` and `plot_pc_graph_tikz` (for TikzGraphs.jl-based plotting), `plot_pc_graph_recipes` (for GraphRecipes.jl-based plotting)
+"""
+function plot_pc_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
+    objs = prepare_pc_graph(g, node_labels)
+    graph_to_text(objs.plot_g, objs.node_labels, edge_styles=objs.edge_styles)
+end

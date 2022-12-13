@@ -459,12 +459,13 @@ function fcialg(t, p::Float64, test::typeof(cmitest); kwargs...)
     return fcialg(n, cmitest, c, p; kwargs...)
 end
 
+
 """
-    prepare_fci_graph(g, node_labels)
+    prepare_fci_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
 prepare the output of the FCI algorithm for plotting with various backends
 """
-function plot_fci_graph(g, node_labels::Array=[])
+function prepare_fci_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
     plot_g = DiGraph(nv(g))
 
     if length(node_labels) != nv(g)
@@ -501,13 +502,14 @@ function plot_fci_graph(g, node_labels::Array=[])
         node_style=node_style, options=options)
 end
 
-# Removed to avoid redefinition clash
-# """
-#     plot_fci_graph(g, node_labels)
+"""
+    plot_fci_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
-# plot the output of the FCI algorithm.
-# """
-# function plot_fci_graph(g, node_labels::Array=[])
-#     objs = CausalInference.prepare_fci_graph(g, node_labels)
-#     graph_to_text(objs.plot_g, objs.node_labels)
-# end
+plot the output of the FCI algorithm (Text-based output)
+
+See also: `plot_fci_graph` and `plot_fci_graph_tikz` (for TikzGraphs.jl-based plotting), `plot_fci_graph_recipes` (for GraphRecipes.jl-based plotting)
+"""
+function plot_fci_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
+    objs = prepare_fci_graph(g, node_labels)
+    graph_to_text(objs.plot_g, objs.node_labels, edge_styles=objs.edge_styles)
+end

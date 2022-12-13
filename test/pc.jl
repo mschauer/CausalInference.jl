@@ -62,3 +62,25 @@ println("Running CMI tests")
     @test collect(Graphs.edges(cmi_g)) == collect(Graphs.edges(dg))
     @test collect(Graphs.edges(gaussci_g)) == collect(Graphs.edges(dg))
 end
+
+@testset "PC alg plotting utils" begin
+    g = DiGraph(5)
+    for (i, j) in [(1, 2), (2, 3), (2, 4), (4, 2), (4, 5)]
+        add_edge!(g, i, j)
+    end
+    objs = CausalInference.prepare_pc_graph(g)
+    @test keys(objs)==(:plot_g, :node_labels, :edge_styles, :node_style, :options)
+    @test nv(objs.plot_g) == nv(g)
+    @test ne(objs.plot_g) == (ne(g) - 1) # bi-directional edge removed
+    @test objs.edge_styles[(1, 2)] == "->" # default 
+    @test objs.edge_styles[(2, 4)] == "--" # recognize bi-directional edge
+    @test objs.node_labels == string.(1:nv(g))
+
+    objs = CausalInference.prepare_pc_graph(g, collect(string.('a':'e')))
+    @test keys(objs)==(:plot_g, :node_labels, :edge_styles, :node_style, :options)
+    @test nv(objs.plot_g) == nv(g)
+    @test ne(objs.plot_g) == (ne(g) - 1) # bi-directional edge removed
+    @test objs.edge_styles[(1, 2)] == "->" # default 
+    @test objs.edge_styles[(2, 4)] == "--" # recognize bi-directional edge
+    @test objs.node_labels == collect(string.('a':'e'))
+end

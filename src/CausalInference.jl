@@ -14,7 +14,9 @@ export n_ball
 export fcialg, is_collider, is_triangle, is_parent
 export is_discriminating_path, has_marks, set_marks!, is_uncovered_circle_path
 export is_uncovered_PD_path, @arrow_str
-export plot_pc_graph, plot_fci_graph
+export plot_pc_graph_text, plot_fci_graph_text
+export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
+export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 
 include("graphs.jl")
@@ -36,10 +38,16 @@ if !EXTENSIONS_SUPPORTED
     using Requires: @require
 end
 
+# methods to extend conditionally
+function plot_pc_graph_recipes end
+function plot_fci_graph_recipes end
+function plot_pc_graph_tikz end
+function plot_fci_graph_tikz end
+
 function __init__()
     @static if !EXTENSIONS_SUPPORTED
-        @require GraphRecipes = "5ae59095-9a9b-59fe-a467-6f913c188581" include("../ext/GraphRecipesExt.jl")
+        @require GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73" include("../ext/GraphRecipesExt.jl")
         @require TikzGraphs = "b4f28e30-c73f-5eaf-a395-8a9db949a742" include("../ext/TikzGraphsExt.jl")
     end
 end
-end # module
+end # end of module

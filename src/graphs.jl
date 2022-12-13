@@ -1,5 +1,6 @@
-export has_a_path, graph_to_text
+using TabularDisplay
 
+export has_a_path, graph_to_text
 
 """
     has_a_path(g::AbstractGraph, U::Vector, V::Vector, exclude_vertices::AbstractVector = T[], nbs=Graphs.outneighbors)
@@ -38,20 +39,38 @@ function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector, exclude_vertices:
 end
 
 """
-    graph_to_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString})
+    graph_to_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=[]; edge_styles::AbstractDict=Dict())
 
 print out a graph `g` as a table of edges labeled by`node_labels`
+
+# Arguments
+- `g::AbstractGraph`: a graph to print
+- `node_labels::AbstractVector{<:AbstractString}=[]`: labels for nodes (same order as indices of nodes in `g`)
+- `edge_styles::AbstractDict=Dict()`: dictionary of edge styles (e.g. `Dict((1, 2) => "->", (2, 3) => "<->")`)
+
+# Example
+```
+g = DiGraph(4)
+for (i, j) in [(1, 2), (2, 3), (2, 4)]
+    add_edge!(g, i, j)
+end
+graph_to_text(g)
+```
 """
-function graph_to_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=[])
+function graph_to_text end;
+function graph_to_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[]; edge_styles::AbstractDict=Dict())
+    graph_to_text(stdout, g, node_labels, edge_styles=edge_styles)
+end
+function graph_to_text(io::IO, g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[]; edge_styles::AbstractDict=Dict())
     if length(node_labels) == 0
         node_labels = map(string, 1:nv(g))
     end
-    @assert length(node_labels) == ne(g) "node_labels must be same length as number of nodes (provided: $(length(node_labels)), expected: $(nv(g)))"
+    @assert length(node_labels) == nv(g) "node_labels must be the same length as number of nodes (provided: $(length(node_labels)), expected: $(nv(g)))"
 
     edges_array = String[]
-    # TODO: add edge styles // communicate directedness
     for e in edges(g)
-        push!(edges_array, string(node_labels[e.src], " <-> ", node_labels[e.dst]))
+        arrow_symbol = get(edge_styles, (e.src, e.dst), "->")
+        push!(edges_array, string(node_labels[e.src], arrow_symbol, node_labels[e.dst]))
     end
-    displaytable(edges_array)
+    displaytable(io, edges_array)
 end
