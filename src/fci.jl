@@ -4,10 +4,10 @@ using Combinatorics: combinations, powerset
 macro arrow_str(str)
     symbols = ['*', 'o', '>', '<', '-']
     symDict = Dict('o' => :circle,
-        '>' => :arrow,
-        '<' => :arrow,
-        '-' => :tail,
-        '*' => :star)
+                   '>' => :arrow,
+                   '<' => :arrow,
+                   '-' => :tail,
+                   '*' => :star)
 
     @assert length(str) == 3
     @assert str[1] ∈ symbols
@@ -26,10 +26,11 @@ the arrow macro to simplify use)
 Example:
 has_marks(dg, 1, 2, arrow"o->")
 """
-function has_marks(dg, v1, v2, t::Tuple{Symbol,Symbol})
+function has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol})
     if t[2] != :star
         if t[1] != :star
-            result = get_prop(dg, v2, v1, :mark) == t[1] && get_prop(dg, v1, v2, :mark) == t[2]
+            result = get_prop(dg, v2, v1, :mark) == t[1] &&
+                     get_prop(dg, v1, v2, :mark) == t[2]
         else
             result = get_prop(dg, v1, v2, :mark) == t[2]
         end
@@ -48,7 +49,7 @@ set edge marks between node v1 and v2.
 Example:
 set_marks!(dg, 1, 2, arrow"*->")
 """
-function set_marks!(dg, v1, v2, t::Tuple{Symbol,Symbol})
+function set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
     if t[1] != :star
         set_prop!(dg, v2, v1, :mark, t[1])
     end
@@ -96,7 +97,7 @@ function is_discriminating_path(dg, path)
         return false
     end
 
-    triples = collect(zip(path[1:end-2], path[2:end-1], path[3:end]))[1:end-1]
+    triples = collect(zip(path[1:(end - 2)], path[2:(end - 1)], path[3:end]))[1:(end - 1)]
     colliders = map(t -> is_collider(dg, t...), triples)
     parents = map(t -> is_parent(dg, t[2], path[end]), triples)
     if all(colliders) && all(parents)
@@ -116,8 +117,8 @@ function is_uncovered_circle_path(dg, path)
         return false
     end
 
-    edges = collect(zip(path[1:end-1], path[2:end]))
-    triples = collect(zip(path[1:end-2], path[3:end]))
+    edges = collect(zip(path[1:(end - 1)], path[2:end]))
+    triples = collect(zip(path[1:(end - 2)], path[3:end]))
 
     unshielded = map(t -> !isadjacent(dg, t[1], t[2]), triples)
     circles = map(e -> has_marks(dg, e[1], e[2], arrow"o-o"), edges)
@@ -135,8 +136,8 @@ function is_uncovered_PD_path(dg, path)
         return false
     end
 
-    edges = collect(zip(path[1:end-1], path[2:end]))
-    triples = collect(zip(path[1:end-2], path[3:end]))
+    edges = collect(zip(path[1:(end - 1)], path[2:end]))
+    triples = collect(zip(path[1:(end - 2)], path[3:end]))
     unshielded = map(t -> !isadjacent(dg, t[1], t[2]), triples)
     directions = map(e -> (!has_marks(dg, e[1], e[2], arrow"<-*") &&
                            !has_marks(dg, e[1], e[2], arrow"*--")), edges)
@@ -153,7 +154,8 @@ Perform the FCI algorithm for a set of `n` variables using the test
 
 Returns the PAG as a MetaDiGraph
 """
-function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where {V<:Integer}
+function fcialg(n::V, I, par...; augmented = true, verbose = false,
+                kwargs...) where {V <: Integer}
 
     # Step F1 and F2
     g, S = skeleton(n, I, par...; kwargs...)
@@ -191,8 +193,9 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 if length(path) == 2
                     push!(pdsep[v], w)
                 else
-                    triples = zip(path[1:end-2], path[2:end-1], path[3:end])
-                    tconds = map(t -> is_triangle(dg, t...) || is_collider(dg, t...), triples)
+                    triples = zip(path[1:(end - 2)], path[2:(end - 1)], path[3:end])
+                    tconds = map(t -> is_triangle(dg, t...) || is_collider(dg, t...),
+                                 triples)
                     if all(tconds)
                         push!(pdsep[v], w)
                     end
@@ -260,7 +263,6 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 if (!has_edge(dg, α, γ) &&
                     has_marks(dg, α, β, arrow"*->") &&
                     has_marks(dg, β, γ, arrow"o-*"))
-
                     set_marks!(dg, β, γ, arrow"-->")
                     loop = true
                     verbose && println("R1 with $(α)-$(β)-$(γ)")
@@ -271,7 +273,6 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                     has_marks(dg, α, γ, arrow"*-o") &&
                     ((has_marks(dg, α, β, arrow"-->") && has_marks(dg, β, γ, arrow"o-*")) ||
                      (has_marks(dg, α, β, arrow"o->") && has_marks(dg, β, γ, arrow"-->"))))
-
                     set_marks!(dg, α, γ, arrow"*->")
                     loop = true
                     verbose && println("R1 with $(α)-$(β)-$(γ)")
@@ -293,7 +294,6 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                         end
                     end
                 end
-
             end
 
             # R4
@@ -301,13 +301,13 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 paths = yen_k_shortest_paths(g, x, α, Graphs.weights(g), 100).paths
                 for path in paths
                     if (is_discriminating_path(dg, path) &&
-                        has_marks(dg, path[end-1], path[end], arrow"o-*"))
+                        has_marks(dg, path[end - 1], path[end], arrow"o-*"))
                         if (haskey(S, Edge(path[1], path[end])) &&
-                            path[end-1] ∈ S[Edge(path[1], path[end])])
-                            set_marks!(dg, path[end-1], path[end], arrow"-->")
+                            path[end - 1] ∈ S[Edge(path[1], path[end])])
+                            set_marks!(dg, path[end - 1], path[end], arrow"-->")
                         else
-                            set_marks!(dg, path[end-1], path[end], arrow"<->")
-                            set_marks!(dg, path[end-2], path[end-1], arrow"<->")
+                            set_marks!(dg, path[end - 1], path[end], arrow"<->")
+                            set_marks!(dg, path[end - 2], path[end - 1], arrow"<->")
                         end
                         loop = true
                         verbose && println("R4 with $(α) and $(path)")
@@ -315,7 +315,6 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 end
             end
         end
-
     end
 
     if !augmented
@@ -336,11 +335,11 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
 
                 for path in paths
                     if (is_uncovered_circle_path(dg, path) &&
-                        !isadjacent(dg, path[1], path[end-1]) &&
+                        !isadjacent(dg, path[1], path[end - 1]) &&
                         !isadjacent(dg, path[2], path[end]))
                         verbose && println("R5: $(α)-$(β) with $(path)")
                         set_marks!(dg, α, β, arrow"---")
-                        for (e1, e2) in zip(path[1:end-1], path[2:end])
+                        for (e1, e2) in zip(path[1:(end - 1)], path[2:end])
                             set_marks!(dg, e1, e2, arrow"---")
                         end
                         loop = true
@@ -350,7 +349,6 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
             end
 
             for γ in inneighbors(dg, β)
-
                 if γ == α
                     continue
                 end
@@ -405,7 +403,6 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                     end
                     if (has_marks(dg, γ, β, arrow"-->") &&
                         has_marks(dg, β, θ, arrow"<--"))
-
                         p1 = yen_k_shortest_paths(g, α, γ, Graphs.weights(g), 100).paths
                         p2 = yen_k_shortest_paths(g, α, θ, Graphs.weights(g), 100).paths
 
@@ -418,7 +415,8 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                                         if (μ != ω && !isadjacent(dg, μ, ω))
                                             set_marks!(dg, α, β, arrow"-->")
                                             loop = true
-                                            verbose && println("R10: $(α)-$(β) with $(p1) and $(p2)")
+                                            verbose &&
+                                                println("R10: $(α)-$(β) with $(p1) and $(p2)")
                                             break
                                         end
                                     end
@@ -429,11 +427,9 @@ function fcialg(n::V, I, par...; augmented=true, verbose=false, kwargs...) where
                 end
             end
         end
-
     end
     dg
 end
-
 
 function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     @assert Tables.istable(t)
@@ -442,7 +438,8 @@ function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     sch = Tables.schema(t)
     n = length(sch.names)
 
-    X = reduce(hcat, map(c -> Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
+    X = reduce(hcat,
+               map(c -> Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
     N = size(X, 1)
     C = Statistics.cor(X)
     return fcialg(n, gausscitest, (C, N), quantile(Normal(), 1 - p / 2); kwargs...)
@@ -459,13 +456,13 @@ function fcialg(t, p::Float64, test::typeof(cmitest); kwargs...)
     return fcialg(n, cmitest, c, p; kwargs...)
 end
 
-
 """
     prepare_fci_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
 prepare the output of the FCI algorithm for plotting with various backends
 """
-function prepare_fci_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
+function prepare_fci_graph(g::AbstractGraph,
+                           node_labels::AbstractVector{<:AbstractString} = String[])
     plot_g = DiGraph(nv(g))
 
     if length(node_labels) != nv(g)
@@ -494,12 +491,11 @@ function prepare_fci_graph(g::AbstractGraph, node_labels::AbstractVector{<:Abstr
             elseif has_marks(g, e.src, e.dst, arrow"---")
                 push!(styles_dict, (e.src, e.dst) => "--")
             end
-
         end
     end
 
-    (; plot_g, node_labels, edge_styles=styles_dict,
-        node_style=node_style, options=options)
+    (; plot_g, node_labels, edge_styles = styles_dict,
+     node_style = node_style, options = options)
 end
 
 """
@@ -509,9 +505,10 @@ plot the output of the FCI algorithm (Text-based output)
 
 See also: `plot_fci_graph` and `plot_fci_graph_tikz` (for TikzGraphs.jl-based plotting), `plot_fci_graph_recipes` (for GraphRecipes.jl-based plotting)
 """
-function plot_fci_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
+function plot_fci_graph_text(g::AbstractGraph,
+                             node_labels::AbstractVector{<:AbstractString} = String[])
     objs = prepare_fci_graph(g, node_labels)
-    graph_to_text(objs.plot_g, objs.node_labels, edge_styles=objs.edge_styles)
+    graph_to_text(objs.plot_g, objs.node_labels, edge_styles = objs.edge_styles)
 end
 
 # methods to extend conditionally

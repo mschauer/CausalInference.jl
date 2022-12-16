@@ -8,7 +8,9 @@ export has_a_path, graph_to_text
 Find if there is a path connecting U with V not passing `exclude_vertices`, where ` nbs=Graphs.outneighbors`
 determines the direction of traversal. 
 """
-function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector, exclude_vertices::AbstractVector=T[], nbs=Graphs.outneighbors) where {T}
+function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector,
+                    exclude_vertices::AbstractVector = T[],
+                    nbs = Graphs.outneighbors) where {T}
     seen = zeros(Bool, nv(g))
     target = zeros(Bool, nv(g))
     for ve in V
@@ -58,14 +60,18 @@ graph_to_text(g)
 ```
 """
 function graph_to_text end;
-function graph_to_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[]; edge_styles::AbstractDict=Dict())
-    graph_to_text(stdout, g, node_labels, edge_styles=edge_styles)
+function graph_to_text(g::AbstractGraph,
+                       node_labels::AbstractVector{<:AbstractString} = String[];
+                       edge_styles::AbstractDict = Dict())
+    graph_to_text(stdout, g, node_labels, edge_styles = edge_styles)
 end
-function graph_to_text(io::IO, g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[]; edge_styles::AbstractDict=Dict())
+function graph_to_text(io::IO, g::AbstractGraph,
+                       node_labels::AbstractVector{<:AbstractString} = String[];
+                       edge_styles::AbstractDict = Dict())
     if length(node_labels) == 0
         node_labels = map(string, 1:nv(g))
     end
-    @assert length(node_labels) == nv(g) "node_labels must be the same length as number of nodes (provided: $(length(node_labels)), expected: $(nv(g)))"
+    @assert length(node_labels)==nv(g) "node_labels must be the same length as number of nodes (provided: $(length(node_labels)), expected: $(nv(g)))"
 
     edges_array = String[]
     for e in edges(g)

@@ -1,3 +1,4 @@
+# deprecated in favour of explicit Tikz-backed function `plot_pc_graph_tikz` (conditionally loaded with Requires.jl)
 using TikzGraphs
 using TikzPictures
 
@@ -6,7 +7,7 @@ using TikzPictures
 
 Plot DAG or the output of the PC algorithm.
 """
-function plot_dag(g, node_labels::Array=[])
+function plot_dag(g, node_labels::Array = [])
     plot_g = DiGraph(nv(g))
 
     if length(node_labels) != nv(g)
@@ -19,14 +20,14 @@ function plot_dag(g, node_labels::Array=[])
     styles_dict = Dict()
 
     for e in edges(g)
-       if has_edge(plot_g, e.dst, e.src)
+        if has_edge(plot_g, e.dst, e.src)
             styles_dict[(e.dst, e.src)] = "o-o"
-       else
-           add_edge!(plot_g, e.src, e.dst)
-           push!(styles_dict, (e.src, e.dst)=>"->")
-       end
+        else
+            add_edge!(plot_g, e.src, e.dst)
+            push!(styles_dict, (e.src, e.dst) => "->")
+        end
     end
 
-    TikzGraphs.plot(plot_g, node_labels, edge_styles=styles_dict,
-                    node_style=node_style, options=options)
+    TikzGraphs.plot(plot_g, node_labels, edge_styles = styles_dict,
+                    node_style = node_style, options = options)
 end

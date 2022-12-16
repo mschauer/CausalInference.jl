@@ -27,7 +27,6 @@ function graph(E)
     g
 end
 
-
 """
     vpairs(g)
 
@@ -41,7 +40,6 @@ vpairs(g) = map(Pair, collect(edges(g)))
 Compute the `skeleton` using the `dseporacle` for the DAG `g`.
 """
 skel_oracle(g) = skeleton(nv(g), dseporacle, g)
-
 
 """
     pc_oracle(g)
@@ -60,10 +58,9 @@ function randdag(n, alpha = 0.1)
     g = DiGraph(n)
     p = randperm(n)
     for i in 1:n
-        for j in i+1:n
+        for j in (i + 1):n
             rand() < alpha && add_edge!(g, p[i], p[j])
         end
     end
     g
 end
-

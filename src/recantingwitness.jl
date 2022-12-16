@@ -1,6 +1,5 @@
 export has_recanting_witness
 
-
 """
     has_recanting_witness(g::AbstractGraph, u, v,  blocked_edges::AbstractGraph) -> Bool
 
@@ -13,7 +12,8 @@ outgoing edges of `u`.
 See Alvin, Shpitser, Pearl (2005): "Identifiability of Path-Specific Effects", 
 https://ftp.cs.ucla.edu/pub/stat_ser/r321-L.pdf.    
 """
-function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blocked_edges::AbstractGraph{T}) where T
+function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,
+                               blocked_edges::AbstractGraph{T}) where {T}
     on_blocked = zeros(Bool, nv(g))
     on_open = zeros(Bool, nv(g))
     may_blocked = zeros(Bool, nv(g))
@@ -30,7 +30,7 @@ function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blo
 
         next_open = Vector{T}()
         next_blocked = Vector{T}()
-        
+
         push!(next_open, nbr)
         on_open[nbr] = true
         while !isempty(next_open) # find all reachable via direct neighbour
@@ -39,14 +39,13 @@ function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blo
                 if may_blocked[src] && has_edge(blocked_edges, src, vertex)
                     if !on_blocked[vertex]
                         on_blocked[vertex] = true
-                        if vertex != v 
+                        if vertex != v
                             push!(next_blocked, vertex)  # push onto blocked queue
                         end
                     end
                 elseif !on_open[vertex]
-                
                     on_open[vertex] = true
-                    if vertex != v 
+                    if vertex != v
                         push!(next_open, vertex) # push onto queue
                     end
                 end
@@ -57,7 +56,7 @@ function has_recanting_witness(g::AbstractGraph{T}, u::Integer, v::Integer,  blo
             for vertex in outneighbors(g, src)
                 if !on_blocked[vertex]
                     on_blocked[vertex] = true
-                    if vertex != v 
+                    if vertex != v
                         push!(next_blocked, vertex)  # push onto blocked queue
                     end
                 end

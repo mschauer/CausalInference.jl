@@ -41,10 +41,8 @@ end
 function __init__()
     @static if !EXTENSIONS_SUPPORTED
         # requires both GraphRecipes.jl and Plots.jl
-        @require GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73" begin
-            @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" include("../ext/GraphRecipesExt.jl")
-        end
-        @require TikzGraphs = "b4f28e30-c73f-5eaf-a395-8a9db949a742" include("../ext/TikzGraphsExt.jl")
+        @require GraphRecipes="bd48cda9-67a9-57be-86fa-5b3c104eda73" begin @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" include("../ext/GraphRecipesExt.jl") end
+        @require TikzGraphs="b4f28e30-c73f-5eaf-a395-8a9db949a742" include("../ext/TikzGraphsExt.jl")
     end
 end
 end # end of module

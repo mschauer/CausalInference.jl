@@ -52,10 +52,10 @@ Find the orientable unshielded triples in the skeleton. Triples are connected ve
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
 """
 function orientable_unshielded(g, S)
-    Z = Tuple{Int64,Int64,Int64}[]
+    Z = Tuple{Int64, Int64, Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
-        @assert(v < w)
+        @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
             insorted(neighbors(g, z), v) && continue
@@ -77,10 +77,10 @@ Find the unshielded triples in the cyclefree skeleton. Triples are connected ver
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
 """
 function unshielded(g)
-    Z = Tuple{Int64,Int64,Int64}[]
+    Z = Tuple{Int64, Int64, Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
-        @assert(v < w)
+        @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
             insorted(neighbors(g, z), v) && continue
@@ -94,7 +94,6 @@ function unshielded(g)
     end
     Z
 end
-
 
 isadjacent(dg, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
 has_both(dg, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
@@ -130,7 +129,6 @@ function _vskel(n::V, I, par...) where {V}
     dg
 end
 
-
 """
     pcalg(n::V, I, par...)
     pcalg(g, I, par...)
@@ -151,7 +149,6 @@ function pcalg(n, I, par...; kwargs...)
     apply_pc_rules(g, dg; kwargs...)
 end
 
-
 """
     orient_unshielded(g, dg, S)
 
@@ -170,7 +167,6 @@ function orient_unshielded(g, dg, S)
 
     # Step 2: Apply Rule 0 once
     Z = orientable_unshielded(g, S)
-
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
@@ -195,9 +191,9 @@ both `v=>w` and `w=>v `if the direction of `Edge(v,w)`` is unknown.
 
 Returns the CPDAG as DiGraph. 
 """
-function apply_pc_rules(g, dg; VERBOSE=false)
+function apply_pc_rules(g, dg; VERBOSE = false)
     # Step 3: Apply Rule 1-3 consecutively
-    removed = Tuple{Int64,Int64}[]
+    removed = Tuple{Int64, Int64}[]
     while true
         for e in edges(g)
             for e_ in (e, reverse(e))
@@ -212,7 +208,6 @@ function apply_pc_rules(g, dg; VERBOSE=false)
                     push!(removed, (w, v))
                     @goto ende
                 end
-
 
                 # Rule 2: Orient v-w into v->w whenever there is a chain
                 # v->k->w.
@@ -279,12 +274,12 @@ function pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
     sch = Tables.schema(t)
     n = length(sch.names)
 
-    X = reduce(hcat, map(c -> Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
+    X = reduce(hcat,
+               map(c -> Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
     N = size(X, 1)
     C = Statistics.cor(X)
     return pcalg(n, gausscitest, (C, N), quantile(Normal(), 1 - p / 2); kwargs...)
 end
-
 
 """
     pcalg(t::T, p::Float64; cmitest::typeof(cmitest); kwargs...) where{T}
@@ -308,7 +303,8 @@ end
 
 prepare resulting graph for plotting with various backends
 """
-function prepare_pc_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
+function prepare_pc_graph(g::AbstractGraph,
+                          node_labels::AbstractVector{<:AbstractString} = String[])
     plot_g = DiGraph(nv(g))
 
     if length(node_labels) != nv(g)
@@ -332,8 +328,8 @@ function prepare_pc_graph(g::AbstractGraph, node_labels::AbstractVector{<:Abstra
         end
     end
 
-    (; plot_g, node_labels, edge_styles=styles_dict,
-        node_style=node_style, options=options)
+    (; plot_g, node_labels, edge_styles = styles_dict,
+     node_style = node_style, options = options)
 end
 
 """
@@ -343,9 +339,10 @@ plot the output of the PG algorithm (Text-based output)
 
 See also: `plot_pc_graph` and `plot_pc_graph_tikz` (for TikzGraphs.jl-based plotting), `plot_pc_graph_recipes` (for GraphRecipes.jl-based plotting)
 """
-function plot_pc_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
+function plot_pc_graph_text(g::AbstractGraph,
+                            node_labels::AbstractVector{<:AbstractString} = String[])
     objs = prepare_pc_graph(g, node_labels)
-    graph_to_text(objs.plot_g, objs.node_labels, edge_styles=objs.edge_styles)
+    graph_to_text(objs.plot_g, objs.node_labels, edge_styles = objs.edge_styles)
 end
 
 # methods to extend conditionally
