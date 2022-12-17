@@ -264,7 +264,7 @@ end
 """
     pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
 
-run PC algorithm for tabular input data t using a p-value p to test for 
+Run PC algorithm for tabular input data t using a p-value p to test for 
 conditional independeces using Fisher's z-transformation.
 """
 function pcalg(t, p::Float64, test::typeof(gausscitest); kwargs...)
@@ -284,7 +284,7 @@ end
 """
     pcalg(t::T, p::Float64; cmitest::typeof(cmitest); kwargs...) where{T}
 
-run PC algorithm for tabular input data t using a p-value p to detect 
+Run PC algorithm for tabular input data t using a p-value p to detect 
 conditional independeces using a conditional mutual information permutation test.
 """
 function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
@@ -301,7 +301,7 @@ end
 """
     prepare_pc_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
-prepare resulting graph for plotting with various backends
+Prepare resulting graph for plotting with various backends.
 """
 function prepare_pc_graph(g::AbstractGraph,
                           node_labels::AbstractVector{<:AbstractString} = String[])
@@ -335,7 +335,7 @@ end
 """
     plot_pc_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
-plot the output of the PG algorithm (Text-based output)
+Plot the output of the PC algorithm (text-based output).
 
 See also: `plot_pc_graph` and `plot_pc_graph_tikz` (for TikzGraphs.jl-based plotting), `plot_pc_graph_recipes` (for GraphRecipes.jl-based plotting)
 """
@@ -349,7 +349,7 @@ end
 """
     plot_pc_graph_recipes(g, node_labels::AbstractVector{<:AbstractString}=String[])
 
-plot the output of the PC algorithm (GraphRecipes backend)
+Plot the output of the PC algorithm (GraphRecipes backend).
 
 Requires GraphRecipes and Plots to be imported
 """
@@ -358,7 +358,7 @@ function plot_pc_graph_recipes end
 """
     CausalInference.plot_pc_graph_tikz(g, node_labels::AbstractVector{<:AbstractString}=String[])
 
-plot the output of the PC algorithm (TikzGraphs backend)
+Plot the output of the PC algorithm (TikzGraphs backend).
 
 Requires TikzGraphs to be imported
 """

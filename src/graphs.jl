@@ -43,7 +43,7 @@ end
 """
     graph_to_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=[]; edge_styles::AbstractDict=Dict())
 
-print out a graph `g` as a table of edges labeled by`node_labels`
+Print out a graph `g` as a table of edges labeled by `node_labels`.
 
 # Arguments
 - `g::AbstractGraph`: a graph to print

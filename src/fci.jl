@@ -20,11 +20,11 @@ end
 """
     has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol}
 
-test if the edge between node v1 and v2 has the edge markers given by the tuple t (use
+Test if the edge between node v1 and v2 has the edge markers given by the tuple t (use
 the arrow macro to simplify use)
 
 Example:
-has_marks(dg, 1, 2, arrow"o->")
+`has_marks(dg, 1, 2, arrow"o->")`
 """
 function has_marks(dg, v1, v2, t::Tuple{Symbol, Symbol})
     if t[2] != :star
@@ -44,10 +44,10 @@ end
 """
     set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
 
-set edge marks between node v1 and v2.
+Set edge marks between node v1 and v2.
 
 Example:
-set_marks!(dg, 1, 2, arrow"*->")
+`set_marks!(dg, 1, 2, arrow"*->")`
 """
 function set_marks!(dg, v1, v2, t::Tuple{Symbol, Symbol})
     if t[1] != :star
@@ -62,7 +62,7 @@ end
 """
     is_collider(dg, v1, v2, v3)
 
-check if egde v1, v2 and v3 form a collider
+Check if egde v1, v2 and v3 form a collider.
 """
 function is_collider(dg, v1, v2, v3)
     return has_marks(dg, v1, v2, arrow"*->") && has_marks(dg, v2, v3, arrow"<-*")
@@ -71,7 +71,7 @@ end
 """
     is_parent(dg, v1, v2)
 
-check if v1 is a parent of v2
+Check if v1 is a parent of v2.
 """
 function is_parent(dg, v1, v2)
     return has_edge(dg, v1, v2) && has_marks(dg, v1, v2, arrow"-->")
@@ -80,7 +80,7 @@ end
 """
     is_triangle(dg, v1, v2, v3)
 
-check if v1, v2 and v3 form a triangle
+Check if v1, v2 and v3 form a triangle.
 """
 function is_triangle(dg, v1, v2, v3)
     return isadjacent(dg, v1, v2) && isadjacent(dg, v2, v3) && isadjacent(dg, v3, v1)
@@ -89,7 +89,7 @@ end
 """
     is_discriminating_path(dg, path)
 
-check if `path` is a discriminating path
+Check if `path` is a discriminating path.
 """
 function is_discriminating_path(dg, path)
     # a discriminating path consists of at least four edges
@@ -110,7 +110,7 @@ end
 """
     is_uncovered_circle_path(dg, path)
 
-check if `path` is an uncovered circle path
+Check if `path` is an uncovered circle path.
 """
 function is_uncovered_circle_path(dg, path)
     if length(path) < 4
@@ -129,7 +129,7 @@ end
 """
     is_uncovered_PD_path(dg, path)
 
-check if `path` is an uncovered potentially directed path
+Check if `path` is an uncovered potentially directed path.
 """
 function is_uncovered_PD_path(dg, path)
     if length(path) < 4
@@ -459,7 +459,7 @@ end
 """
     prepare_fci_graph(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
-prepare the output of the FCI algorithm for plotting with various backends
+Prepare the output of the FCI algorithm for plotting with various backends.
 """
 function prepare_fci_graph(g::AbstractGraph,
                            node_labels::AbstractVector{<:AbstractString} = String[])
@@ -501,7 +501,7 @@ end
 """
     plot_fci_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
-plot the output of the FCI algorithm (Text-based output)
+Plot the output of the FCI algorithm (text-based output).
 
 See also: `plot_fci_graph` and `plot_fci_graph_tikz` (for TikzGraphs.jl-based plotting), `plot_fci_graph_recipes` (for GraphRecipes.jl-based plotting)
 """
@@ -515,7 +515,7 @@ end
 """
     plot_fci_graph_recipes(g, node_labels::AbstractVector{<:AbstractString}=String[])
 
-plot the output of the FCI algorithm (GraphRecipes backend)
+Plot the output of the FCI algorithm (GraphRecipes backend).
 
 Requires GraphRecipes and Plots to be imported
 """
@@ -523,7 +523,7 @@ function plot_fci_graph_recipes end
 """
     plot_fci_graph_tikz(g, node_labels::AbstractVector{<:AbstractString}=String[])
 
-plot the output of the FCI algorithm (TikzGraphs backend)
+Plot the output of the FCI algorithm (TikzGraphs backend).
 
 Requires TikzGraphs to be imported
 """
