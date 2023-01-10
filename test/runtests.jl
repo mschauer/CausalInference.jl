@@ -2,7 +2,6 @@ using CausalInference
 using Graphs
 using Test
 
-
 include("skeleton.jl")
 include("dsep.jl")
 include("pc.jl")

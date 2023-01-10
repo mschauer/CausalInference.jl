@@ -9,6 +9,11 @@ The causal model we are going to study can be represented using the following DA
 
 ```julia
 using CausalInference
+using TikzGraphs
+# If you have problems with TikzGraphs.jl,
+# try alternatively plotting backend GraphRecipes.jl + Plots.jl
+# and corresponding plotting function `plot_pc_graph_recipes`
+
 
 dag = digraph([
     1 => 3
@@ -21,7 +26,7 @@ dag = digraph([
     2 => 4
     4 => 6
     4 => 8])
-t = plot_pc_graph(dag)
+t = plot_pc_graph_tikz(dag)
 ```
 
 We are interested in the average causal effect (ACE) of a treatment `X=[6]` on an outcome `Y=[8]`, which stands for the expected increase of `Y` per unit of a controlled increase in `X`.

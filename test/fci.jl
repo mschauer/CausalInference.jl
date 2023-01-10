@@ -31,15 +31,15 @@ using CausalInference, Graphs, MetaGraphs, Random
     add_edge!(dg, 3, 5)
     add_edge!(dg, 5, 3)
     set_marks!(dg, 3, 5, arrow"-->")
-    
+
     add_edge!(dg, 2, 3)
     add_edge!(dg, 3, 2)
     set_marks!(dg, 2, 3, arrow"<->")
-    
+
     add_edge!(dg, 2, 5)
     add_edge!(dg, 5, 2)
     set_marks!(dg, 2, 5, arrow"-->")
-    
+
     add_edge!(dg, 1, 2)
     set_marks!(dg, 1, 2, arrow"*->")
 
@@ -50,55 +50,55 @@ end
     Random.seed!(123)
 
     N = 10000
-    t1 = 2*randn(N)
-    t2 = 2*randn(N)
+    t1 = 2 * randn(N)
+    t2 = 2 * randn(N)
     c = randn(N)
-    b = t1 + c + randn(N)*0.25
-    d = t2 + c + randn(N)*0.25
-    a = t1 + d + randn(N)*0.5
-    e = t2 + b + randn(N)*0.5
-    df = (a=a,b=b,c=c,d=d,e=e)
+    b = t1 + c + randn(N) * 0.25
+    d = t2 + c + randn(N) * 0.25
+    a = t1 + d + randn(N) * 0.5
+    e = t2 + b + randn(N) * 0.5
+    df = (a = a, b = b, c = c, d = d, e = e)
 
     true_g = DiGraph(7)
-    add_edge!(true_g,6,1)
-    add_edge!(true_g,6,2)
-    add_edge!(true_g,3,2)
-    add_edge!(true_g,3,4)
-    add_edge!(true_g,7,4)
-    add_edge!(true_g,7,5)
-    add_edge!(true_g,4,1)
-    add_edge!(true_g,2,5)
-    
+    add_edge!(true_g, 6, 1)
+    add_edge!(true_g, 6, 2)
+    add_edge!(true_g, 3, 2)
+    add_edge!(true_g, 3, 4)
+    add_edge!(true_g, 7, 4)
+    add_edge!(true_g, 7, 5)
+    add_edge!(true_g, 4, 1)
+    add_edge!(true_g, 2, 5)
+
     g_oracle = fcialg(5, dseporacle, true_g)
     g_gauss = fcialg(df, 0.05, gausscitest)
 
     # test that hidden dsep has been found
-    @test !has_edge(g_oracle, 1 ,5)
-    @test !has_edge(g_gauss, 1 ,5)
+    @test !has_edge(g_oracle, 1, 5)
+    @test !has_edge(g_gauss, 1, 5)
 
     # test that edges remain
-    @test has_edge(g_oracle, 2 ,5)
-    @test has_edge(g_gauss, 2 ,5)
-    @test has_edge(g_oracle, 1 ,4)
-    @test has_edge(g_gauss, 1 ,4)
+    @test has_edge(g_oracle, 2, 5)
+    @test has_edge(g_gauss, 2, 5)
+    @test has_edge(g_oracle, 1, 4)
+    @test has_edge(g_gauss, 1, 4)
 end
 
 @testset "FCI Orientation" begin
     true_g = DiGraph(4)
-    add_edge!(true_g,1,3)
-    add_edge!(true_g,2,3)
-    add_edge!(true_g,3,4)
-    g_oracle = fcialg(4, dseporacle, true_g, verbose=true)
+    add_edge!(true_g, 1, 3)
+    add_edge!(true_g, 2, 3)
+    add_edge!(true_g, 3, 4)
+    g_oracle = fcialg(4, dseporacle, true_g, verbose = true)
 
     @test has_marks(g_oracle, 1, 3, arrow"o->")
     @test has_marks(g_oracle, 3, 4, arrow"-->")
 
     true_g = DiGraph(5)
-    add_edge!(true_g,1,2)
-    add_edge!(true_g,3,4)
-    add_edge!(true_g,5,2)
-    add_edge!(true_g,5,4)
-    g_oracle = fcialg(4, dseporacle, true_g, verbose=true)
+    add_edge!(true_g, 1, 2)
+    add_edge!(true_g, 3, 4)
+    add_edge!(true_g, 5, 2)
+    add_edge!(true_g, 5, 4)
+    g_oracle = fcialg(4, dseporacle, true_g, verbose = true)
 
     @test has_marks(g_oracle, 2, 4, arrow"<->")
     @test has_marks(g_oracle, 1, 2, arrow"o->")
@@ -112,11 +112,11 @@ end
     add_edge!(true_g, 7, 3)
     add_edge!(true_g, 3, 4)
     add_edge!(true_g, 6, 4)
-    g_oracle = fcialg(4, dseporacle, true_g, sel=[7], verbose=true)
+    g_oracle = fcialg(4, dseporacle, true_g, sel = [7], verbose = true)
 
     # test for that weird edge I don't understand...
     @test has_marks(g_oracle, 1, 4, arrow"o->")
-    
+
     # test graph Figure 6 in Zhang, 2008
     true_g = DiGraph(5)
     add_edge!(true_g, 1, 2)
@@ -124,10 +124,37 @@ end
     add_edge!(true_g, 4, 3)
     add_edge!(true_g, 5, 1)
     add_edge!(true_g, 5, 4)
-    g_oracle = fcialg(4, dseporacle, true_g, verbose=true)
+    g_oracle = fcialg(4, dseporacle, true_g, verbose = true)
 
     @test has_marks(g_oracle, 1, 4, arrow"o-o")
     @test has_marks(g_oracle, 4, 3, arrow"-->")
     @test has_marks(g_oracle, 2, 3, arrow"-->")
     @test has_marks(g_oracle, 1, 2, arrow"o-o")
+end
+
+@testset "FCI alg plotting utils" begin
+    mg = MetaDiGraph(3)
+    add_edge!(mg, 1, 2)
+    add_edge!(mg, 2, 1)
+    set_prop!(mg, 1, 2, :mark, :arrow)
+    set_prop!(mg, 2, 1, :mark, :tail)
+    add_edge!(mg, 2, 3)
+    add_edge!(mg, 3, 2)
+    set_prop!(mg, 2, 3, :mark, :circle)
+    set_prop!(mg, 3, 2, :mark, :circle)
+    objs = CausalInference.prepare_fci_graph(mg)
+    @test keys(objs) == (:plot_g, :node_labels, :edge_styles, :node_style, :options)
+    @test nv(objs.plot_g) == nv(mg)
+    @test ne(objs.plot_g) == (ne(mg) - 2) # bi-directional edges removed
+    @test objs.edge_styles[(1, 2)] == "->"
+    @test objs.edge_styles[(2, 3)] == "o-o"
+    @test objs.node_labels == string.(1:nv(mg))
+
+    objs = CausalInference.prepare_fci_graph(mg, collect(string.('a':'c')))
+    @test keys(objs) == (:plot_g, :node_labels, :edge_styles, :node_style, :options)
+    @test nv(objs.plot_g) == nv(mg)
+    @test ne(objs.plot_g) == (ne(mg) - 2) # bi-directional edges removed
+    @test objs.edge_styles[(1, 2)] == "->"
+    @test objs.edge_styles[(2, 3)] == "o-o"
+    @test objs.node_labels == collect(string.('a':'c'))
 end

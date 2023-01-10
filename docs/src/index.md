@@ -28,6 +28,13 @@ CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represen
 ## Performance
 The speed of the algorithm is comparable with the C++ code of the R package `pcalg`.
 
+## Plotting
+Main package provides a text-based output describing all identified edges for PC and FCI algorithm ([`plot_pc_graph_text`](@ref) and [`plot_fci_graph_text`](@ref), respectively).
+
+In addition, additional plotting backends are supported with lazy code loading orchestrated by [Requires.jl](https://github.com/JuliaPackaging/Requires.jl). Upon importing of [TikzGraphs.jl](https://github.com/JuliaTeX/TikzGraphs.jl), additional plotting methods [`plot_pc_graph_tikz`](@ref) and [`plot_fci_graph_tikz`](@ref) will be loaded (these are also aliased as [`plot_pc_graph`](@ref) and [`plot_fci_graph`](@ref) for backward compatibility). Similarly, upon importing of both [GraphRecipes.jl](https://github.com/JuliaPlots/GraphRecipes.jl) and [Plots.jl](https://github.com/JuliaPlots/Plots.jl), additional plotting methods [`plot_pc_graph_recipes`](@ref) and [`plot_fci_graph_recipes`](@ref) will be loaded.
+
+At the time of writing (December 2022), TikzGraphs.jl cannot be installed on ARM-based systems, so GraphRecipes.jl + Plots.jl is the recommended plotting backend in such cases.
+
 ## Contribution
 See [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInference.jl/issues/1) for questions and coordination of the development.
 

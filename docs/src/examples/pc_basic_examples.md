@@ -7,6 +7,12 @@ A few example data sets can be useful to illustrate how to work with the PC algo
 We can easily create some sample data that corresponds to the causal structure described by the DAG. For the sake of simplicity, let's create data from a simple linear model that follows the structure defined by the DAG shown above:
 
 ```Julia
+using CausalInference
+using TikzGraphs
+# If you have problems with TikzGraphs.jl, 
+# try alternatively plotting backend GraphRecipes.jl + Plots.jl
+# and corresponding plotting function `plot_pc_graph_recipes`
+
 # Generate some sample data to use with the PC algorithm
 
 N = 1000 # number of data points
@@ -30,7 +36,7 @@ est_g = pcalg(df, 0.01, gausscitest)
 In order to investigate the output of the PC algorithm, this package also provides a function to easily plot and visually analyse this output.
 
 ```Julia
-tp = plot_pc_dag(est_g, [String(k) for k in keys(df)])
+tp = plot_pc_graph_tikz(est_g, [String(k) for k in keys(df)])
 ```
 
 ![Example output of PC algorithm](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/pc_graph_linear.png)
@@ -51,7 +57,7 @@ s = z + randn(N)*0.25
 
 df = (x=x, v=v, w=w, z=z, s=s)
 
-plot_pc_dag(pcalg(df, 0.01, gausscitest), [String(k) for k in keys(df)])
+plot_pc_graph_tikz(pcalg(df, 0.01, gausscitest), [String(k) for k in keys(df)])
 
 ```
 

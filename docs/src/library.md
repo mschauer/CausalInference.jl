@@ -21,7 +21,9 @@ skeleton
 dseporacle
 unshielded
 orientable_unshielded
-plot_pc_graph
+plot_pc_graph_tikz
+plot_pc_graph_recipes
+plot_pc_graph_text
 ```
 
 ## Statistics
@@ -53,7 +55,9 @@ is_discriminating_path
 is_uncovered_circle_path
 is_uncovered_PD_path
 fcialg
-plot_fci_graph
+plot_fci_graph_tikz
+plot_fci_graph_recipes
+plot_fci_graph_text
 ```
 
 ## Miscellaneous

@@ -15,13 +15,13 @@ Iterator of edges of a dag, ordered in Chickering order:
 ordered_edges(g) = OrderedEdges(g)
 
 struct OrderedEdges
-    g
+    g::Any
     ys::Vector{Int}
     yp::Vector{Int}
     n::Int
     m::Int
 
-    function OrderedEdges(g::DiGraph) 
+    function OrderedEdges(g::DiGraph)
         ys = topological_sort_by_dfs(g)
         yp = sortperm(ys)
         new(g, ys, yp, nv(g), ne(g))
@@ -30,13 +30,13 @@ end
 
 length(iter::OrderedEdges) = iter.m
 
-function iterate(iter::OrderedEdges, state=(0, 0, 0, Int[]))
-    i, j, k, xs  = state
+function iterate(iter::OrderedEdges, state = (0, 0, 0, Int[]))
+    i, j, k, xs = state
     k >= iter.m && return nothing
     g, ys, yp = iter.g, iter.ys, iter.yp
     while i == 0
         j = j + 1
-        xs = sort(inneighbors(g, ys[j]), by=x->yp[x])
+        xs = sort(inneighbors(g, ys[j]), by = x -> yp[x])
         i = length(xs)
     end
     Edge(xs[i], ys[j]), (i - 1, j, k + 1, xs)
@@ -44,7 +44,7 @@ end
 
 # came in handy while prototyping
 function chickering_order(g)
-    outp = Pair{Int,Int}[]
+    outp = Pair{Int, Int}[]
     ys = topological_sort_by_dfs(g)
     yp = sortperm(ys)
     n = nv(g)
@@ -55,19 +55,18 @@ function chickering_order(g)
         while i == 0
             j = j + 1
             if j > n
-                @goto ende 
+                @goto ende
             end
-            xs = sort(inneighbors(g, ys[j]), by=x->yp[x])
+            xs = sort(inneighbors(g, ys[j]), by = x -> yp[x])
             i = length(xs)
         end
         x, y = xs[i], ys[j]
-        push!(outp, x=>y)
+        push!(outp, x => y)
         i -= 1
     end
     @label ende
     outp
 end
-
 
 @enum Status reversible=0 compelled=1 unknown=2
 """
@@ -99,9 +98,9 @@ function cpdag(skel::DiGraph)
         while i == 0
             j = j + 1
             if j > n
-                @goto ende 
+                @goto ende
             end
-            xs = sort(inneighbors(g, ys[j]), by=x->yp[x])
+            xs = sort(inneighbors(g, ys[j]), by = x -> yp[x])
             i = length(xs)
         end
 
@@ -122,7 +121,7 @@ function cpdag(skel::DiGraph)
 
             lbl = reversible
             for z in inneighbors(g, y)
-                if x == z || has_edge(g, z => x) 
+                if x == z || has_edge(g, z => x)
                     continue
                 end
                 lbl = compelled
@@ -140,7 +139,7 @@ function cpdag(skel::DiGraph)
     @label ende
     for e in collect(edges(g))
         x, y = Tuple(e)
-        if label[x=>y] == reversible
+        if label[x => y] == reversible
             add_edge!(g, y => x)
         end
     end

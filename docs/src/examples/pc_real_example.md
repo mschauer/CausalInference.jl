@@ -7,6 +7,10 @@ The can be loaded into a dataframe in a few lines of code:
 ```Julia
 using HTTP, CSV, DataFrames
 using CausalInference
+using TikzGraphs
+# If you have problems with TikzGraphs.jl, 
+# try alternatively plotting backend GraphRecipes.jl + Plots.jl
+# and corresponding plotting function `plot_pc_graph_recipes`
 
 url = "https://www.ccd.pitt.edu//wp-content/uploads/files/Retention.txt"
 
@@ -24,7 +28,7 @@ variables = map(x->replace(x,"_"=>" "), names(df))
 This dataframe can be used as input to the PC algorithm just like the dataframes holding synthetic data before:
 
 ```Julia
-plot_pc_graph(pcalg(df, 0.025, gausscitest), variables)
+plot_pc_graph_tikz(pcalg(df, 0.025, gausscitest), variables)
 ```
 
 ![Plot of PC output for true data](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/pc_gauss_real.png)
