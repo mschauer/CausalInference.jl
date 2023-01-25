@@ -1,6 +1,11 @@
 export backdoor_criterion
 export backdoors
 
+# TODOs
+# - start with implementing a general Bayes-Ball type graph search
+# - then implement efficient algorithms for finding backdoor adjustment sets
+
+
 function backdoors(g::AbstractGraph{T}, U::Vector) where {T}
     seen = zeros(Bool, nv(g))
     bd = zeros(Bool, nv(g))
