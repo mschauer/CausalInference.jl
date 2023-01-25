@@ -81,6 +81,59 @@ function alt_cpdag(g)
     return nvertexdigraphfromedgelist(nv(g), edgelist)
 end
 
+# TODOs:
+# - add function for checking whether a graph is a CDPAG
+# - add function for checking whether a PDAG has a DAG extension
+function hasdirectedcycle(G)
+    # TODO: implement
+    return true
+end
+
+function ismaximallyoriented(G)
+    # TODO: implement
+    return true
+end
+
+function checkundirectedcomps(G)
+    # TODO: implement
+    return true, true
+end
+
+function isstronglyprotected(G)
+    # TODO: implement
+    return true
+end
+
+"""
+    classifygraph(G)
+Classifies a graph efficiently into the following classes:
+- "cyclic": has a directed cycle (the graph can also satisfy some of the other criteria)
+- "not maximally oriented": there is an undirected edge whose direction would follow from one of the Meek rules (Meek 1995)
+- "not extendable": there is no consistent DAG extension of this graph
+- "CPDAG": the graph is a CPDAG
+- "MPDAG, counting works" and "MPDAG, counting not yet implemented": in both cases the graph is an MPDAG, however, in the second case it has not enough structure for the counting algorithm to work (TODO: add more details)
+"""
+
+function classifygraph(G)
+    hasdirectedcycle(G) && return "cyclic"
+    ismaximallyoriented(G) && return "not maximally oriented"
+    areinduced, arechordal = checkundirectedcomps(G)
+    !arechordal && return "not extendable"
+    if areinduced
+        if isstronglyprotected(G)
+            return "CPDAG"
+        else
+            return "MPDAG, counting works"
+        end
+    else
+        return "MPDAG, counting not yet implemented"
+    end
+end
+
+function consistent_extension(G)
+    # TODO: implement Dor-Tarsi algorithm
+end
+
 
 """
     ordered_edges(dag)
