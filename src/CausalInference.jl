@@ -3,6 +3,10 @@ using Graphs
 using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
+using DataStructures
+using Memoization, LRUCache
+
+import Base: ==, show
 
 export dsep, skeleton, gausscitest, dseporacle, partialcor
 export unshielded, pcalg, vskel
@@ -18,6 +22,7 @@ export plot_pc_graph_text, plot_fci_graph_text
 export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
+export fges, allundirected, alldirected
 
 include("graphs.jl")
 include("combinations_without.jl")
@@ -30,6 +35,8 @@ include("fci.jl")
 include("misc.jl")
 include("recantingwitness.jl")
 include("backdoor.jl")
+include("fges_helper.jl")
+include("fges.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
 const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)
