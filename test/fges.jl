@@ -1,26 +1,26 @@
-using CausalInference
-using Graphs
-using Random
-using Statistics
+using Distributions, CausalInference, Graphs
+using Test, Random
 
 
-Random.seed!(314)
-#Generate a dataset
-numFeatures = 100
-numObservations = 10000
-data = zeros(numObservations, numFeatures)
+Random.seed!(100)
+N = 2000
+d = Normal()
+p = 0.01
 
-#number of previous features to use in caluclating the next feature
-n=5
+x = randn(N)
+v = x + randn(N) * 0.5
+w = x + randn(N) * 0.5
+z = v + w + randn(N) * 0.5
+s = z + randn(N) * 0.5
+X = [x v w z s]
 
-for i in 1:numFeatures
-    if i ≤ n
-        data[:,i] = randn(numObservations)
-    else
-        data[:,i] = sum(rand()*data[:,i-j] for j∈1:n) + randn(numObservations)
-        #Stop the data from exploding
-        data[:,i] ./= mean(data[:,i])
-    end
-end
 
-g = fges(data;verbose=true)
+g = fges(X)
+
+@test collect(Graphs.edges(g)) == map(x -> Edge(x...), [1 => 2
+                            1 => 3
+                            2 => 1
+                            2 => 4
+                            3 => 1
+                            3 => 4
+                            4 => 5])

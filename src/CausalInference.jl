@@ -3,7 +3,6 @@ using Graphs
 using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
-using DataStructures
 using Memoization, LRUCache
 
 import Base: ==, show

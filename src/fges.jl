@@ -45,11 +45,6 @@ end
 # Base Function Overloads
 ####################################################################
 
-#Print method to display the parsed data
-function show(io::IO, d::ParseData{T}) where T
-    print(io, "$(d.numObservations)×$(d.numFeatures) ParseData{$(T)}")
-end
-
 #Print method to display the Step
 function show(io::IO, newStep::Step{A,B}) where {A,B}
     print(io, "Edge: $(newStep.edge), Subset: $(newStep.subset), Δscore: $(newStep.Δscore)")
@@ -298,7 +293,7 @@ end
 # Scoring function
 ####################################################################
 
-@memoize LRU(maxsize=100_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
+@memoize LRU(maxsize=1_000_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
 
     #Unpack some variables from the dataParsed structure
     n = A(dataParsed.numObservations) #convert datatype
