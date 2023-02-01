@@ -118,27 +118,7 @@ function isblocked(g, x, y, nodesRemoved)
     end
     return true
 end
-# function isblocked(g, x, y, nodesRemoved)
-    
-#     #If x or y are in nodesRemoved, the path is blocked
-#     (x ∈ nodesRemoved || y ∈ nodesRemoved) && return true
 
-#     #if the src and dest are the same, path is itself
-#     x == y && return false
-
-#     #Check out algorithm 3: https://leetcode.com/problems/find-if-path-exists-in-graph/solutions/2715942/official-solution/
-#     edgeSet = IntDisjointSets(nv(g))
-
-#     for edge in edges(g)
-#         (source, destination) = src(edge), dst(edge)
-
-#         if (source ∉ nodesRemoved) && (destination ∉ nodesRemoved)
-#             union!(edgeSet, source, destination)
-#         end
-#     end
-
-#     return !in_same_set(edgeSet, x, y)
-# end
 
 
 ####################################################################

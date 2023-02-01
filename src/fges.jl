@@ -211,8 +211,8 @@ function findBestInsert(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
     #Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Txy: any subset of the undirected neighbors of y not connected to x
-    Tyx = calcT(g, Edge(x,y))
-    NAyx = calcNAyx(g, Edge(x,y))
+    Tyx = calcT(g, y, x)
+    NAyx = calcNAyx(g, y, x)
 
 
     #Ceate two containers to hold the best found score and best subset of Tyx
@@ -263,7 +263,7 @@ function findBestDelete(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
     #Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Hyx: any subset of the undirected neighbors of y that are connected to x
-    NAyx = calcNAyx(g, Edge(x,y))
+    NAyx = calcNAyx(g, y, x)
     Hyx = NAyx
 
     #Ceate two containers to hold the best found score and best subset of Tyx
@@ -392,31 +392,31 @@ function meekRules!(g)
             #Check if x has a unique parent 
             if R1(xNeighbors, yNeighbors)
                 #Add x→y
-                add_edge!(g, x, y)
+                orientedge!(g, x, y)
             #Check if y has a unique parent
             elseif R1(yNeighbors, xNeighbors)
                 #Add y→x
-                add_edge!(g, y, x)
+                orientedge!(g, y, x)
             end
 
             #Rule 2: Direct the edge away from a potential cycle
             #Check if x has a child that is a parent of y
             if R2(xNeighbors, yNeighbors)
                 #Add x→y
-                add_edge!(g, x, y)
+                orientedge!(g, x, y)
             #Check if y has a child that is a parent of x
             elseif R2(yNeighbors, xNeighbors)
                 #Add y→x
-                add_edge!(g, y, x)
+                orientedge!(g, y, x)
             end
 
             #Rule 3: Double Triangle, diagonal
             if R3(xNeighbors, yNeighbors)
                 #Add x→y
-                add_edge!(g, x, y)
+                orientedge!(g, x, y)
             elseif R3(yNeighbors, xNeighbors)
                 #Add y→x
-                add_edge!(g, y, x)
+                orientedge!(g, y, x)
             end
 
             #Rule 4: Double Triangle, side
@@ -424,10 +424,10 @@ function meekRules!(g)
             #So, we need to pass the graph through as well
             if R4(xNeighbors, yNeighbors, g)
                 #Add x→y
-                add_edge!(g, x, y)
+                orientedge!(g, x, y)
             elseif R4(yNeighbors, xNeighbors, g)
                 #Add y→x
-                add_edge!(g, y, x)
+                orientedge!(g, y, x)
             end
             
         end

@@ -23,4 +23,4 @@ for i in 1:numFeatures
     end
 end
 
-g = fges(data)
+g = fges(data;verbose=true)
