@@ -31,30 +31,6 @@ function gensearch(g, S, rules)
     return Set{Integer}(findall(any, result))
 end
 
-function alt_dsep(g, X, Y, S, inrem = Set{Integer}(), outrem = Set{Integer}())
-    function rules(prevedge, nextedge, v, w)
-       (v in inrem || w in outrem) && nextedge == 1 && return false, false 
-       (v in outrem || w in inrem) && nextedge == 0 && return false, false
-       if prevedge == -1 || (v in S && prevedge == 1 && nextedge == 0) || (!(v in S) && !(prevedge == 1 && nextedge ==0))
-           return true, true
-       end
-       return false, false
-    end
-    R = gensearch(g, X, rules)
-    return length(intersect(R, Y)) == 0 
-end
-
-function alt_test_backdoor(g, X, Y, S)
-    function rules(prevedge, nextedge, v, w)
-        if (prevedge == -1 && nextedge == 0) || (prevedge != -1 && nextedge == 1 && !(inunion, X, S)) || (prevedge == 0 && nextedge == 0 && !(v in S)) || (prevedge == 1 && nextedge == 0 && v in S)
-            return true, true
-        end
-        return false, false
-    end
-    R = gensearch(g, X, rules)
-    return length(intersect(R, Y)) == 0 
-end
-
 function ancestors(g, X, inrem = Set{Integer}(), outrem = Set{Integer}())
     function rules(prevedge, nextedge, v, w)
         nextedge == 0 && !(v in inrem) && !(w in outrem) && return true, true
@@ -69,6 +45,38 @@ function descendants(g, X, inrem = Set{Integer}(), outrem = Set{Integer}())
         return false, false
     end
     return gensearch(g, X, rules)
+end
+
+function alt_test_dsep(g, X, Y, S, inrem = Set{Integer}(), outrem = Set{Integer}())
+    function rules(prevedge, nextedge, v, w)
+       (v in inrem || w in outrem) && nextedge == 1 && return false, false 
+       (v in outrem || w in inrem) && nextedge == 0 && return false, false
+       if prevedge == -1 || (v in S && prevedge == 1 && nextedge == 0) || (!(v in S) && !(prevedge == 1 && nextedge ==0))
+           return true, true
+       end
+       return false, false
+    end
+    R = gensearch(g, X, rules)
+    return length(intersect(R, Y)) == 0 
+end 
+
+function alt_test_backdoor(g, X, Y, S)
+    function rules(prevedge, nextedge, v, w)
+        if (prevedge == -1 && nextedge == 0) || (prevedge != -1 && nextedge == 1 && !(inunion, X, S)) || (prevedge == 0 && nextedge == 0 && !(v in S)) || (prevedge == 1 && nextedge == 0 && v in S)
+            return true, true
+        end
+        return false, false
+    end
+    R = gensearch(g, X, rules)
+    return length(intersect(R, Y)) == 0 
+end
+
+function find_dsep(g, X, Y, I, R, inrem = Set{Integer}(), outrem = Set{Integer}())
+    
+end
+
+function find_min_dsep(g, X, Y, I, R, inrem = Set{Integer}(), outrem = Set{Integer}())
+
 end
 
 function pcp(g, X, Y)
@@ -88,7 +96,7 @@ function find_covariate_adjustment(g, X, Y, I, R)
     end
 end
 
-function find_backdoor(g, X, Y, I, R)
+function find_backdoor_adjustment(g, X, Y, I, R)
     Z = find_covariate_adjustment(g, X, Y, I, R)
     DeX = descendants(g, X, X, Set{Integer}())
     bdZ = setdiff(Z, DeX)
@@ -99,4 +107,23 @@ function find_backdoor(g, X, Y, I, R)
     end
 end
 
+function find_frontdoor_adjustment(g, X, Y, I, R)
 
+end
+
+function find_min_frontdoor_adjustment(g, X, Y, I, R)
+
+end
+
+# TODO: write iterators with state as call stack
+function list_covariate_adjustment(g, X, Y, I, R)
+
+end
+
+function list_backdoor_adjustment(g, X, Y, I, R)
+
+end
+
+function list_frontdoor_adjustment(g, X, Y, I, R)
+
+end
