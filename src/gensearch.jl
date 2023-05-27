@@ -47,7 +47,7 @@ function descendants(g, X, inrem = Set{Integer}(), outrem = Set{Integer}())
     return gensearch(g, X, rules)
 end
 
-function alt_test_dsep(g, X, Y, S, inrem = Set{Integer}(), outrem = Set{Integer}())
+function bayesball(g, X, S, inrem = Set{Integer}(), outrem = Set{Integer}())
     function rules(prevedge, nextedge, v, w)
        (v in inrem || w in outrem) && nextedge == 1 && return false, false 
        (v in outrem || w in inrem) && nextedge == 0 && return false, false
@@ -56,7 +56,11 @@ function alt_test_dsep(g, X, Y, S, inrem = Set{Integer}(), outrem = Set{Integer}
        end
        return false, false
     end
-    R = gensearch(g, X, rules)
+    return gensearch(g, X, rules)
+end
+
+function alt_test_dsep(g, X, Y, S, inrem = Set{Integer}(), outrem = Set{Integer}())
+    R = bayesball(g, X, S, inrem, outrem)
     return length(intersect(R, Y)) == 0 
 end 
 
@@ -72,11 +76,35 @@ function alt_test_backdoor(g, X, Y, S)
 end
 
 function find_dsep(g, X, Y, I, R, inrem = Set{Integer}(), outrem = Set{Integer}())
-    
+    Z = intersect(R, setdiff(ancestors(g, union(X, Y, I), inrem, outrem), union(X, Y)))
+    if alt_test_dsep(g, X, Y, Z, inrem, outrem)
+        return Z
+    else
+        return false
+    end
+end
+
+function closure(g, X, A, Z, inrem, outrem)
+    function rules(prevedge, nextedge, v, w)
+        !(w in A) && return false, false
+       (v in inrem || w in outrem) && nextedge == 1 && return false, false 
+       (v in outrem || w in inrem) && nextedge == 0 && return false, false
+        if ((prevedge == 1 && nextedge == 1) || prevedge == 0) && v in Z
+            return false, false
+        end
+        return true, true
+    end
+    return gensearch(g, X, rules)
 end
 
 function find_min_dsep(g, X, Y, I, R, inrem = Set{Integer}(), outrem = Set{Integer}())
-
+    A = ancestors(g, union(X, Y, I), inrem, outrem)
+    Z = find_dsep(g, X, Y, I, R, inrem, outrem)
+    Z == false && return false
+    Xstar = closure(g, X, A, Z, inrem, outrem)
+    ZX = union(intersect(Z, Xstar), I)
+    Ystar = closure(g, Y, A, ZX, inrem, outrem)
+    return union(intersect(ZX, Ystar), I)
 end
 
 function pcp(g, X, Y)
@@ -89,7 +117,7 @@ function find_covariate_adjustment(g, X, Y, I, R)
     PCPXY = pcp(g, X, Y)
     DpcpXY = descendants(g, PCPXY)
     Z = setdiff(intersect(ancestors(g, union(X, Y, I)), R), union(X, Y, DpcpXY))
-    if alt_dsep(g, X, Y, Z, PCPXY, Set{Integer}())
+    if alt_test_dsep(g, X, Y, Z, PCPXY, Set{Integer}())
         return Z
     else
         return false
@@ -100,19 +128,82 @@ function find_backdoor_adjustment(g, X, Y, I, R)
     Z = find_covariate_adjustment(g, X, Y, I, R)
     DeX = descendants(g, X, X, Set{Integer}())
     bdZ = setdiff(Z, DeX)
-    if alt_dsep(g, X, Y, bdZ, Set{Integer}(), X)
+    if alt_test_dsep(g, X, Y, bdZ, Set{Integer}(), X)
         return Z
     else
         return false
     end
 end
 
-function find_frontdoor_adjustment(g, X, Y, I, R)
-
+# this is of course also minimal bd set!
+function find_min_covariate_adjustment(g, X, Y, I, R)
+    PCPXY = pcp(g, X, Y)
+    DePCP = descendants(g, PCPXY)
+    Rd = setdiff(R, DePCP) 
+    return find_min_dsep(g, X, Y, I, Rd, PCPXY, Set{Integer}())
 end
 
-function find_min_frontdoor_adjustment(g, X, Y, I, R)
+function find_frontdoor_adjustment(g, X, Y, I, R)
+    Za = bayesball(g, X, Set{Integer}(), Set{Integer}(), X)
+    A = ancestors(g, Y)
+    # could check for za \in Za not in I already here
+    # paper is wrong here -> double check and correct
+    function Zabrules(prevedge, nextedge, v, w)
+        nextedge == 1 && return true, true
+        prevedge == 1 && v in A && !(w in Za) && return true, true 
+        (prevedge == -1 || prevedge == 0) && nextedge == 0 && w in Za && return true, false
+        return false, false
+    end
+    Zab = setdiff(Za, gensearch(g, Za, Zabrules))
+    if issubset(I, Zab) && alt_test_dsep(g, X, Y, Zab, X, Zab)
+        return Zab
+    else
+        return false
+    end
+end
 
+# double check these rules
+function find_min_frontdoor_adjustment(g, X, Y, I, R)
+    Zii = find_frontdoor_adjustment(g, X, Y, I, R)
+    Zii == false && return false 
+    function Za_rules(prevedge, nextedge, v, w)
+        cont, yld = false, false
+        if prevedge in [-1, 0] && nextedge == 0
+            !inunion(w, X, Y, Zii) && (cont = true)
+            w in Zii && (yld = true)
+        end
+        return cont, yld
+    end
+    Za = gensearch(g, Y, Za_rules) 
+    function Zxy_rules(prevedge, nextedge, v, w)
+        cont, yld = false, false
+        if prevedge in [-1, 1] && nextedge == 1
+            !inunion(w, X, Y, I, Za) && (cont = true)
+            w in Za && (yld = true)
+        end
+        return cont, yld
+    end
+    Zxy = gensearch(g, X, Zxy_rules)
+    function Zzy_rules(prevedge, nextedge, v, w)
+        cont, yld = false, false
+        if prevedge in [-1, 0] && nextedge == 0
+            !inunion(w, X, I, Zxy) && (cont = true)
+            w in Za && (yld = true)
+        end
+
+        if prevedge in [0, 1] && nextedge == 1
+            !(w in X) && !inunion(v, I, Za) && (cont = true)
+            w in Za && !inunion(v, I, Za) && (yld = true)
+        end
+
+        if prevedge == 1 && nextedge == 0
+            inunion(v, I, Za) && !inunion(w, X, I, Zxy) && (cont = true)
+            inunion(v, I, Za) && w in Za && (yld = true)
+        end
+        return cont, yld
+    end
+    Zzy = gensearch(g, union(I, Zxy), Zzy_rules) 
+    return union(I, Zxy, Zzy)
 end
 
 # TODO: write iterators with state as call stack
