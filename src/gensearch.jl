@@ -9,19 +9,19 @@ function inunion(w, sets...)
 end
 
 function gensearch(g, S, pass)
-    visited = falses(2*nv(g))
+    visited = falses(3*nv(g))
     function genvisit(g, v, prevedge)
-        prevedge != -1 && (visited[2*v-prevedge] = true)
+        visited[3*v - 1 + prevedge] = true
         for nextedge in [0, 1]
             nextedge == 0 && (neighbors = inneighbors(g, v))
             nextedge == 1 && (neighbors = outneighbors(g, v))
             for w in neighbors
-                pass(prevedge, nextedge, v, w) && !visited[2*w-nextedge] && genvisit(g, w, nextedge)
+                pass(prevedge, nextedge, v, w) && !visited[3*w - 1 + nextedge] && genvisit(g, w, nextedge)
             end
         end
     end
     foreach(s -> genvisit(g, s, -1), S)
-    return Set{Integer}(findall(any, visited))
+    return Set{Integer}([x for x in 1:nv(g) if visited[3*x-2] || visited[3*x-1] || visited[3*x]])
 end
 
 function ancestors(g, X, inrem = Set{Integer}(), outrem = Set{Integer}())
@@ -42,8 +42,8 @@ end
 
 function bayesball(g, X, S, inrem = Set{Integer}(), outrem = Set{Integer}())
     function pass(prevedge, nextedge, v, w)
-       (v in inrem || w in outrem) && nextedge == 1 && return false
-       (v in outrem || w in inrem) && nextedge == 0 && return false
+       (v in inrem || w in outrem) && nextedge == 0 && return false
+       (v in outrem || w in inrem) && nextedge == 1 && return false
        if prevedge == -1 || (v in S && prevedge == 1 && nextedge == 0) || (!(v in S) && !(prevedge == 1 && nextedge ==0))
            return true
        end
@@ -53,18 +53,11 @@ function bayesball(g, X, S, inrem = Set{Integer}(), outrem = Set{Integer}())
 end
 
 function alt_test_dsep(g, X, Y, S, inrem = Set{Integer}(), outrem = Set{Integer}())
-    R = bayesball(g, X, S, inrem, outrem)
-    return length(intersect(R, Y)) == 0 
+    return length(intersect(bayesball(g, X, S, inrem, outrem), Y)) == 0 
 end 
 
 function alt_test_backdoor(g, X, Y, S)
-    function pass(prevedge, nextedge, v, w)
-        if (prevedge == -1 && nextedge == 0) || (prevedge != -1 && nextedge == 1 && !(inunion, X, S)) || (prevedge == 0 && nextedge == 0 && !(v in S)) || (prevedge == 1 && nextedge == 0 && v in S)
-            return true
-        end
-        return false
-    end
-    return length(intersect(gensearch(g, X, pass), Y)) == 0 
+    return length(intersect(bayesball(g, X, S, Set{Integer}(), X), Y)) == 0 
 end
 
 function find_dsep(g, X, Y, I, R, inrem = Set{Integer}(), outrem = Set{Integer}())
@@ -79,8 +72,8 @@ end
 function closure(g, X, A, Z, inrem, outrem)
     function pass(prevedge, nextedge, v, w)
         !(w in A) && return false
-       (v in inrem || w in outrem) && nextedge == 1 && return false
-       (v in outrem || w in inrem) && nextedge == 0 && return false
+       (v in inrem || w in outrem) && nextedge == 0 && return false
+       (v in outrem || w in inrem) && nextedge == 1 && return false
         if ((prevedge == 1 && nextedge == 1) || prevedge == 0) && v in Z
             return false
         end
@@ -132,6 +125,11 @@ function find_min_covariate_adjustment(g, X, Y, I, R)
     PCPXY = pcp(g, X, Y)
     DePCP = descendants(g, PCPXY)
     Rd = setdiff(R, DePCP) 
+    # TODO: implement vetos!!!
+    function vetos(prevedge, nextedge, v, w)
+        v in X && w in PCPXY && return true
+        return false
+    end
     return find_min_dsep(g, X, Y, I, Rd, PCPXY, Set{Integer}())
 end
 
@@ -159,7 +157,7 @@ function find_min_frontdoor_adjustment(g, X, Y, I, R)
     Zii = find_frontdoor_adjustment(g, X, Y, I, R)
     Zii == false && return false 
     function Za_rules(prevedge, nextedge, v, w)
-        prevedge in [-1, 0] && nextedge == 0 && && !(v in Zii) && !inunion(w, X, Y) && return true
+        prevedge in [-1, 0] && nextedge == 0 && !(v in Zii) && !inunion(w, X, Y) && return true
         return false
     end
     Za = intersect(gensearch(g, Y, Za_rules), Zii) 
