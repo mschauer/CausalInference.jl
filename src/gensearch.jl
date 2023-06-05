@@ -12,6 +12,8 @@ function inunion(w, sets...)
     return false
 end
 
+# maybe replace unused arguments by type like so:
+# function no_veto(::T, ::T, ::T, ::T)
 function no_veto(pe, ne, v, w)
     return false
 end
@@ -77,22 +79,19 @@ function find_min_dsep(g, X, Y, I, R, veto)
     A = ancestors(g, union(X, Y, I), veto)
     Z = find_dsep(g, X, Y, I, R, veto)
     Z == false && return false
-    Xstar = closure(g, X, A, Z, veto)
-    ZX = union(intersect(Z, Xstar), I)
-    Ystar = closure(g, Y, A, ZX, veto)
-    return union(intersect(ZX, Ystar), I)
+    ZX = union(intersect(Z, closure(g, X, A, Z, veto)), I)
+    return union(intersect(ZX, closure(g, Y, A, ZX, veto)), I)
 end
 
 function pcp(g, X, Y)
-    DeX = descendants(g, X, (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w))
-    AnY = ancestors(g, Y, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w))
-    return intersect(setdiff(DeX, X), AnY)
+    return intersect(setdiff(descendants(g, X, (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w))
+, X), ancestors(g, Y, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w))
+)
 end
 
 function find_covariate_adjustment(g, X, Y, I, R)
     PCPXY = pcp(g, X, Y)
-    DpcpXY = descendants(g, PCPXY)
-    Z = setdiff(intersect(ancestors(g, union(X, Y, I)), R), union(X, Y, DpcpXY))
+    Z = setdiff(intersect(ancestors(g, union(X, Y, I)), R), union(X, Y, descendants(g, PCPXY)))
     if issubset(I, Z) && alt_test_dsep(g, X, Y, Z, (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
         return Z
     else
@@ -101,9 +100,7 @@ function find_covariate_adjustment(g, X, Y, I, R)
 end
 
 function find_backdoor_adjustment(g, X, Y, I, R)
-    Z = find_covariate_adjustment(g, X, Y, I, R)
-    DeX = descendants(g, X, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w))
-    bdZ = setdiff(Z, DeX)
+    bdZ = setdiff(find_covariate_adjustment(g, X, Y, I, R), descendants(g, X, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w)))
     if issubset(I, bdZ) && alt_test_dsep(g, X, Y, bdZ, (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w))
         return bdZ
     else
@@ -111,16 +108,14 @@ function find_backdoor_adjustment(g, X, Y, I, R)
     end
 end
 
-# this is of course also minimal bd set!
+# this is also minimal bd set!
 function find_min_covariate_adjustment(g, X, Y, I, R)
     PCPXY = pcp(g, X, Y)
-    DePCP = descendants(g, PCPXY)
-    Rd = setdiff(R, DePCP) 
-    return find_min_dsep(g, X, Y, I, Rd, (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
+    return find_min_dsep(g, X, Y, I, setdiff(R, descendants(g, PCPXY)), (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
 end
 
 function find_frontdoor_adjustment(g, X, Y, I, R)
-    Za = bayesball(g, X, Set{Integer}(), (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w))
+    Za = setdiff(R, bayesball(g, X, Set{Integer}(), (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w)))
     A = ancestors(g, Y)
     function Zab_pass(pe, ne, v, w)
         ne == 1 && return true
@@ -140,23 +135,23 @@ end
 function find_min_frontdoor_adjustment(g, X, Y, I, R)
     Zii = find_frontdoor_adjustment(g, X, Y, I, R)
     Zii == false && return false 
-    function Za_rules(pe, ne, v, w)
+    function Za_pass(pe, ne, v, w)
         pe in [-1, 0] && ne == 0 && !(v in Zii) && !inunion(w, X, Y) && return true
         return false
     end
-    Za = intersect(gensearch(g, Y, Za_rules), Zii) 
-    function Zxy_rules(pe, ne, v, w)
+    Za = intersect(gensearch(g, Y, Za_pass), Zii) 
+    function Zxy_pass(pe, ne, v, w)
         pe in [-1, 1] && ne == 1 && !(v in Za) && !inunion(w, X, Y, I) && return true
         return false
     end
-    Zxy = intersect(gensearch(g, X, Zxy_rules), Za)
-    function Zzy_rules(pe, ne, v, w)
+    Zxy = intersect(gensearch(g, X, Zxy_pass), Za)
+    function Zzy_pass(pe, ne, v, w)
         pe in [-1, 0] && ne == 0 && !inunion(w, X, I, Zxy) && return true
         pe in [0, 1] && ne == 1 && !(w in X) && !inunion(v, I, Za) && return true
         pe == 1 && ne == 0 && inunion(v, I, Za) && !inunion(w, X, I, Zxy) && return true
         return false
     end
-    Zzy = intersect(gensearch(g, union(I, Zxy), Zzy_rules), Za) 
+    Zzy = intersect(gensearch(g, union(I, Zxy), Zzy_pass), Za) 
     return union(I, Zxy, Zzy)
 end
 
