@@ -15,15 +15,15 @@ end
 # maybe replace unused arguments by type like so:
 # function no_veto(::T, ::T, ::T, ::T)
 function no_veto(pe, ne, v, w)
-    return false
+    return (pe, ne, v, w) -> false
 end
 
-function no_outgoing(S, pe, ne, v, w)
-   return v in S && ne == RIGHT 
+function no_outgoing(S)
+    return (pe, ne, v, w) -> v in S && ne == RIGHT 
 end
 
-function no_incoming(S, pe, ne, v, w)
-    return v in S && ne == LEFT
+function no_incoming(S)
+    return (pe, ne, v, w) -> v in S && ne == LEFT
 end
 
 function gensearch(g, S, pass)
@@ -38,7 +38,7 @@ function gensearch(g, S, pass)
             end
         end
     end
-    foreach(s -> genvisit(g, s, -1), S)
+    foreach(s -> genvisit(g, s, INIT), S)
     return Set{Integer}([x for x in 1:nv(g) if visited[3*x-2] || visited[3*x-1] || visited[3*x]])
 end
 
@@ -59,7 +59,7 @@ function alt_test_dsep(g, X, Y, S, veto = no_veto)
 end 
 
 function alt_test_backdoor(g, X, Y, S)
-    return length(intersect(bayesball(g, X, S, (pe, ne, v,w) -> no_outgoing(X, pe, ne, v, w)), Y)) == 0
+    return length(intersect(bayesball(g, X, S, no_outgoing(X)), Y)) == 0
 end
 
 function find_dsep(g, X, Y, I, R, veto)
@@ -84,8 +84,8 @@ function find_min_dsep(g, X, Y, I, R, veto)
 end
 
 function pcp(g, X, Y)
-    return intersect(setdiff(descendants(g, X, (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w))
-, X), ancestors(g, Y, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w))
+    return intersect(setdiff(descendants(g, X, no_outgoing(X))
+, X), ancestors(g, Y, no_incoming(X))
 )
 end
 
@@ -100,8 +100,8 @@ function find_covariate_adjustment(g, X, Y, I, R)
 end
 
 function find_backdoor_adjustment(g, X, Y, I, R)
-    bdZ = setdiff(find_covariate_adjustment(g, X, Y, I, R), descendants(g, X, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w)))
-    if issubset(I, bdZ) && alt_test_dsep(g, X, Y, bdZ, (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w))
+    bdZ = setdiff(find_covariate_adjustment(g, X, Y, I, R), descendants(g, X, no_incoming(X)))
+    if issubset(I, bdZ) && alt_test_dsep(g, X, Y, bdZ, no_outgoing(X))
         return bdZ
     else
         return false
@@ -115,7 +115,7 @@ function find_min_covariate_adjustment(g, X, Y, I, R)
 end
 
 function find_frontdoor_adjustment(g, X, Y, I, R)
-    Za = setdiff(R, bayesball(g, X, Set{Integer}(), (pe, ne, v, w) -> no_outgoing(X, pe, ne, v, w)))
+    Za = setdiff(R, bayesball(g, X, Set{Integer}(), no_outgoing(X)))
     A = ancestors(g, Y)
     function Zab_pass(pe, ne, v, w)
         ne == 1 && return true
@@ -124,7 +124,7 @@ function find_frontdoor_adjustment(g, X, Y, I, R)
         return false
     end
     Zab = setdiff(Za, gensearch(g, Za, Zab_pass))
-    if issubset(I, Zab) && alt_test_dsep(g, X, Y, Zab, (pe, ne, v, w) -> no_incoming(X, pe, ne, v, w) || no_outgoing(Zab, pe, ne, v, w))
+    if issubset(I, Zab) && length(intersect(descendants(g, X, no_outgoing(Zab)))) == 0
         return Zab
     else
         return false
