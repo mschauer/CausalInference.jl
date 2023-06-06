@@ -4,6 +4,7 @@ using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
 
+export ancestors, descendants, alt_test_dsep 
 export dsep, skeleton, gausscitest, dseporacle, partialcor
 export unshielded, pcalg, vskel
 export cpdag
@@ -30,6 +31,7 @@ include("fci.jl")
 include("misc.jl")
 include("recantingwitness.jl")
 include("backdoor.jl")
+include("gensearch.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
 const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)

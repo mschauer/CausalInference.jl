@@ -4,12 +4,14 @@ using Random
 using Test
 Random.seed!(1)
 
-@testset "adjustment" begin
-    g = digraph([1 => 3, 2 => 1, 2 => 3])
-    X = Set{Integer}(1)
-    Y = Set{Integer}(3)
-    I = Set{Integer}()
-    R = Set{Integer}(2)
-    
-#    @test TODO
+g = SimpleDiGraph(Edge.([(1, 2), (2, 3), (4, 1), (4, 3)]))
+X = Set{Integer}(1)
+Y = Set{Integer}(3)
+
+@testset "gensearch in1" begin
+    @test issetequal(ancestors(g, X), Set{Integer}([1,4]))
+    @test issetequal(descendants(g, X), Set{Integer}([1,2,3]))
+    @test alt_test_dsep(g, X, Y, Set{Integer}([2,4]))
+    @test !alt_test_dsep(g, X, Y, Set{Integer}(2))
+    @test !alt_test_dsep(g, X, Y, Set{Integer}(4))
 end

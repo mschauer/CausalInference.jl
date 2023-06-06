@@ -15,7 +15,7 @@ end
 # maybe replace unused arguments by type like so:
 # function no_veto(::T, ::T, ::T, ::T)
 function no_veto(pe, ne, v, w)
-    return (pe, ne, v, w) -> false
+    return false
 end
 
 function no_outgoing(S)
@@ -50,8 +50,8 @@ function descendants(g, X, veto = no_veto)
     return gensearch(g, X, (pe, ne, v, w) -> ne == RIGHT && !veto(pe, ne, v, w))
 end
 
-function bayesball(g, X, S, veto = no_veto)
-    return gensearch(g, X, (pe, ne, v, w) -> !veto(pe, ne, v, w) && pe == INIT || (v in S && pe == RIGHT && ne == LEFT) || (!(v in S) && !(pe == RIGHT && ne == LEFT)))
+function bayesball(g, X, S = Set{Integer}(), veto = no_veto)
+    return gensearch(g, X, (pe, ne, v, w) -> !veto(pe, ne, v, w) && (pe == INIT || (v in S && pe == RIGHT && ne == LEFT) || (!(v in S) && !(pe == RIGHT && ne == LEFT))))
 end
 
 function alt_test_dsep(g, X, Y, S, veto = no_veto)
@@ -62,7 +62,7 @@ function alt_test_backdoor(g, X, Y, S)
     return length(intersect(bayesball(g, X, S, no_outgoing(X)), Y)) == 0
 end
 
-function find_dsep(g, X, Y, I, R, veto)
+function find_dsep(g, X, Y, I, R, veto = no_veto)
     Z = intersect(R, setdiff(ancestors(g, union(X, Y, I), veto), union(X, Y)))
     if alt_test_dsep(g, X, Y, Z, veto)
         return Z
