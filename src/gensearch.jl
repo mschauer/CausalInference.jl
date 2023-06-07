@@ -26,6 +26,7 @@ function no_incoming(S)
     return (pe, ne, v, w) -> v in S && ne == LEFT
 end
 
+
 function gensearch(g, S, pass)
     visited = falses(3*nv(g))
     function genvisit(g, v, pe)
@@ -58,12 +59,17 @@ function alt_test_dsep(g, X, Y, S, veto = no_veto)
     return length(intersect(bayesball(g, X, S, veto), Y)) == 0 
 end 
 
-function alt_test_backdoor(g, X, Y, S)
-    return length(intersect(bayesball(g, X, S, no_outgoing(X)), Y)) == 0
+function alt_test_covariate_adjustment(g, X, Y, S) 
+    PCPXY = pcp(g, X, Y)
+    return alt_test_dsep(g, X, Y, S, (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
 end
 
-function find_dsep(g, X, Y, I, R, veto = no_veto)
-    Z = intersect(R, setdiff(ancestors(g, union(X, Y, I), veto), union(X, Y)))
+function alt_test_backdoor(g, X, Y, S)
+    return alt_test_dsep(g, X, Y, S, no_outgoing(X))
+end
+
+function find_dsep(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y), veto = no_veto)
+    Z = intersect(R, setdiff(ancestors(g, union(X, Y, I), veto), X, Y))
     if alt_test_dsep(g, X, Y, Z, veto)
         return Z
     else
@@ -72,10 +78,10 @@ function find_dsep(g, X, Y, I, R, veto = no_veto)
 end
 
 function closure(g, X, A, Z, veto)
-    return gensearch(g, X, (pe, ne, v, w) -> (w in A) && !veto(pe, ne, v, w) && !(((pe == 1 && ne == 1) || pe == 0) && v in Z))
+    return gensearch(g, X, (pe, ne, v, w) -> (w in A) && !veto(pe, ne, v, w) && !(((pe == RIGHT && ne == RIGHT) || pe == LEFT) && v in Z))
 end
 
-function find_min_dsep(g, X, Y, I, R, veto)
+function find_min_dsep(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y), veto = no_veto)
     A = ancestors(g, union(X, Y, I), veto)
     Z = find_dsep(g, X, Y, I, R, veto)
     Z == false && return false
@@ -84,14 +90,13 @@ function find_min_dsep(g, X, Y, I, R, veto)
 end
 
 function pcp(g, X, Y)
-    return intersect(setdiff(descendants(g, X, no_outgoing(X))
-, X), ancestors(g, Y, no_incoming(X))
+    return intersect(setdiff(descendants(g, X, no_incoming(X)), X), ancestors(g, Y, no_outgoing(X))
 )
 end
 
-function find_covariate_adjustment(g, X, Y, I, R)
+function find_covariate_adjustment(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y))
     PCPXY = pcp(g, X, Y)
-    Z = setdiff(intersect(ancestors(g, union(X, Y, I)), R), union(X, Y, descendants(g, PCPXY)))
+    Z = setdiff(intersect(ancestors(g, union(X, Y, I)), R), X, Y, descendants(g, PCPXY))
     if issubset(I, Z) && alt_test_dsep(g, X, Y, Z, (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
         return Z
     else
@@ -99,7 +104,7 @@ function find_covariate_adjustment(g, X, Y, I, R)
     end
 end
 
-function find_backdoor_adjustment(g, X, Y, I, R)
+function find_backdoor_adjustment(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y))
     bdZ = setdiff(find_covariate_adjustment(g, X, Y, I, R), descendants(g, X, no_incoming(X)))
     if issubset(I, bdZ) && alt_test_dsep(g, X, Y, bdZ, no_outgoing(X))
         return bdZ
@@ -109,22 +114,23 @@ function find_backdoor_adjustment(g, X, Y, I, R)
 end
 
 # this is also minimal bd set!
-function find_min_covariate_adjustment(g, X, Y, I, R)
+function find_min_covariate_adjustment(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y))
     PCPXY = pcp(g, X, Y)
     return find_min_dsep(g, X, Y, I, setdiff(R, descendants(g, PCPXY)), (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
 end
 
-function find_frontdoor_adjustment(g, X, Y, I, R)
+function find_frontdoor_adjustment(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y))
     Za = setdiff(R, bayesball(g, X, Set{Integer}(), no_outgoing(X)))
     A = ancestors(g, Y)
     function Zab_pass(pe, ne, v, w)
-        ne == 1 && return true
-        pe == 1 && v in A && !(w in Za) && return true
-        (pe == -1 || pe == 0) && ne == 0 && w in Za && return true
+        v in X && return false
+        ne == RIGHT && return true
+        pe == RIGHT && v in A && !(w in Za) && return true
+        (pe == INIT || pe == LEFT) && !(w in Za) && return true
         return false
     end
-    Zab = setdiff(Za, gensearch(g, Za, Zab_pass))
-    if issubset(I, Zab) && length(intersect(descendants(g, X, no_outgoing(Zab)))) == 0
+    Zab = setdiff(Za, gensearch(g, Y, Zab_pass))
+    if issubset(I, Zab) && length(intersect(descendants(g, X, no_outgoing(Zab)), Y)) == 0
         return Zab
     else
         return false
@@ -132,29 +138,31 @@ function find_frontdoor_adjustment(g, X, Y, I, R)
 end
 
 # write explanation for these rules
-function find_min_frontdoor_adjustment(g, X, Y, I, R)
+    function find_min_frontdoor_adjustment(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y))
     Zii = find_frontdoor_adjustment(g, X, Y, I, R)
     Zii == false && return false 
     function Za_pass(pe, ne, v, w)
-        pe in [-1, 0] && ne == 0 && !(v in Zii) && !inunion(w, X, Y) && return true
+        pe in [INIT, LEFT] && ne == LEFT && !(v in Zii) && !inunion(w, X, Y) && return true
         return false
     end
     Za = intersect(gensearch(g, Y, Za_pass), Zii) 
     function Zxy_pass(pe, ne, v, w)
-        pe in [-1, 1] && ne == 1 && !(v in Za) && !inunion(w, X, Y, I) && return true
+        pe in [INIT, RIGHT] && ne == RIGHT && !(v in Za) && !inunion(w, X, Y, I) && return true
         return false
     end
     Zxy = intersect(gensearch(g, X, Zxy_pass), Za)
     function Zzy_pass(pe, ne, v, w)
-        pe in [-1, 0] && ne == 0 && !inunion(w, X, I, Zxy) && return true
-        pe in [0, 1] && ne == 1 && !(w in X) && !inunion(v, I, Za) && return true
-        pe == 1 && ne == 0 && inunion(v, I, Za) && !inunion(w, X, I, Zxy) && return true
+        pe in [INIT, LEFT] && ne == LEFT && !inunion(w, X, I, Zxy) && return true
+        pe in [LEFT, RIGHT] && ne == RIGHT && !(w in X) && !inunion(v, I, Za) && return true
+        pe == RIGHT && ne == LEFT && inunion(v, I, Za) && !inunion(w, X, I, Zxy) && return true
         return false
     end
     Zzy = intersect(gensearch(g, union(I, Zxy), Zzy_pass), Za) 
     return union(I, Zxy, Zzy)
 end
 
+
+# TODO: list all d-separators and minimal d-separators
 struct AdjustmentIterator{T<:Integer, F<:Function}
     g::SimpleDiGraph{T}
     X::Set{T}
@@ -200,7 +208,7 @@ function Base.iterate(A::AdjustmentIterator, state)
 end
 
 function list_covariate_adjustment(g, X, Y, I, R)
-    return AdjustmentIterator(g, X, Y, I, R, find_covariate_adjustment)
+    return AdjustmentIterator(g, X, Y, I = Set{Integer}(), R = setdiff(Set(vertices(g)), X, Y), find_covariate_adjustment)
 end
 
 function list_backdoor_adjustment(g, X, Y, I, R)
