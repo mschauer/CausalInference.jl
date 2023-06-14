@@ -1,13 +1,14 @@
 using Graphs
 
 ## missing features:
-# - make functions callable with non-sets (e.g. X = 1, Y = 4)
+# - make functions callable with non-sets (e.g. X = 1, Y = 4) -> what is the best way to do this?
 
 const INIT = 0
 const LEFT = 1
 const RIGHT = 2
 
-# helper functions
+## helper functions
+
 function inunion(w, sets...)
     for S in sets
         w in S && return true
@@ -49,7 +50,9 @@ end
 """
     ancestors(g, X, veto = no_veto)
 
-Returns the set of ancestors of the set of vertices `X` in graph `g`.
+Return the set of ancestors of the set of vertices `X` in graph `g`. 
+
+That is, a vertex is in the output set if it is an ancestor of at least one of the vertices in `X`.
 """
 function ancestors(g, X, veto = no_veto)
     return gensearch(g, X, (pe, ne, v, w) -> ne == LEFT && !veto(pe, ne, v, w))
@@ -58,7 +61,9 @@ end
 """
     descendants(g, X, veto = no_veto)
 
-Returns the set of descendants of the set of vertices `X` in graph `g`.
+Return the set of descendants of the set of vertices `X` in graph `g`. 
+
+That is, a vertex is in the output set if it is a descendant of at least one of the vertices in `X`.
 """
 function descendants(g, X, veto = no_veto)
     return gensearch(g, X, (pe, ne, v, w) -> ne == RIGHT && !veto(pe, ne, v, w))
@@ -71,7 +76,9 @@ end
 """
     alt_test_dsep(g, X, Y, S, veto = no_veto)
 
-Check if sets of vertices `X` and `Y` are d-separated in `g` given `S`.
+Check if sets of vertices `X` and `Y` are d-separated in `g` given `S`. 
+
+An alternative to the `test_dsep` function, which uses gensearch under the hood. Might be (a bit) slower. 
 """
 function alt_test_dsep(g, X, Y, S, veto = no_veto)
     return length(intersect(bayesball(g, X, S, veto), Y)) == 0 
@@ -80,7 +87,9 @@ end
 """
     test_covariate_adjustment(g, X, Y, S)
 
-Check if `S` is a covariate adjustment set relative to `(X, Y)` in graph `g`. This is done by checking the graphical criterion given in https://arxiv.org/abs/1203.3515 using the algorithmic approach proposed in https://arxiv.org/abs/1803.00116.
+Check if `S` is a covariate adjustment set relative to `(X, Y)` in graph `g`. 
+
+Done by checking the graphical criterion given in https://arxiv.org/abs/1203.3515 using the algorithmic approach proposed in https://arxiv.org/abs/1803.00116. Output is a boolean.
 """
 function test_covariate_adjustment(g, X, Y, S) 
     PCPXY = pcp(g, X, Y)
@@ -91,7 +100,9 @@ end
 """
     alt_test_backdoor(g, X, Y, S)
 
-Check if `S` satisfies the backdoor criterion relative to `(X, Y)` in graph `g`.
+Check if `S` satisfies the backdoor criterion relative to `(X, Y)` in graph `g`. 
+
+Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116.
 """
 function alt_test_backdoor(g, X, Y, S)
     length(intersect(S, descendants(g, X))) != 0 && return false
@@ -101,7 +112,9 @@ end
 """
     find_dsep(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y), veto = no_veto)
 
-Finds a d-separator `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. If none exists, `false` is returned. 
+Find a d-separator `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else return `false`. 
+
+Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116. 
 """
 function find_dsep(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y), veto = no_veto)
     Z = intersect(R, setdiff(ancestors(g, union(X, Y, I), veto), X, Y))
@@ -119,7 +132,9 @@ end
 """
     find_min_dsep(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y), veto = no_veto)
 
-Finds an inclusion minimal d-separator `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, i.e., one for which no subset is a d-separator. If none exists, `false` is returned.
+Find an inclusion minimal d-separator `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, i.e., one for which no subset is a d-separator, else return `false`.
+
+Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116. 
 """
 function find_min_dsep(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y), veto = no_veto)
     A = ancestors(g, union(X, Y, I), veto)
@@ -137,7 +152,9 @@ end
 """
     find_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Finds a covariate adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. If none exists, `false` is returned. 
+Find a covariate adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else return `false`. 
+
+Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116. 
 """
 function find_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     PCPXY = pcp(g, X, Y)
@@ -152,7 +169,9 @@ end
 """
     find_backdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Finds a backdoor adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. If none exists, `false` is returned. 
+Find a backdoor adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else return `false`. 
+
+Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116. 
 """
 function find_backdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     bdZ = setdiff(find_covariate_adjustment(g, X, Y, I, R), descendants(g, X, no_incoming(X)))
@@ -166,7 +185,9 @@ end
 """
     find_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Finds an inclusion minimal covariate adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. If none exists, `false` is returned. 
+Find an inclusion minimal covariate adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else return `false`. 
+
+Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116.  
 """
 # this is also minimal bd set!
 function find_min_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
@@ -177,7 +198,9 @@ end
 """
     find_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Finds a frontdoor adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. If none exists, `false` is returned. 
+Find a frontdoor adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else return `false`. 
+
+Follows the algorithm given in  https://arxiv.org/abs/2211.16468. 
 """
 function find_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     Za = setdiff(R, bayesball(g, X, Set{Integer}(), no_outgoing(X)))
@@ -200,7 +223,9 @@ end
 """
     find_min_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Finds an inclusion minimal frontdoor adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. If none exists, `false` is returned. 
+Find an inclusion minimal frontdoor adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else returns `false`. 
+
+Follows the algorithm given in  https://arxiv.org/abs/2211.16468. 
 """
 # write explanation for the pass rules
     function find_min_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
@@ -275,7 +300,7 @@ Base.IteratorSize(::ConstraintIterator) = Base.SizeUnknown()
 """
     list_dseps(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Lists all d-separators `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
+List all d-separators `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
 """
 function list_dseps(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     return ConstraintIterator(g, X, Y, I, R, find_dsep)
@@ -284,7 +309,7 @@ end
 """
     list_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Lists all d-separators `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
+List all covariate adjustment sets `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
 """
 function list_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     return ConstraintIterator(g, X, Y, I, R, find_covariate_adjustment)
@@ -293,7 +318,7 @@ end
 """
     list_backdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Lists all d-separators `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
+List all back-door adjustment sets `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
 """
 function list_backdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     return ConstraintIterator(g, X, Y, I, R, find_backdoor_adjustment)
@@ -302,7 +327,7 @@ end
 """
     list_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-Lists all d-separators `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
+List all front-door adjustment sets `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`. 
 """
 function list_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     return ConstraintIterator(g, X, Y, I, R, find_frontdoor_adjustment)
