@@ -262,10 +262,10 @@ end
 
 function downwards(state, I, R)
     v = first(setdiff(R, I))
-    push!(state, ("up", "I", v, I, R))
-    push!(state, ("down", "I", v, I, R))
-    push!(state, ("up", "R", v, I, R))
-    push!(state, ("down", "R", v, I, R))
+    push!(state, (:up, :I, v, I, R))
+    push!(state, (:down, :I, v, I, R))
+    push!(state, (:up, :R, v, I, R))
+    push!(state, (:down, :R, v, I, R))
 end
 
 # TODO: do this more elegantly
@@ -282,13 +282,13 @@ end
 function Base.iterate(A::ConstraintIterator, state)
     while !isempty(state)
         dir, set, v, I, R = pop!(state)
-        dir == "down" && set == "I" && push!(I, v)
-        dir == "up" && set == "I" && delete!(I, v)
-        dir == "down" && set == "R" && delete!(R, v)
-        dir == "up" && set == "R" && push!(R, v)
+        dir == :down && set == :I && push!(I, v)
+        dir == :up && set == :I && delete!(I, v)
+        dir == :down && set == :R && delete!(R, v)
+        dir == :up && set == :R && push!(R, v)
         A.find(A.g,  A.X, A.Y, I, R) == false && continue
         issetequal(I, R) && return deepcopy(I), state
-        if dir == "down"
+        if dir == :down
             downwards(state, I, R)
         end
     end
