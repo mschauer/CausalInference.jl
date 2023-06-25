@@ -1,6 +1,55 @@
 import Base: iterate, length
 
 """
+    alt_cpdag(g::DiGraph)
+
+Computes CPDAG from a DAG using a simpler adaption of Chickering's conversion algorithm without ordering all edges
+(equivalent to the PC algorithm with `d`-seperation as independence test, see `pc_oracle`.)
+
+Reference: M. Chickering: Learning equivalence classes of Bayesian
+network structures. Journal of Machine Learning Research 2 (2002).
+M. Chickering: A Transformational Characterization of Equivalent Bayesian Network Structures. (1995).
+"""
+function alt_cpdag(g)
+    compelled = SimpleDiGraph(nv(g))
+    reversible = SimpleDiGraph(nv(g))
+    to = topological_sort_by_dfs(g)
+    invto = invperm(to)
+    iscompelled = falses(nv(g))
+    for y in to
+        indegree(g, y) == 0 && continue
+        x = argmax(x -> invto[x], inneighbors(g, y))
+        iscompelled[inneighbors(g, y)] .= false
+        for w in inneighbors(compelled, x)
+            if !has_edge(g, w, y)
+                iscompelled[inneighbors(g, y)] .= true
+                @goto add_edges
+            else
+                iscompelled[w] = true
+            end
+        end
+        for z in inneighbors(g, y)
+            z == x && continue
+            if !has_edge(g, z, x)
+                iscompelled[inneighbors(g, y)] .= true
+                @goto add_edges
+            end
+        end
+        @label add_edges
+        for v in inneighbors(g, y)
+            if iscompelled[v]
+                add_edge!(compelled, v, y) 
+            else
+                add_edge!(reversible, v, y)
+                add_edge!(reversible, y, v)
+            end
+        end
+    end
+    return union(compelled, reversible)
+end
+
+
+"""
     ordered_edges(dag)
 
 Iterator of edges of a dag, ordered in Chickering order:
