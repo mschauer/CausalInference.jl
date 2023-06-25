@@ -272,7 +272,7 @@ end
 function Base.iterate(A::ConstraintIterator)
     R = deepcopy(A.R)
     I = deepcopy(A.I)
-    state = Vector{Tuple{String, String, Int64, Set{Int64}, Set{Int64}}}()
+    state = Vector{Tuple{Symbol, Symbol, Int64, Set{Int64}, Set{Int64}}}()
     A.find(A.g, A.X, A.Y, I, R) == false && return nothing
     issetequal(I, R) && return I, state
     downwards(state, I, R)
