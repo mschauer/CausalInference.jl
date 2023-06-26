@@ -1,5 +1,22 @@
 import Base: iterate, length
 
+function dfs(g, u, visited, to)
+    visited[u] = true
+    for v in outneighbors(g, u)
+        !visited[v] && dfs(g, v, visited, to)
+    end
+    push!(to, u)
+end
+
+function tsort(g)
+    visited = falses(nv(g))
+    to = Vector{Int64}()
+    for u in vertices(g)
+        !visited[u] && dfs(g, u, visited, to)
+    end
+    return reverse(to)
+end
+
 """
     alt_cpdag(g::DiGraph)
 
@@ -13,7 +30,7 @@ M. Chickering: A Transformational Characterization of Equivalent Bayesian Networ
 function alt_cpdag(g)
     compelled = SimpleDiGraph(nv(g))
     reversible = SimpleDiGraph(nv(g))
-    to = topological_sort_by_dfs(g)
+    to = tsort(g)
     invto = invperm(to)
     iscompelled = falses(nv(g))
     for y in to
@@ -71,7 +88,7 @@ struct OrderedEdges
     m::Int
 
     function OrderedEdges(g::DiGraph)
-        ys = topological_sort_by_dfs(g)
+        ys = tsort(g)
         yp = sortperm(ys)
         new(g, ys, yp, nv(g), ne(g))
     end
@@ -94,7 +111,7 @@ end
 # came in handy while prototyping
 function chickering_order(g)
     outp = Pair{Int, Int}[]
-    ys = topological_sort_by_dfs(g)
+    ys = tsort(g)
     yp = sortperm(ys)
     n = nv(g)
     i = 0 # src index
@@ -134,7 +151,7 @@ representation of a DiGraph.
 """
 function cpdag(skel::DiGraph)
     g = copy(skel)
-    ys = topological_sort_by_dfs(g)
+    ys = tsort(g)
     yp = sortperm(ys)
     n = nv(g)
     m = ne(g)
