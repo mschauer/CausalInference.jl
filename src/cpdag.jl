@@ -1,5 +1,9 @@
 import Base: iterate, length
 
+# REMARKS:
+# - implemented own topological sort temporarily as topological_sort_by_dfs from Julia Graphs appears to have an issue (quadratic run-time for sparse graphs)
+# - cpdag(g) potentially has O(m * sqrt(m)) worst-case run-time due to iterating over all w -> x, not only compelled ones. However, in contrast to topological_sort_by_dfs, quadratic run-time behaviour for sparse graphs (e.g. O(n*n*)/O(m*m)) does not seem to appear.
+
 function dfs(g, u, visited, to)
     visited[u] = true
     for v in outneighbors(g, u)
