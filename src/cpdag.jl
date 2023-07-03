@@ -21,6 +21,14 @@ function tsort(g)
     return reverse(to)
 end
 
+function nvertexdigraphfromedgelist(n, edgelist)
+    g = SimpleDiGraph(edgelist)
+    while nv(g) < n
+        add_vertex!(g)
+    end
+    return g
+end
+
 """
     alt_cpdag(g::DiGraph)
 
@@ -32,16 +40,19 @@ network structures. Journal of Machine Learning Research 2 (2002).
 M. Chickering: A Transformational Characterization of Equivalent Bayesian Network Structures. (1995).
 """
 function alt_cpdag(g)
-    compelled = SimpleDiGraph(nv(g))
-    reversible = SimpleDiGraph(nv(g))
+    compelledingoing = [Vector{Int64}() for _ = 1:nv(g)]
+    edgelist = Vector{Edge{Int64}}()
     to = tsort(g)
     invto = invperm(to)
     iscompelled = falses(nv(g))
     for y in to
         indegree(g, y) == 0 && continue
-        x = argmax(x -> invto[x], inneighbors(g, y))
+        x, xidx = -1, -1
+        for z in inneighbors(g, y)
+            invto[z] > xidx && ((x, xidx) = (z, invto[z]))
+        end
         iscompelled[inneighbors(g, y)] .= false
-        for w in inneighbors(compelled, x)
+        for w in compelledingoing[x]
             if !has_edge(g, w, y)
                 iscompelled[inneighbors(g, y)] .= true
                 @goto add_edges
@@ -59,14 +70,15 @@ function alt_cpdag(g)
         @label add_edges
         for v in inneighbors(g, y)
             if iscompelled[v]
-                add_edge!(compelled, v, y) 
-            else
-                add_edge!(reversible, v, y)
-                add_edge!(reversible, y, v)
+                push!(compelledingoing[y], v)
+                push!(edgelist, Edge(v, y))
+            else 
+                push!(edgelist, Edge(v, y))
+                push!(edgelist, Edge(y, v))
             end
         end
     end
-    return union(compelled, reversible)
+    return nvertexdigraphfromedgelist(nv(g), edgelist)
 end
 
 
