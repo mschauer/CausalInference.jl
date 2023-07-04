@@ -183,7 +183,7 @@ function find_backdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set
 end
 
 """
-    find_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
+    find_min_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
 Find an inclusion minimal covariate adjustment set `Z` with `I subseteq Z subseteq R` for sets of vertices `X` and `Y` in `g`, else return `false`. 
 
@@ -191,7 +191,6 @@ Follows the algorithmic approach proposed in https://arxiv.org/abs/1803.00116.
 """
 function find_min_covariate_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     PCPXY = pcp(g, X, Y)    
-    # this is also minimal bd set!
     return find_min_dsep(g, X, Y, I, setdiff(R, descendants(g, PCPXY)), (pe, ne, v, w) -> v in X && w in PCPXY && ne == RIGHT)
 end
 
