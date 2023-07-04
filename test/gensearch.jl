@@ -8,7 +8,7 @@ Y = Set(4)
 
 # for some of the tests other results would not be wrong per se 
 # e.g. for the finding methods, other valid sets could be returned
-# however, the algorithms should be deterministic, so I think the
+# however, the algorithms should be deterministic, so we think the
 # tests are okay for now
 
 @testset "gensearch in1" begin
@@ -31,6 +31,7 @@ Y = Set(4)
     @test find_covariate_adjustment(g, X, Y) == Set([5,6])
     @test find_backdoor_adjustment(g, X, Y) == Set([5,6])
     @test find_min_covariate_adjustment(g, X, Y) ==  Set(5)
+    @test find_min_backdoor_adjustment(g, X, Y) == Set(5)
     @test find_frontdoor_adjustment(g, X, Y) == Set([2,3,7])
     @test Set(list_dseps(g, X, Y)) == Set([Set([3,6]), Set([2,6]), Set([2,3,6]), Set([3,6,7]), Set([2,6,7]), Set([2,3,6,7]), Set([3,5]), Set([2,5]), Set([2,3,5]), Set([3,5,7]), Set([2,5,7]), Set([2,3,5,7]), Set([3,5,6]), Set([2,5,6]), Set([2,3,5,6]), Set([3,5,6,7]), Set([2,5,6,7]), Set([2,3,5,6,7])])
     @test Set(list_covariate_adjustment(g, X, Y)) == Set([Set([5,7]), Set([5]), Set([6]), Set([6,7]), Set([5,6]), Set([5,6,7])])
