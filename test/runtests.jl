@@ -2,8 +2,8 @@ using CausalInference
 using Graphs
 using Test
 
-include("cpdag.jl")
 include("gensearch.jl")
+include("cpdag.jl")
 include("skeleton.jl")
 include("dsep.jl")
 include("pc.jl")
