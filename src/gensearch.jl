@@ -1,11 +1,8 @@
 using Graphs
 
-## missing features:
-# - make functions callable with non-sets (e.g. X = 1, Y = 4) -> what is the best way to do this?
-
-const INIT = 0
-const LEFT = 1
-const RIGHT = 2
+const INIT = 1
+const LEFT = 2
+const RIGHT = 3
 
 ## helper functions
 
@@ -40,19 +37,19 @@ end
 
 
 function gensearch(g, S, pass)
-    visited = falses(3*nv(g))
+    visited = falses(3, nv(g))
     function genvisit(g, v, pe)
-        visited[3*v - pe] = true
-        for ne in [LEFT, RIGHT]
+        visited[pe, v] = true
+        for ne in (LEFT, RIGHT)
             ne == LEFT && (neighbors = inneighbors(g, v))
             ne == RIGHT && (neighbors = outneighbors(g, v))
             for w in neighbors
-                pass(pe, ne, v, w) && !visited[3*w - ne] && genvisit(g, w, ne)
+                pass(pe, ne, v, w) && !visited[ne, w] && genvisit(g, w, ne)
             end
         end
     end
     foreach(s -> genvisit(g, s, INIT), S)
-    return Set([x for x in 1:nv(g) if visited[3*x-2] || visited[3*x-1] || visited[3*x]])
+    return Set(getindex.(findall(any(visited, dims=1)),2))
 end
 
 """
@@ -283,12 +280,12 @@ function find_min_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdif
     return union(I, Zxy, Zzy)
 end
 
-struct ConstraintIterator{T<:Integer, F<:Function}
+struct ConstraintIterator{T<:Integer, S, U<:AbstractSet{T}, F<:Function}
     g::SimpleDiGraph{T}
-    X::Set{T}
-    Y::Set{T}
-    I::Set{T}
-    R::Set{T}
+    X::S
+    Y::S
+    I::U
+    R::U
     find::F
 end
 
