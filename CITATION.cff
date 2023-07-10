@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Schauer"
+  given-names: "Moritz"
+  orcid: "http://orcid.org/0000-0003-3310-7915"
+- family-names: "Keller"
+  given-names: "Martin"
+- family-names: "Wienöbst"
+  given-names: "Marcel"  
+title: "CausalInference.jl"
+doi: 10.5281/zenodo.1005091
+url: "https://github.com/mschauer/CausalInference.jl"
