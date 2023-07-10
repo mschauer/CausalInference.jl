@@ -1,5 +1,87 @@
 import Base: iterate, length
 
+# REMARKS:
+# - implemented own topological sort temporarily as topological_sort_by_dfs from Julia Graphs appears to have an issue (quadratic run-time for sparse graphs)
+# - cpdag(g) potentially has O(m * sqrt(m)) worst-case run-time due to iterating over all w -> x, not only compelled ones. However, in contrast to topological_sort_by_dfs, quadratic run-time behaviour for sparse graphs (e.g. O(n*n*)/O(m*m)) does not seem to appear.
+
+function dfs(g, u, visited, to)
+    visited[u] = true
+    for v in outneighbors(g, u)
+        !visited[v] && dfs(g, v, visited, to)
+    end
+    push!(to, u)
+end
+
+function tsort(g)
+    visited = falses(nv(g))
+    to = Vector{Int64}()
+    for u in vertices(g)
+        !visited[u] && dfs(g, u, visited, to)
+    end
+    return reverse(to)
+end
+
+function nvertexdigraphfromedgelist(n, edgelist)
+    g = SimpleDiGraph(edgelist)
+    while nv(g) < n
+        add_vertex!(g)
+    end
+    return g
+end
+
+"""
+    alt_cpdag(g::DiGraph)
+
+Computes CPDAG from a DAG using a simpler adaption of Chickering's conversion algorithm without ordering all edges
+(equivalent to the PC algorithm with `d`-separation as independence test, see `pc_oracle`.)
+
+Reference: M. Chickering: Learning equivalence classes of Bayesian
+network structures. Journal of Machine Learning Research 2 (2002).
+M. Chickering: A Transformational Characterization of Equivalent Bayesian Network Structures. (1995).
+"""
+function alt_cpdag(g)
+    compelledingoing = [Vector{Int64}() for _ = 1:nv(g)]
+    edgelist = Vector{Edge{Int64}}()
+    to = tsort(g)
+    invto = invperm(to)
+    iscompelled = falses(nv(g))
+    for y in to
+        indegree(g, y) == 0 && continue
+        x, xidx = -1, -1
+        for z in inneighbors(g, y)
+            invto[z] > xidx && ((x, xidx) = (z, invto[z]))
+        end
+        iscompelled[inneighbors(g, y)] .= false
+        for w in compelledingoing[x]
+            if !has_edge(g, w, y)
+                iscompelled[inneighbors(g, y)] .= true
+                @goto add_edges
+            else
+                iscompelled[w] = true
+            end
+        end
+        for z in inneighbors(g, y)
+            z == x && continue
+            if !has_edge(g, z, x)
+                iscompelled[inneighbors(g, y)] .= true
+                @goto add_edges
+            end
+        end
+        @label add_edges
+        for v in inneighbors(g, y)
+            if iscompelled[v]
+                push!(compelledingoing[y], v)
+                push!(edgelist, Edge(v, y))
+            else 
+                push!(edgelist, Edge(v, y))
+                push!(edgelist, Edge(y, v))
+            end
+        end
+    end
+    return nvertexdigraphfromedgelist(nv(g), edgelist)
+end
+
+
 """
     ordered_edges(dag)
 
@@ -22,7 +104,7 @@ struct OrderedEdges
     m::Int
 
     function OrderedEdges(g::DiGraph)
-        ys = topological_sort_by_dfs(g)
+        ys = tsort(g)
         yp = sortperm(ys)
         new(g, ys, yp, nv(g), ne(g))
     end
@@ -45,7 +127,7 @@ end
 # came in handy while prototyping
 function chickering_order(g)
     outp = Pair{Int, Int}[]
-    ys = topological_sort_by_dfs(g)
+    ys = tsort(g)
     yp = sortperm(ys)
     n = nv(g)
     i = 0 # src index
@@ -85,7 +167,7 @@ representation of a DiGraph.
 """
 function cpdag(skel::DiGraph)
     g = copy(skel)
-    ys = topological_sort_by_dfs(g)
+    ys = tsort(g)
     yp = sortperm(ys)
     n = nv(g)
     m = ne(g)
