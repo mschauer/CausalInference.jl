@@ -1,4 +1,3 @@
-push!(LOAD_PATH,"../src/")
 using Documenter
 using CausalInference
 
@@ -15,4 +14,4 @@ makedocs(modules = [CausalInference],
 # Documenter can also automatically deploy documentation to gh-pages.
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
-# deploydocs(repo = "github.com/mschauer/CausalInference.jl.git")
+deploydocs(repo = "github.com/mschauer/CausalInference.jl.git")
