@@ -5,6 +5,7 @@
 ```@docs
 dsep
 cpdag
+alt_cpdag
 vskel
 has_recanting_witness
 backdoor_criterion
@@ -71,4 +72,25 @@ CausalInference.disjoint_sorted
 CausalInference.ordered_edges
 CausalInference.insorted
 CausalInference.removesorted!
+```
+
+## Adjustment
+```@docs
+ancestors
+descendants
+alt_test_dsep
+test_covariate_adjustment
+alt_test_backdoor
+find_dsep
+find_min_dsep
+find_covariate_adjustment
+find_backdoor_adjustment
+find_frontdoor_adjustment
+find_min_covariate_adjustment
+find_min_backdoor_adjustment
+find_min_frontdoor_adjustment
+list_dseps
+list_covariate_adjustment
+list_backdoor_adjustment
+list_frontdoor_adjustment
 ```
