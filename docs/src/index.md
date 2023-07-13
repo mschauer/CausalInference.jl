@@ -1,10 +1,10 @@
 # CausalInference.jl
 
-A Julia package for causal inference, graphical models and structure learning with the PC and FCI algorithms. This package contains for now the stable PC algorithm [`pcalg`](@ref) as well as the extended FCI algorithm. 
+A Julia package for causal inference, graphical models and structure learning. This package contains the stable PC algorithm [`pcalg`](@ref) and the extended FCI algorithm, as well as functionality to compute adjustment sets which can be used as control variables to compute causal effects by regression. 
 
 ## Introduction
 
-The aim of this package is to provide Julia implementations of two popular algorithms for causal structure identification, the PC algorithm and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data.
+The first aim of this package is to provide Julia implementations of popular algorithms for causal structure identification, the PC algorithm and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data. Secondly, similarly to DAGitty, covariate adjustment sets for estimating causal effects for example by regression can be computed. 
 
 Causal inference is by no means an easy subject. Readers without any prior exposure to these topics are encouraged to go over the following resources in order to get a basic idea of what's involved in causal inference:
 
@@ -25,8 +25,10 @@ Both types of graphs are represented by sorted adjacency lists (vectors of vecto
 
 CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
 
+The listing algorithms for adjustment sets are implemented from scratch using an memority efficient iterator protocol to handle large problems.
+
 ## Performance
-The speed of the algorithm is comparable with the C++ code of the R package `pcalg`.
+The speed of the PC algorithm is comparable with the C++ code of the R package `pcalg`.
 
 ## Plotting
 Main package provides a text-based output describing all identified edges for PC and FCI algorithm ([`plot_pc_graph_text`](@ref) and [`plot_fci_graph_text`](@ref), respectively).
@@ -46,3 +48,6 @@ See [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInferenc
 * T. Richardson, P. Spirtes: Ancestral Graph Markov Models. *The Annals of Statistics* 30 (2002), 962-1030
 * D. M. Chickering: Learning Equivalence Classes of Bayesian-Network Structures. *Journal of Machine Learning Research* 2 (2002), 445-498.
 * D. Colombo, M. H. Maathuis: Order-Independent Constraint-Based Causal Structure Learning. *Journal of Machine Learning Research* 15 (2014), 3921-3962.
+* B. van der Zander, M. Liśkiewicz, J. Textor: Separators and Adjustment Sets in Causal Graphs: Complete Criteria and an Algorithmic Framework. [
+https://doi.org/10.48550/arXiv.1803.00116]
+
