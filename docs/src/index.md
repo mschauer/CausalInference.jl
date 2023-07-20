@@ -48,6 +48,5 @@ See [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInferenc
 * T. Richardson, P. Spirtes: Ancestral Graph Markov Models. *The Annals of Statistics* 30 (2002), 962-1030
 * D. M. Chickering: Learning Equivalence Classes of Bayesian-Network Structures. *Journal of Machine Learning Research* 2 (2002), 445-498.
 * D. Colombo, M. H. Maathuis: Order-Independent Constraint-Based Causal Structure Learning. *Journal of Machine Learning Research* 15 (2014), 3921-3962.
-* B. van der Zander, M. Liśkiewicz, J. Textor: Separators and Adjustment Sets in Causal Graphs: Complete Criteria and an Algorithmic Framework. [
-https://doi.org/10.48550/arXiv.1803.00116]
+* B. van der Zander, M. Liśkiewicz, J. Textor: Separators and Adjustment Sets in Causal Graphs: Complete Criteria and an Algorithmic Framework. (https://doi.org/10.48550/arXiv.1803.00116)
 
