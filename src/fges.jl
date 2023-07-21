@@ -66,22 +66,31 @@ Compute a causal graph for the given observed data.
 """
 function fges(data; penalty = 1.0, verbose=false)
 
+    # data type / precision
+    scoreT = eltype(data)
+
     # Parse the inputted data
     dataParsed = ParseData(data, penalty)
 
     # Create an empty graph with one node for each feature
     g = DiGraph(dataParsed.numFeatures)
 
+    return fges_internal(g, scoreT, dataParsed; penalty, verbose)
+end
+
+function fges_internal(g, scoreT, data; penalty = 1.0, verbose=false)
+
     verbose && println("Start forward search")
     # Perform the forward search 
-    Search!(g, dataParsed, Insert!, verbose)
+    
+    ges_search!(g, Step{Int, scoreT}(), data, Insert!, verbose)
 
     verbose && println("Start backward search")
     # Perform the backward search 
-    Search!(g, dataParsed, Delete!, verbose)
+    ges_search!(g, Step{Int, scoreT}(), data, Delete!, verbose)
     
-    # Return the graph
-    return g
+    return g # Return the graph
+
 end
 
 ####################################################################
@@ -127,24 +136,21 @@ end
 # Forward and Backward search
 ####################################################################
 
-function Search!(g, dataParsed::ParseData{Matrix{A}}, operator, verbose) where A
-
-    # Create a container to hold information about the next step
-    newStep = Step{Int,A}()
+function ges_search!(g, newStep, data, operator, verbose)
 
     # Continually add/remove edges to the graph until the score stops increasing
     while true
         
         # Get the new best step (depends on if we're inserting or deleting)
         if operator == Insert!
-            findNextEquivClass!(newStep, dataParsed, g, findBestInsert, verbose)
+            findNextEquivClass!(newStep, data, g, findBestInsert, verbose)
         else
-            findNextEquivClass!(newStep, dataParsed, g, findBestDelete, verbose)
+            findNextEquivClass!(newStep, data, g, findBestDelete, verbose)
         end
         
         
         # If the score did not improve...
-        if newStep.Δscore ≤ zero(A)
+        if newStep.Δscore ≤ 0
             #...stop searching
             break
         end
@@ -159,7 +165,7 @@ function Search!(g, dataParsed::ParseData{Matrix{A}}, operator, verbose) where A
         meekRules!(g)
 
         # Reset the score
-        newStep.Δscore = zero(A)
+        newStep.Δscore = 0
 
         
     end
@@ -168,7 +174,7 @@ function Search!(g, dataParsed::ParseData{Matrix{A}}, operator, verbose) where A
 end
 
 
-function findNextEquivClass!(newStep, dataParsed, g, findBestOperation::Function, verbose)
+function findNextEquivClass!(newStep, data, g, findBestOperation::Function, verbose)
 
     # Parallelization with synced threads (to avoid race conditions)
     @sync begin
@@ -185,7 +191,7 @@ function findNextEquivClass!(newStep, dataParsed, g, findBestOperation::Function
                         #(1) check if a valid operator exists
                         #(2) score all valid operators and return the one with the highest score
                         #findBestOperation is either "findBestInsert" or "findBestDelete"
-                    (bestSubset, bestScore) = findBestOperation(dataParsed, g, x, y)
+                    (bestSubset, bestScore) = findBestOperation(newStep, data, g, x, y)
 
                     # If the best valid operator was better than any previously found...
                     if bestScore > newStep.Δscore 
@@ -204,7 +210,7 @@ function findNextEquivClass!(newStep, dataParsed, g, findBestOperation::Function
 end
 
 
-function findBestInsert(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
+function findBestInsert(step, dataParsed, g, x, y)
     # Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Txy: any subset of the undirected neighbors of y not connected to x
@@ -213,7 +219,7 @@ function findBestInsert(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
 
 
     # Create two containers to hold the best found score and best subset of Tyx
-    bestScore = zero(A)
+    bestScore = zero(step.Δscore)
     bestT = Vector{Int}()
 
     # Keep a list of invalid sets
@@ -246,7 +252,7 @@ function findBestInsert(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
 end
 
 # Check if the set T is contained in any invalid set
-function checkSupersets(T,invalid)
+function checkSupersets(T, invalid)
     for i ∈ invalid
         if i ⊆ T
             return false
@@ -256,7 +262,7 @@ function checkSupersets(T,invalid)
 end
 
 
-function findBestDelete(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
+function findBestDelete(step, dataParsed, g, x, y)
     # Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Hyx: any subset of the undirected neighbors of y that are connected to x
@@ -264,7 +270,7 @@ function findBestDelete(dataParsed::ParseData{Matrix{A}}, g, x, y) where A
     Hyx = NAyx
 
     # Ceate two containers to hold the best found score and best subset of Tyx
-    bestScore = zero(A)
+    bestScore = zero(step.Δscore)
     bestH = Vector{Int}()
 
     # Loop through all possible subsets of Hyx
