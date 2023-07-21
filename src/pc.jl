@@ -95,11 +95,6 @@ function unshielded(g)
     Z
 end
 
-isadjacent(dg, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
-has_both(dg, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
-
-remove!(dg::DiGraph, e::Pair) = rem_edge!(dg, Edge(e))
-remove!(dg::Graph, e::Tuple) = rem_edge!(dg, Edge(e))
 
 """
     vskel(g)
