@@ -2,6 +2,7 @@ using CausalInference
 using Graphs
 using Test
 
+include("fges.jl")
 include("gensearch.jl")
 include("cpdag.jl")
 include("skeleton.jl")
@@ -12,4 +13,3 @@ include("witness.jl")
 include("fci.jl")
 include("klentropy.jl")
 include("backdoor.jl")
-
