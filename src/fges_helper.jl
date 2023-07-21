@@ -1,156 +1,13 @@
 ####################################################################
-# is* functions
-####################################################################
-
-"""
-    isundirected(g, edge::Edge)
-    isundirected(g, x, y)
-Test if `x` and `y` are connected by a undirected edge in the graph `g`.
-Can also perform the same test given an `edge`.
-"""
-isundirected(g, x, y) = has_edge(g,x,y) && has_edge(g,y,x)
-isundirected(g, edge) = has_edge(g,edge) && has_edge(g,reverse(edge))
-
-"""
-    isadjacent(g, edge::Edge)
-    isadjacent(g, x, y)
-Test if `x` and `y` are connected by a any edge in the graph `g`.
-Can also perform the same test given an `edge`.
-"""
-isadjacent(g, edge) = has_edge(g,edge) || has_edge(g,reverse(edge))
-#isadjacent(g, x, y) = has_edge(g,x,y) || has_edge(g,y,x) #defined in pc.jl
-
-"""
-    isparent(g, edge::Edge)
-    isparent(g, x, y)
-Test if `x` is a parent of `y` in the graph `g`, meaning x→y.
-Can also perform the same test given an `edge`.
-"""
-isparent(g, edge) = has_edge(g,edge) && !has_edge(g,reverse(edge))
-isparent(g, x, y) = has_edge(g,x,y) && !has_edge(g,y,x)
-
-
-"""
-    ischild(g, edge::Edge)
-    ischild(g, x, y)
-Test if `x` is a child of `y` in the graph `g`, meaning x←y.
-Can also perform the same test given an `edge`.
-"""
-ischild(g, edge) = !has_edge(g,edge) && has_edge(g,reverse(edge))
-ischild(g, x, y) = !has_edge(g,x,y) && has_edge(g,y,x)
-
-
-"""
-    isdescendent(g, edge::Edge)
-    isdescendent(g, x, y)
-Return `true` if `x`←`y` OR `x`-`y` in the graph `g`.
-"""
-isdescendent(g, edge) = has_edge(g,reverse(edge))
-isdescendent(g, x, y) = has_edge(g,y,x)
-
-"""
-    isoriented(g, edge::Edge)
-    isoriented(g, x, y)
-Test if `x` and `y` are connected by a directed edge in the graph `g`, either x←y OR x→y.
-Can also perform the same test given an `edge`.
-"""
-isoriented(g, edge) = has_edge(g,edge) ⊻ has_edge(g,reverse(edge)) # xor
-isoriented(g, x, y) = has_edge(g,x,y) ⊻ has_edge(g,y,x)
-
-
-"""
-    isclique(g, nodes)
-Return `true` if all vertices in `nodes` are connected to each other in the graph `g`.
-"""
-function isclique(g, nodes)
-
-    for nodePair in allpairs(nodes)
-        if !isadjacent(g, nodePair)
-            return false
-        end
-    end
-
-    return true
-end
-
-
-#Do the nodesRemoved block all semi-directed paths between src and dest?
-"""
-    isblocked(g, src, dest, nodesRemoved)
-Return `true` if there is no semi-directed path between `src` and `dest` in the graph `g`.
-A set of vertices (`nodesRemoved`) can be removed from the graph before searching for a semi-directed path.
-A semi-directed path between `src` and `dest` is a list of edges in `g` where every edge is either undirected or points toward `dest`. 
-    src → x₁ - x₂ → dest ✓
-    src → x₁ ← x₂ - dest ✖
-"""
-function isblocked(g, x, y, nodesRemoved)
-
-    #Keep track of all the nodes visited
-    visited = zeros(Bool, nv(g))
-
-    # mark excluded vertices as visited
-    for vᵢ in nodesRemoved 
-        visited[vᵢ] = true
-    end
-
-    #If src or dest were in nodesRemoved, the path is blocked
-    (visited[x] || visited[y]) && return true
-
-    #if the src and dest are the same, path is itself
-    x == y && return false
-
-    #check if scr or dest have no neighbors
-    if countNeighbors(g, x)==0 || countNeighbors(g, y)==0
-        return true
-    end
-
-    queue = [x]
-    visited[x] = true
-    while !isempty(queue)
-        currentNode = popfirst!(queue) # get new element from queue
-        for vᵢ in descendent(g,currentNode)
-            vᵢ == y && return false
-            if !visited[vᵢ]
-                push!(queue, vᵢ) # push onto queue
-                visited[vᵢ] = true
-            end
-        end
-    end
-    return true
-end
-
-
-
-####################################################################
-# Modify Edges
-####################################################################
-
-"""
-    orientedge!(g, x, y)
-Update the edge `x`-`y` to `x`→`y` in the graph `g`. 
-"""
-orientedge!(g, edge) = rem_edge!(g, reverse(edge))
-orientedge!(g, x, y) = rem_edge!(g, y, x)
-
-
-
-####################################################################
 # Neighborhood functions 
 ####################################################################
 
-#Should these be non-allocating iterators? 
-neighborsGeneral(isFunction::Function, g, x) = Iterators.filter(vᵢ -> isFunction(g,vᵢ,x), vertices(g))
+# Should these be non-allocating iterators? 
+neighbors_general(f, g, x) = Iterators.filter(vᵢ -> f(g, vᵢ, x), vertices(g))
 
-#Note: inneighbors and outneighbors are already defined in Graphs.jl
+# Note: inneighbors and outneighbors are already defined in Graphs.jl
 
-#All vertices connected to x by an undirected edge
-neighbors_undirect(g, x) = neighborsGeneral(isundirected, g, x)
-
-#these are just aliases for the functions above
-parents(g, x) = inneighbors(g, x)
-children(g, x) = outneighbors(g, x)
-
-descendent(g, x) = neighborsGeneral(isdescendent, g, x)
+descendent(g, x) = neighbors_general(isdescendent, g, x)
 
 
 ####################################################################
@@ -178,7 +35,7 @@ countNeighbors_in(g, x) = countGeneral(isparent, g, x)
 countNeighbors_out(g, x) = countGeneral(ischild, g, x)
 
 #All vertices connected to x by an undirected edge
-countNeighbors_undirect(g, x) = countGeneral(isundirected, g, x)
+countNeighbors_undirected(g, x) = countGeneral(isundirected, g, x)
 
 #these are just aliases for the functions above
 countParents(g, x) = countNeighbors_in(g, x)
@@ -210,7 +67,7 @@ alledges(g) = [Edge(nodePair) for nodePair in allpairs(vertices(g)) if isadjacen
 # for x-y, get undirected neighbors of y and any neighbor of x
 #calcNAyx(g, y::Integer, x::Integer) = setdiff(neighbors_undirect(g,y) ∩ neighbors(g,x), x)
 function calcNAyx(g, y, x)
-    neighborList = Int64[]
+    neighborList = eltype(g)[]
 
     #loop through all vertices except for x
     for vᵢ in Iterators.filter(!isequal(x),vertices(g))
