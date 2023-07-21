@@ -13,8 +13,3 @@ See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) f
 ![Example output of PC algorithm](assets/pc_graph_linear.png)
 
 
-# FAQ
-
-**Q:** I looked for "causal inference" and found [CausalInference.jl](.) and [Omega.jl](http://www.zenna.org/Omega.jl/latest/causal/)... 
-**A:** CausalInference.jl is about causal discovery; you observe the data and want to infer the causal structure. Omega lets you reason what happens then: when you intervene ("do calculus") and want to cause changes.
-

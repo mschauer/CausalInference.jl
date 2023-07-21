@@ -33,6 +33,9 @@ h = pc_oracle(digraph(E1a))
 @test digraph(C1) == cpdag(digraph(E1a))
 @test digraph(C1) == cpdag(digraph(E1b))
 @test digraph(C1) == cpdag(digraph(E1c))
+@test digraph(C1) == alt_cpdag(digraph(E1a))
+@test digraph(C1) == alt_cpdag(digraph(E1b))
+@test digraph(C1) == alt_cpdag(digraph(E1c))
 
 for (C, Es) in [(C1, [E1a, E1b, E1c]),
     (C2, [E2a]),
@@ -42,6 +45,7 @@ for (C, Es) in [(C1, [E1a, E1b, E1c]),
         global h = pc_oracle(digraph(E))
         @test sort(C) == sort(vpairs(h))
         @test digraph(C) == cpdag(digraph(E))
+        @test digraph(C) == alt_cpdag(digraph(E)) 
     end
 end
 
@@ -51,6 +55,10 @@ for n in 0:10
         global g = randdag(n, alpha)
         h1 = pc_oracle(g)
         h2 = cpdag(g)
+        h1 == h2 || println(vpairs(g))
+        @test vpairs(h1) ⊆ vpairs(h2)
+        @test vpairs(h2) ⊆ vpairs(h1)
+        h2 = alt_cpdag(g)
         h1 == h2 || println(vpairs(g))
         @test vpairs(h1) ⊆ vpairs(h2)
         @test vpairs(h2) ⊆ vpairs(h1)
@@ -67,14 +75,20 @@ end
     h1 == h2 || println(vpairs(g))
     @test vpairs(h1) ⊆ vpairs(h2)
     @test vpairs(h2) ⊆ vpairs(h1)
+    h2 = alt_cpdag(g)
+    h1 == h2 || println(vpairs(g))
+    @test vpairs(h1) ⊆ vpairs(h2)
+    @test vpairs(h2) ⊆ vpairs(h1)
 end
 
-@testset "orient after v structre" begin
+@testset "orient after v-structure" begin
     global g = digraph([1 => 4, 2 => 1, 3 => 1])
     @test sort(vpairs(vskel(g))) == [1 => 4, 2 => 1, 3 => 1, 4 => 1]
 
     h1 = pc_oracle(g)
     h2 = cpdag(g)
+    @test h1 == h2
+    h2 = alt_cpdag(g)
     @test h1 == h2
 end
 
@@ -84,5 +98,7 @@ end
 
     h1 = pc_oracle(g)
     h2 = cpdag(g)
+    @test h1 == h2
+    h2 = alt_cpdag(g)
     @test h1 == h2
 end
