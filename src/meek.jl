@@ -91,8 +91,7 @@ end
 """
     meek_rule4(dg, v, w)
 
-Rule 4: Orient v-w into v→w if v-k→l→w where v--l and not adj(k,w) [check].
-Used in GES but not used in PC algorithm?
+Rule 4: Orient v-w into v→w if v-k→l→w where adj(v,l) and not adj(k,w) [check].
 """
 function meek_rule4(dg, v, w)
     for l in inneighbors(dg, w)
