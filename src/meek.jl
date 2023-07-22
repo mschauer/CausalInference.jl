@@ -1,22 +1,29 @@
 # http://proceedings.mlr.press/v89/katz19a/katz19a-supp.pdf
 # https://arxiv.org/pdf/1302.4972.pdf
-function meek_rules!(g)
+"""
+    meek_rules!(g; rule4=false)
+
+Apply Meek's rules 1-3 or 1-4 with rule4=true to orient edges in a 
+partially directed graph without creating cycles or new v-structures.
+Rule 4 is needed if edges are compelled/preoriented using external knowledge.
+"""
+function meek_rules!(g; rule4=false)
     while true 
         done = true
         # Loop through all the edges in the graph (u-v)
         for e in collect(edges(g)) # collect iterator as we are deleting
             (u, v) = src(e), dst(e)
-            # We only need to update undirected edges
-            !has_edge(g, reverse(e)) && continue
-            # check only case u->v, well check v->u later
-        
-            if meek_rule1(g, u, v) || meek_rule2(g, u, v) || meek_rule3(g, u, v) || meek_rule4(g, u, v)
+            # We only need to update (still) undirected edges
+            !has_both(g, e) && continue
+
+            # check only case u->v, we'll check v->u later
+            if meek_rule1(g, u, v) || meek_rule2(g, u, v) || meek_rule3(g, u, v) || (rule4 && meek_rule4(g, u, v))
                 # Make u→v
                 remove!(g, v => u)
                 done = false
             end
         end
-        done && return 
+        done && return g
     end
 end
 
