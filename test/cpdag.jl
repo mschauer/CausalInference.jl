@@ -84,6 +84,8 @@ end
 @testset "orient after v-structure" begin
     global g = digraph([1 => 4, 2 => 1, 3 => 1])
     @test sort(vpairs(vskel(g))) == [1 => 4, 2 => 1, 3 => 1, 4 => 1]
+    @test sort(vpairs(alt_vskel(g))) == [1 => 4, 2 => 1, 3 => 1, 4 => 1]
+    @test sort(vpairs(vskel!(copy(g)))) == [1 => 4, 2 => 1, 3 => 1, 4 => 1]
 
     h1 = pc_oracle(g)
     h2 = cpdag(g)
@@ -95,7 +97,9 @@ end
 @testset "check that edge is still undirected" begin
     global g = digraph([1 => 4, 2 => 1, 3 => 1, 3 => 4])
     @test sort(vpairs(vskel(g))) == [1 => 4, 2 => 1, 3 => 1, 3 => 4, 4 => 1, 4 => 3]
-
+    @test sort(vpairs(alt_vskel(g))) == [1 => 4, 2 => 1, 3 => 1, 3 => 4, 4 => 1, 4 => 3]
+    @test sort(vpairs(vskel!(copy(g)))) == [1 => 4, 2 => 1, 3 => 1, 3 => 4, 4 => 1, 4 => 3]
+    
     h1 = pc_oracle(g)
     h2 = cpdag(g)
     @test h1 == h2

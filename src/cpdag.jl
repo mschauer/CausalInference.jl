@@ -227,3 +227,45 @@ function cpdag(skel::DiGraph)
     end
     g
 end
+"""
+    vskel(g)
+
+Skeleton and `v`-structures. (Currently from the first step of the pc-Alg.)
+"""
+function vskel(g::DiGraph)
+    g2 = DiGraph(Graph(g))
+    for v in vertices(g)
+        ns = inneighbors(g, v)
+        n = length(ns)
+        protected = falses(n) # mark in-neighbours which are v structures
+        for (i, j) in combinations(1:n, 2) 
+            if !isadjacent(g, ns[i], ns[j]) 
+                protected[i] = protected[j] = true
+            end
+        end
+        for i in 1:n
+            if protected[i]
+                remove!(g2, v=>ns[i])
+            end
+        end
+    end
+    g2
+end
+function vskel!(g::DiGraph)
+    for v in vertices(g)
+        ns = inneighbors(g, v)
+        n = length(ns)
+        protected = falses(n) # mark in-neighbours which are v structures
+        for (i, j) in combinations(1:n, 2) 
+            if !isadjacent(g, ns[i], ns[j]) 
+                protected[i] = protected[j] = true
+            end
+        end
+        for i in 1:n
+            if !protected[i]
+                add_edge!(g, v=>ns[i]) # make undirected
+            end
+        end
+    end
+    g
+end

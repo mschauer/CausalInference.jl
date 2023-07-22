@@ -96,12 +96,8 @@ function unshielded(g)
 end
 
 
-"""
-    vskel(g)
 
-Skeleton and `v`-structures. (Currently from the first step of the pc-Alg.)
-"""
-vskel(g) = _vskel(nv(g), dseporacle, g)
+alt_vskel(g) = _vskel(nv(g), dseporacle, g)
 
 function _vskel(n::V, I, par...) where {V}
     # Step 1

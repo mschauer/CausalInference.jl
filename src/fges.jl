@@ -160,7 +160,7 @@ function ges_search!(g, newStep, data, operator, verbose)
         
         # Covert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
-        graphVStructure!(g)
+        vskel!(g)
         # Apply the 4 Meek rules to orient some edges in the graph
         meek_rules!(g)
 
@@ -347,22 +347,4 @@ end
 end
 
 
-
-# Revert a graph to undirected edges and unshielded colliders (i.e. parents not adjacent)
-function graphVStructure!(g)
-    
-    # loop through all vertices
-    for x in vertices(g)
-        # get the parents of current vertex
-        parentsX = parents(g,x)
-        # if all the parents are adjacent, undirect the edges
-        # (if there is only 1 parent, then it is still a clique)
-        if isclique(g, parentsX)
-            for p in parentsX
-                add_edge!(g, x, p)
-                add_edge!(g, p, x)
-            end
-        end
-    end
-end
 
