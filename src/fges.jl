@@ -211,6 +211,8 @@ end
 
 
 function findBestInsert(step, dataParsed, g, x, y)
+    isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
+
     # Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Txy: any subset of the undirected neighbors of y not connected to x

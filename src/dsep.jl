@@ -1,53 +1,5 @@
-# Blocking and d-seperation
+# Blocking and d-separation
 
-isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
-
-#Do the nodesRemoved block all semi-directed paths between src and dest?
-#= """
-    isblocked(g, src, dest, nodesRemoved)
-
-Return `true` if there is no semi-directed path between `src` and `dest` in the graph `g`.
-A set of vertices (`nodesRemoved`) can be removed from the graph before searching for a semi-directed path.
-A semi-directed path between `src` and `dest` is a list of edges in `g` where every edge is either undirected or points toward `dest`. 
-    src → x₁ - x₂ → dest ✓
-    src → x₁ ← x₂ - dest ✖
-"""
-function isblocked(g, x, y, nodesRemoved)
-
-    # Keep track of all the nodes visited
-    visited = zeros(Bool, nv(g))
-
-    # Mark excluded vertices as visited
-    for vᵢ in nodesRemoved 
-        visited[vᵢ] = true
-    end
-
-    # If src or dest were in nodesRemoved, the path is blocked
-    (visited[x] || visited[y]) && return true
-
-    # If the src and dest are the same, path is itself
-    x == y && return false
-
-    # Check if scr or dest have no neighbors
-    if hasnoneighbors(g, x) || hasnoneighbors(g, y)
-        return true
-    end
-
-    queue = [x]
-    visited[x] = true
-    while !isempty(queue)
-        current = popfirst!(queue) # get new element from queue
-        for vᵢ in descendent(g, current)
-            vᵢ == y && return false
-            if !visited[vᵢ]
-                push!(queue, vᵢ) # push onto queue
-                visited[vᵢ] = true
-            end
-        end
-    end
-    return true
-end
-=#
 
 """
     dsep(g::AbstractGraph, u, v, s; verbose = false)
