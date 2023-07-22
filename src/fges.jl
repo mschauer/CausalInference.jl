@@ -62,7 +62,7 @@ end
 """
     fges(data; penalty = 1.0, verbose=false)
 
-Compute a causal graph for the given observed data.
+Compute a causal graph for the given observed data using GES.
 """
 function fges(data; penalty = 1.0, verbose=false)
 
@@ -162,7 +162,7 @@ function ges_search!(g, newStep, data, operator, verbose)
         # Undirect all edges unless they participate in a v-structure
         graphVStructure!(g)
         # Apply the 4 Meek rules to orient some edges in the graph
-        meekRules!(g)
+        meek_rules!(g)
 
         # Reset the score
         newStep.Δscore = 0
@@ -176,12 +176,10 @@ end
 
 function findNextEquivClass!(newStep, data, g, findBestOperation::Function, verbose)
 
-    # Parallelization with synced threads (to avoid race conditions)
-    @sync begin
+    begin
         # Loop through all possible node combinations
         for (x,y) in allpairs(vertices(g)) 
-            # Spawn a new thread
-            Threads.@spawn begin
+            begin
                 # Check if there is an edge between two vertices
                 hasEdge = isadjacent(g,x,y)
 
@@ -350,10 +348,6 @@ end
 
 
 
-####################################################################
-# Using Meek's Rules to Update PDAG
-####################################################################
-
 # Revert a graph to undirected edges and unshielded colliders (i.e. parents not adjacent)
 function graphVStructure!(g)
     
@@ -372,46 +366,3 @@ function graphVStructure!(g)
     end
 end
 
-
-#Thoughts on improvement
-    #Would it be cleaner to find all unique triples where one edge is undirected?
-    #Can this update be more local? Most edges will remain unchanged.
-
-# Categorize neighboring edges as "parent", "child", or "undirected"
-function categorizeNeighbors(g, x, y)
-    
-    # Create a dictionary of neighbors (e.g. vertex 5 => :parent)
-    xNeighbors = Dict{Int, Symbol}()
-    yNeighbors = Dict{Int, Symbol}()
-
-    # Loop through all the vertices in the graph
-    for vᵢ in vertices(g)
-
-        # If vᵢ is adjacent, give it a category
-        if isadjacent(g, x, vᵢ)
-            xNeighbors[vᵢ] = setCategory(g, vᵢ, x)
-        end
-
-        # Same procedure to the other vertex in the current edge
-        if isadjacent(g, y, vᵢ)
-            yNeighbors[vᵢ] = setCategory(g, vᵢ, y)
-        end
-    end
-
-    return (xNeighbors, yNeighbors)
-end
-
-
-function setCategory(g, v₁, v₂)
-
-    # Test if v₁ → v₂
-    if isparent(g,v₁,v₂)
-        return :parent
-    # Test if v₁ ← v₂
-    elseif ischild(g,v₁,v₂)
-        return :child
-    # If not then we must have an undirected edge
-    else
-        return :undirected
-    end
-end

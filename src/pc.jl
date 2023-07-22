@@ -193,6 +193,34 @@ function apply_pc_rules(g, dg; VERBOSE = false)
         for e in edges(g)
             for e_ in (e, reverse(e))
                 v, w = Tuple(e_)
+
+                # Rule 1: Orient v-w into v->w whenever there is u->v
+                # such that u and w are not adjacent
+                if meek_rule1(dg, v, w)
+                    VERBOSE && println("rule 1: ", v => w)
+                    remove!(dg, w => v)
+                    push!(removed, (w, v))
+                    @goto ende
+                end
+
+                # Rule 2: Orient v-w into v->w whenever there is a chain
+                # v->k->w.
+                if meek_rule2(dg, v, w)
+                    VERBOSE && println("rule 2: ", v => w)
+                    remove!(dg, w => v)
+                    push!(removed, (w, v))
+                    @goto ende
+                end
+
+                # Rule 3: Orient v-w into v->w whenever there are two chains
+                # v-k->w and v-l->w such that k and l are nonadjacent 
+                if meek_rule3(dg, v, w)
+                    VERBOSE && println("rule 3: ", v => w)
+                    remove!(dg, w => v)
+                    push!(removed, (w, v))
+                    @goto ende
+                end
+#=
                 # Rule 1: Orient v-w into v->w whenever there is u->v
                 # such that u and w are not adjacent
                 for u in inneighbors(dg, v)
@@ -243,6 +271,7 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                     push!(removed, (w, v))
                     @goto ende
                 end
+=#
             end
         end
 
