@@ -1,13 +1,12 @@
 # Edges in partially directed graphs
 
+hasnoneighbors(g, v) = isempty(inneighbors(g, v)) && isempty(outneighbors(g, v))
+
 """
-    isadjacent(g, edge::Edge)
     isadjacent(g, x, y)
 
 Test if `x` and `y` are connected by a any edge in the graph `g`.
-Can also perform the same test given an `edge`.
 """
-isadjacent(g, edge) = has_edge(g, edge) || has_edge(g, reverse(edge))
 isadjacent(dg, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
 
 remove!(dg::DiGraph, e::Pair) = rem_edge!(dg, Edge(e))
@@ -19,43 +18,35 @@ remove!(dg::Graph, e::Tuple) = rem_edge!(dg, Edge(e))
     isundirected(g, x, y)
 
 Test if `x` and `y` are connected by a undirected edge in the graph `g`.
-Can also perform the same test given an `edge`.
 """
 isundirected(g, x, y) = has_edge(g, x, y) && has_edge(g, y, x)
 isundirected(g, edge) = has_edge(g, edge) && has_edge(g, reverse(edge))
-has_both(dg, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
-
+has_both = isundirected
 
 """
-    isparent(g, edge::Edge)
     isparent(g, x, y)
 
 Test if `x` is a parent of `y` in the graph `g`, meaning x→y.
-Can also perform the same test given an `edge`.
 """
-isparent(g, edge) = has_edge(g, edge) && !has_edge(g, reverse(edge))
 isparent(g, x, y) = has_edge(g, x, y) && !has_edge(g, y, x)
 
 
 """
-    ischild(g, edge::Edge)
     ischild(g, x, y)
 
 Test if `x` is a child of `y` in the graph `g`, meaning x←y.
-Can also perform the same test given an `edge`.
 """
-ischild(g, edge) = !has_edge(g, edge) && has_edge(g, reverse(edge))
 ischild(g, x, y) = !has_edge(g, x, y) && has_edge(g, y, x)
 
-
+#=
 """
-    isdescendent(g, edge::Edge)
     isdescendent(g, x, y)
 
 Return `true` if `x`←`y` OR `x`-`y` in the graph `g`.
 """
 isdescendent(g, edge) = has_edge(g, reverse(edge))
 isdescendent(g, x, y) = has_edge(g, y, x)
+=#
 
 """
     isoriented(g, edge::Edge)
@@ -64,7 +55,7 @@ isdescendent(g, x, y) = has_edge(g, y, x)
 Test if `x` and `y` are connected by a directed edge in the graph `g`, either x←y OR x→y.
 Can also perform the same test given an `edge`.
 """
-isoriented(g, edge) = has_edge(g,edge) ⊻ has_edge(g,reverse(edge)) # xor
+isoriented(g, edge) = has_edge(g,edge) ⊻ has_edge(g, reverse(edge)) # xor
 isoriented(g, x, y) = has_edge(g,x,y) ⊻ has_edge(g,y,x)
 
 
@@ -74,13 +65,11 @@ isoriented(g, x, y) = has_edge(g,x,y) ⊻ has_edge(g,y,x)
 Return `true` if all vertices in `nodes` are connected to each other in the graph `g`.
 """
 function isclique(g, nodes)
-
-    for nodePair in allpairs(nodes)
-        if !isadjacent(g, nodePair)
+    for (u, v) in allpairs(nodes)
+        if !isadjacent(g, u, v)
             return false
         end
     end
-
     return true
 end
 

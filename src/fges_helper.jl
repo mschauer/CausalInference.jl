@@ -45,8 +45,6 @@ countChildren(g, x) = countNeighbors_out(g, x)
 # all* functions
 ####################################################################
 
-#Generate an iterator equivalent to combinations(x,2) but produces a vector of tuples
-allpairs(v) = Iterators.filter(i -> isless(i...), Iterators.product(v,v))
 
 #Get every undirected edge in the entire graph g
 allundirected(g) = [Edge(nodePair) for nodePair in allpairs(vertices(g)) if isundirected(g,nodePair)]

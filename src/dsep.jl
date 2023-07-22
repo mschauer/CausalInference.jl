@@ -1,9 +1,9 @@
 # Blocking and d-seperation
 
-hasnoneighbors(g, v) = isempty(inneighbors(g, v)) && isempty(outneighbors(g, v))
+isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
 #Do the nodesRemoved block all semi-directed paths between src and dest?
-"""
+#= """
     isblocked(g, src, dest, nodesRemoved)
 
 Return `true` if there is no semi-directed path between `src` and `dest` in the graph `g`.
@@ -47,7 +47,7 @@ function isblocked(g, x, y, nodesRemoved)
     end
     return true
 end
-
+=#
 
 """
     dsep(g::AbstractGraph, u, v, s; verbose = false)
