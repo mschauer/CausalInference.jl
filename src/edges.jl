@@ -66,7 +66,8 @@ Return `true` if all vertices in `nodes` are connected to each other in the grap
 """
 function isclique(g, nodes)
     for (u, v) in allpairs(nodes)
-        if !isadjacent(g, u, v)
+        #if !isadjacent(g, u, v)
+        if !has_both(g, u, v)
             return false
         end
     end

@@ -96,40 +96,58 @@ end
 ####################################################################
 # Insert and Delete Operators
 ####################################################################
+"""
 
-function Insert!(g, newStep::Step) 
-    edge = newStep.edge
-    T = newStep.subset
+    Insert!(g, x, y, T)
 
-    # Add a directed edge x→y
-    add_edge!(g,edge)
+Inserts x->y and directs previously undirected edges t->y, t ∈ T.
+Here x and y are not adjacent and T are undirected-neighbors of y 
+that are not adjacent to x.
+"""
+function Insert!(g, x, y, T)
+    add_edge!(g, x → y)
     
-    # Orient all edges incident into child node
-    y = dst(edge)
+    # Orient all edges in T incident into child node
     for t ∈ T
-        orientedge!(g,t,y) #t→y
+        orientedge!(g, t → y)
+    end
+    return g
+end
+
+
+
+"""
+
+    Deletes!(g, x, y, T)
+
+Deletes x-y or x->y and directs previously undirected edges t->y, t ∈ T.
+Here x and y are not adjacent and T are undirected-neighbors of y 
+that are not adjacent to x.
+"""
+function Delete!(g, x, y, H)
+
+    # Remove directed or undirected edges (x→y and x-y)
+    rem_edge!(g, x → y)
+    rem_edge!(g, y → x)
+    
+    # Orient all vertices in H toward x and y
+    for h ∈ H
+        orientedge!(g, x → h) 
+        orientedge!(g, y → h)
     end
 
     return nothing
 end
 
-
-function Delete!(g, newStep::Step)
-    edge = newStep.edge
-    H = newStep.subset
-
-    # Remove directed and unidirected edges (x→y and x-y)
-    rem_edge!(g, edge)
-    rem_edge!(g, reverse(edge))
-    
-    # Orient all vertices in H toward x and y
-    (x, y) = src(edge), dst(edge)
-    for h ∈ H
-        orientedge!(g,x,h) #x→h
-        orientedge!(g,y,h) #y→h
-    end
-
-    return nothing
+function Insert!(g, newStep::Step) 
+    x, y = Pair(newStep.edge)
+    T = newStep.subset
+    Insert!(g, x, y, T)
+end
+function Delete!(g, newStep::Step) 
+    x, y = Pair(newStep.edge)
+    T = newStep.subset
+    Delete!(g, x, y, T)
 end
 
 ####################################################################
@@ -143,9 +161,9 @@ function ges_search!(g, newStep, data, operator, verbose)
         
         # Get the new best step (depends on if we're inserting or deleting)
         if operator == Insert!
-            findNextEquivClass!(newStep, data, g, findBestInsert, verbose)
+            find_insert!(newStep, data, g, verbose)
         else
-            findNextEquivClass!(newStep, data, g, findBestDelete, verbose)
+            find_delete!(newStep, data, g, verbose)
         end
         
         
@@ -158,7 +176,7 @@ function ges_search!(g, newStep, data, operator, verbose)
         # Use the insert or delete operator update the graph
         operator(g, newStep)
         
-        # Covert the PDAG to a complete PDAG
+        # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
         vskel!(g)
         # Apply the 4 Meek rules to orient some edges in the graph
@@ -166,7 +184,6 @@ function ges_search!(g, newStep, data, operator, verbose)
 
         # Reset the score
         newStep.Δscore = 0
-
         
     end
 
@@ -174,38 +191,56 @@ function ges_search!(g, newStep, data, operator, verbose)
 end
 
 
-function findNextEquivClass!(newStep, data, g, findBestOperation::Function, verbose)
+function find_insert!(newStep, data, g, verbose)
+    # Loop through all possible node combinations
+    for (x,y) in allpairs(vertices(g)) 
+        # Skip over adjacent edges if we're trying to insert
+        if !isadjacent(g,x,y)
+            #For this pair of nodes, the following function will:
+                #(1) check if a valid operator exists
+                #(2) score all valid operators and return the one with the highest score
+            (bestSubset, bestScore) = findBestInsert(newStep, data, g, x, y)
 
-    begin
-        # Loop through all possible node combinations
-        for (x,y) in allpairs(vertices(g)) 
-            begin
-                # Check if there is an edge between two vertices
-                hasEdge = isadjacent(g,x,y)
+            # If the best valid operator was better than any previously found...
+            if bestScore > newStep.Δscore 
+                #...update newStep
+                newStep.edge = Edge(x,y)
+                newStep.subset = bestSubset
+                newStep.Δscore = bestScore
 
-                # Skip over adjacent edges if we're trying to insert and vice versa
-                if findBestOperation == findBestInsert ? !hasEdge : hasEdge
-                    #For this pair of nodes, the following function will:
-                        #(1) check if a valid operator exists
-                        #(2) score all valid operators and return the one with the highest score
-                        #findBestOperation is either "findBestInsert" or "findBestDelete"
-                    (bestSubset, bestScore) = findBestOperation(newStep, data, g, x, y)
-
-                    # If the best valid operator was better than any previously found...
-                    if bestScore > newStep.Δscore 
-                        #...update newStep
-                        newStep.edge = Edge(x,y)
-                        newStep.subset = bestSubset
-                        newStep.Δscore = bestScore
-
-                        verbose && println(newStep)
-                    end
-                end
-
+                verbose && println(newStep)
             end
         end
     end
 end
+
+function find_delete!(newStep, data, g, verbose)
+    # Loop through all possible node combinations
+    for e in edges(g) # go through edges
+        x, y = Pair(e)
+        if y < x && has_edge(g, y, x) # undirected only once
+            continue
+        end
+         # Check if there is an edge x->y between two vertices
+        if has_edge(g, x, y)
+            #For this pair of nodes, the following function will:
+                #(1) check if a valid operator exists
+                #(2) score all valid operators and return the one with the highest score
+                #findBestOperation is either "findBestInsert" or "findBestDelete"
+            (bestSubset, bestΔ) = findBestDelete(newStep, data, g, x, y)
+
+            # If the best valid operator was better than any previously found...
+            if bestΔ > newStep.Δscore 
+                newStep.edge = Edge(x,y)
+                newStep.subset = bestSubset
+                newStep.Δscore = bestΔ
+
+                verbose && println(newStep)
+            end
+        end
+    end
+end
+
 
 
 # for x-y, get undirected neighbors of y connected to x
@@ -216,18 +251,30 @@ calcNAyx(g, edge) = calcNAyx(g, dst(edge), src(edge))
 calcT(g, y::Integer, x::Integer) = setdiff(neighbors_undirected(g,y), all_neighbors(g,x), x)
 calcT(g, edge) = calcT(g, dst(edge), src(edge))
 
+function tails_and_adj_neighbors(g, x, y)
+    Nb = neighbors_undirected(g, y)
+    a = Bool[isadjacent(g, t, x) for t in Nb]
+    sort!(Nb[.~ a]), sort!(Nb[a])
+end 
+function adj_neighbors(g, x, y)
+    Nb = neighbors_undirected(g, y)
+    a = Bool[isadjacent(g, t, x) for t in Nb]
+    sort!(Nb[a])
+end 
+
+
 function findBestInsert(step, dataParsed, g, x, y)
     isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
-    # Calculate two (possibly empty) sets of nodes
-    # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
-    # Txy: any subset of the undirected neighbors of y not connected to x
     Tyx = calcT(g, y, x)
     NAyx = calcNAyx(g, y, x)
 
+    Ta, Nb = tails_and_adj_neighbors(g, x, y)
+    @assert sort(Tyx) == Ta
+    @assert sort(NAyx) == Nb
 
     # Create two containers to hold the best found score and best subset of Tyx
-    bestScore = zero(step.Δscore)
+    bestΔ = zero(step.Δscore)
     bestT = Vector{Int}()
 
     # Keep a list of invalid sets
@@ -235,31 +282,32 @@ function findBestInsert(step, dataParsed, g, x, y)
     
     # Loop through all possible subsets of Tyx
     for T in powerset(Tyx)
-        if checkSupersets(T,invalid)
+        if checkSupersets(T, invalid)
             NAyxT = NAyx ∪ T
+            # Validity of insert operator
             if isclique(g, NAyxT) && isblocked(g, y, x, NAyxT)
 
-                # Score the valid Insert
-                PAy = parents(g,y)
+                # Score the Insert
+                PAy = inneighbors(g, y)
                 PAy⁺ = PAy ∪ x
-                newScore = score(dataParsed, NAyxT ∪ PAy⁺, y) - score(dataParsed, NAyxT ∪ PAy, y)
+                newΔ = score(dataParsed, NAyxT ∪ PAy⁺, y) - score(dataParsed, NAyxT ∪ PAy, y)
                 
                 # Save the new score if it was better than any previous
-                if newScore > bestScore
+                if newΔ > bestΔ
                     bestT = T
-                    bestScore = newScore
+                    bestΔ = newΔ
                 end
             end
         else
             # Record that the subset T is invalid
-            push!(invalid,T)
+            push!(invalid, T)
         end
     end
 
-    return (bestT, bestScore)
+    return (bestT, bestΔ)
 end
 
-# Check if the set T is contained in any invalid set
+# Check if the set T is a superset of any invalid set
 function checkSupersets(T, invalid)
     for i ∈ invalid
         if i ⊆ T
@@ -275,33 +323,36 @@ function findBestDelete(step, dataParsed, g, x, y)
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Hyx: any subset of the undirected neighbors of y that are connected to x
     NAyx = calcNAyx(g, y, x)
+    Na = adj_neighbors(g, x, y)
     Hyx = NAyx
+    @assert sort(NAyx) == Na
 
-    # Ceate two containers to hold the best found score and best subset of Tyx
-    bestScore = zero(step.Δscore)
+    # Best found score difference
+    # and best subset of Hyx
+    bestΔ = zero(step.Δscore)
     bestH = Vector{Int}()
 
     # Loop through all possible subsets of Hyx
     for H in powerset(Hyx)
         # Calculate NAyx \ {H}
-        NAyx_H = setdiff(NAyx,H)
+        NAyx_H = setdiff(NAyx, H)
 
         # Check if the operator is valid
         if isclique(g, NAyx_H)
 
             # Score the valid operator 
-            PAy = parents(g,y)
+            PAy = inneighbors(g, y)
             PAy⁻ = setdiff(PAy, x)
-            newScore = score(dataParsed, NAyx_H ∪ PAy⁻, y) - score(dataParsed, NAyx_H ∪ PAy, y)
+            newΔ = score(dataParsed, NAyx_H ∪ PAy⁻, y) - score(dataParsed, NAyx_H ∪ PAy, y)
             
-            if newScore > bestScore
+            if newΔ > bestΔ
                 bestH = H
-                bestScore = newScore
+                bestΔ = newΔ
             end
         end
     end
 
-    return (bestH, bestScore)
+    return (bestH, bestΔ)
 end
 
 
@@ -312,9 +363,20 @@ end
 # score equivalent (?) oracle score
 # two dag with the same cpdag need to have the same score sum
 function score(cpdag::DiGraph, vparents, v)
+    uparents = neighbors_undirected(cpdag, v) 
     # possible parents are good (otherwise we could learn only the v structures)
     # impossible parents are bad
-    return length(neighbors_undirected(cpdag, v) ∩ vparents)  -  length(setdiff(vparents, inneighbors(cpdag, v)))
+    iparents = setdiff(vparents, inneighbors(cpdag, v))
+    # new v-structures are bad
+    ns = vparents ∩ uparents
+    protected = falses(length(ns)) # mark in-neighbours which are v structures
+    for (i, j) in combinations(1:length(ns), 2) 
+        if !isadjacent(cpdag, ns[i], ns[j]) 
+            protected[i] = protected[j] = true
+        end
+    end
+
+    return length(ns) - length(protected) -  length(iparents)
 end
 # missing necessary parents are bad? add - length(setdiff(parents_(cpdag, v), vparents))
 

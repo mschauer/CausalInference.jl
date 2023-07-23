@@ -4,6 +4,7 @@ using Test, Random
 
 Random.seed!(100)
 @testset "GES " begin
+    wrong = 0
     for n in 0:10
         alpha = 0.1
         @testset "randdag($n)" begin for k in 1:100
@@ -11,11 +12,13 @@ Random.seed!(100)
             h2 = cpdag(g)
             h1 = CausalInference.fges_internal(g, Float64, h2)
         
-            h1 == h2 || println(vpairs(g))
+            #h1 == h2 || println(vpairs(g))
             @test vpairs(h1) ⊆ vpairs(h2)
             @test_skip vpairs(h2) ⊆ vpairs(h1)
+            wrong += !(vpairs(h2) ⊆ vpairs(h1))
         end end
     end
+    println("Wrong: $wrong")
 end
 
 Random.seed!(100)
