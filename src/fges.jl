@@ -118,11 +118,10 @@ end
 
 """
 
-    Deletes!(g, x, y, T)
+    Deletes!(g, x, y, H)
 
-Deletes x-y or x->y and directs previously undirected edges t->y, t ∈ T.
-Here x and y are not adjacent and T are undirected-neighbors of y 
-that are not adjacent to x.
+Deletes x-y or x->y and directs previously undirected edges x->h and y->h
+for h in H.
 """
 function Delete!(g, x, y, H)
 
@@ -132,7 +131,9 @@ function Delete!(g, x, y, H)
     
     # Orient all vertices in H toward x and y
     for h ∈ H
-        orientedge!(g, x → h) 
+        if has_both(g, x, h) # reading literally Definition 13, Chickering
+            orientedge!(g, x → h) 
+        end
         orientedge!(g, y → h)
     end
 
@@ -146,8 +147,8 @@ function Insert!(g, newStep::Step)
 end
 function Delete!(g, newStep::Step) 
     x, y = Pair(newStep.edge)
-    T = newStep.subset
-    Delete!(g, x, y, T)
+    H = newStep.subset
+    Delete!(g, x, y, H)
 end
 
 ####################################################################
@@ -245,11 +246,9 @@ end
 
 # for x-y, get undirected neighbors of y connected to x
 calcNAyx(g, y::Integer, x::Integer) = intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
-calcNAyx(g, edge) = calcNAyx(g, dst(edge), src(edge))
 
 #for x-y, undirected neighbors of y not connected to x
 calcT(g, y::Integer, x::Integer) = setdiff(neighbors_undirected(g,y), all_neighbors(g,x), x)
-calcT(g, edge) = calcT(g, dst(edge), src(edge))
 
 function tails_and_adj_neighbors(g, x, y)
     Nb = neighbors_undirected(g, y)
