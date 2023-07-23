@@ -10,7 +10,7 @@ import Base: ==, show
 export ancestors, descendants, alt_test_dsep, test_covariate_adjustment, alt_test_backdoor, find_dsep, find_min_dsep, find_covariate_adjustment, find_backdoor_adjustment, find_frontdoor_adjustment, find_min_covariate_adjustment, find_min_backdoor_adjustment, find_min_frontdoor_adjustment, list_dseps, list_covariate_adjustment, list_backdoor_adjustment, list_frontdoor_adjustment
 export dsep, skeleton, gausscitest, dseporacle, partialcor
 export unshielded, pcalg, vskel, vskel!, alt_vskel
-export cpdag, alt_cpdag
+export cpdag, alt_cpdag, meek_rules!
 export digraph, vpairs, skel_oracle, pc_oracle, randdag
 export cmitest, kl_entropy, kl_renyi, kl_mutual_information
 export kl_cond_mi, kl_perm_mi_test, kl_perm_cond_mi_test

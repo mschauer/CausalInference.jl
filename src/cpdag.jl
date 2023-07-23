@@ -230,12 +230,12 @@ end
 """
     vskel(g)
 
-Skeleton and `v`-structures. (Currently from the first step of the pc-Alg.)
+Reduce a DAG to skeleton and `v`-structures. 
 """
 function vskel(g::DiGraph)
     g2 = DiGraph(Graph(g))
     for v in vertices(g)
-        ns = inneighbors(g, v)
+        ns = inneighbors(g, v) # make PDAG save?
         n = length(ns)
         protected = falses(n) # mark in-neighbours which are v structures
         for (i, j) in combinations(1:n, 2) 
@@ -252,6 +252,7 @@ function vskel(g::DiGraph)
     g2
 end
 function vskel!(g::DiGraph)
+    es = Pair{Int,Int}[]
     for v in vertices(g)
         ns = inneighbors(g, v)
         n = length(ns)
@@ -263,9 +264,12 @@ function vskel!(g::DiGraph)
         end
         for i in 1:n
             if !protected[i]
-                add_edge!(g, v=>ns[i]) # make undirected
+                push!(es, v=>ns[i]) # make undirected
             end
         end
+    end
+    for e in es
+        add_edge!(g, e)
     end
     g
 end

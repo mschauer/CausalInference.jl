@@ -62,8 +62,14 @@ for n in 0:10
         h1 == h2 || println(vpairs(g))
         @test vpairs(h1) ⊆ vpairs(h2)
         @test vpairs(h2) ⊆ vpairs(h1)
-
-        #@test h1 == h2     
+        h2 = meek_rules!(vskel(g))
+        h1 == h2 || println(vpairs(g))
+        @test vpairs(h1) ⊆ vpairs(h2)
+        @test vpairs(h2) ⊆ vpairs(h1)
+        h2 = meek_rules!(vskel!(g))
+        h1 == h2 || println(vpairs(g))
+        @test vpairs(h1) ⊆ vpairs(h2)
+        @test vpairs(h2) ⊆ vpairs(h1)
     end end
 end
 

@@ -301,6 +301,15 @@ end
 # Scoring function
 ####################################################################
 
+# score equivalent (?) oracle score
+# two dag with the same cpdag need to have the same score sum
+function score(cpdag::DiGraph, vparents, v)
+    # possible parents are good (otherwise we could learn only the v structures)
+    # impossible parents are bad
+    return length(neighbors_undirected(cpdag, v) ∩ vparents)  -  length(setdiff(vparents, neighbors_adjacent(cpdag, v)))
+end
+# missing necessary parents are bad? add - length(setdiff(parents_(cpdag, v), vparents))
+
 @memoize LRU(maxsize=1_000_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
 
     # Unpack some variables from the dataParsed structure
@@ -336,7 +345,7 @@ end
     # Next we want to calculate the log likelihood that these are the parents of our node
     # score = log(P(data|Model)) ≈ -BIC/2
     # because we're only comparing log likelihoods we'll ignore the 1/2 factor
-    # when P(⋅) is Guassian, log(P(data|Model)) takes the form:
+    # when P(⋅) is Gaussian, log(P(data|Model)) takes the form:
     # -k⋅log(n) - n⋅log(mse)
     # k is the number of free parameters and mse is mean squared error
     k = length(parentsAndIncept) #includes the intercept

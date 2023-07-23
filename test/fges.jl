@@ -3,6 +3,22 @@ using Test, Random
 
 
 Random.seed!(100)
+@testset "GES " begin
+    for n in 0:10
+        alpha = 0.1
+        @testset "randdag($n)" begin for k in 1:100
+            global g = randdag(n, alpha)
+            h2 = cpdag(g)
+            h1 = CausalInference.fges_internal(g, Float64, h2)
+        
+            h1 == h2 || println(vpairs(g))
+            @test vpairs(h1) ⊆ vpairs(h2)
+            @test_skip vpairs(h2) ⊆ vpairs(h1)
+        end end
+    end
+end
+
+Random.seed!(100)
 N = 2000
 d = Normal()
 p = 0.01
@@ -24,3 +40,5 @@ g = fges(X)
                             3 => 1
                             3 => 4
                             4 => 5])
+
+

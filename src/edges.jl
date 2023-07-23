@@ -89,11 +89,13 @@ orientedge!(g, x, y) = rem_edge!(g, y, x)
 
 All vertices in `g` connected to `x` by an undirected edge.
 """
-neighbors_undirected(g, x) = intersect(inneighbors(g, x), outneighbors(g, x))
-#neighbors_undirect(g, x) = neighborsGeneral(isundirected, g, x)
+neighbors_undirected(g, x) = inneighbors(g, x) ∩ outneighbors(g, x)
 # TODO: check if neighbors are sorted.
+neighbors_adjacent(g, x) = outneighbors(g, x) ∪ inneighbors(g, x)
 
 
 #these are just aliases for the functions above
-parents(g, x) = setdiff(inneighbors(g, x), outneighbors(g, x))
-children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
+parents(g, x) = inneighbors(g, x)
+children(g, x) = outneighbors(g, x)
+parents_(g, x) = setdiff(inneighbors(g, x), outneighbors(g, x))
+children_(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
