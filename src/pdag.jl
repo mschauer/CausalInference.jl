@@ -92,6 +92,7 @@ isoriented(g, x, y) = has_edge(g,x,y) ⊻ has_edge(g,y,x)
 
 Return `true` if all vertices in `nodes` are adjacent to each other in the graph `g`.
 Chickering, "Learning equivalence classes" (2002).
+Note that a 3-clique with already two undirected edges is also a clique in the neighbor sense.
 """
 function isclique(g, nodes)
     for (u, v) in allpairs(nodes)
@@ -102,13 +103,14 @@ function isclique(g, nodes)
     return true
 end
 
+
 """
     orientedge!(g, x, y)
 
 Update the edge `x`-`y` to `x`→`y` in the graph `g`. 
 Throws error if not `x - y`
 """
-orientedge!(g, edge) = @assert has_edge(g, x, y) && rem_edge!(g, reverse(edge))
+orientedge!(g, edge) = @assert has_edge(g, edge) && rem_edge!(g, reverse(edge))
 orientedge!(g, x, y) = @assert has_edge(g, x, y) && rem_edge!(g, y, x)
 
 """

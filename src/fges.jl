@@ -191,9 +191,9 @@ end
 function find_insert(scoreT, data, g, verbose)
     nextstep = Step{Int,scoreT}()
     # Loop through all possible node combinations
-    for (x,y) in allpairs(vertices(g)) 
-        # Skip over adjacent edges if we're trying to insert
-        if !isadjacent(g,x,y)
+    for (x,y) in product(vertices(g), vertices(g)) 
+        # Skip over diagonal and adjacent edges
+        if x != y && !isadjacent(g,x,y)
             #For this pair of nodes, the following function will:
                 #(1) check if a valid operator exists
                 #(2) score all valid operators and return the one with the highest score
@@ -279,10 +279,10 @@ function findBestInsert(step, dataParsed, g, x, y)
             # Validity of insert operator
             if isclique(g, NAyxT) && isblocked(g, y, x, NAyxT)
 
-                # Score the Insert
-                PAy = inneighbors(g, y)
+                # Score the insert operator
+                PAy = parents(g, y)
                 PAy⁺ = PAy ∪ x
-                newΔ = score(dataParsed, NAyxT ∪ PAy⁺, y) - score(dataParsed, NAyxT ∪ PAy, y)
+                newΔ = Δscore(dataParsed, NAyxT ∪ PAy, x, y)
                 
                 # Save the new score if it was better than any previous
                 if newΔ > bestΔ
@@ -330,10 +330,10 @@ function findBestDelete(step, dataParsed, g, x, y)
         # Check if the operator is valid
         if isclique(g, NAyx_H)
 
-            # Score the valid operator 
-            PAy = inneighbors(g, y)
+            # Score the operator 
+            PAy = parents(g, y)
             PAy⁻ = setdiff(PAy, x)
-            newΔ = score(dataParsed, NAyx_H ∪ PAy⁻, y) - score(dataParsed, NAyx_H ∪ PAy, y)
+            newΔ = -Δscore(dataParsed, NAyx_H ∪ PAy⁻, x, y)
             
             if newΔ > bestΔ
                 bestH = H
@@ -352,25 +352,14 @@ end
 
 # score equivalent (?) oracle score
 # two dag with the same cpdag need to have the same score sum
-function score(cpdag::DiGraph, vparents, v)
-    uparents = neighbors_undirected(cpdag, v) 
-    # possible parents are good (otherwise we could learn only the v structures)
-    # impossible parents are bad
-    iparents = setdiff(vparents, inneighbors(cpdag, v))
-    # new v-structures are bad
-    ns = vparents ∩ uparents
-    protected = falses(length(ns)) # mark in-neighbours which are v structures
-    for (i, j) in combinations(1:length(ns), 2) 
-        if !isadjacent(cpdag, ns[i], ns[j]) 
-            protected[i] = protected[j] = true
-        end
-    end
-
-    return length(ns) - length(protected) -  length(iparents)
+function Δscore(cpdag::DiGraph, vparents, x, v)
+    2has_edge(cpdag, x → v) - 1 
 end
-# missing necessary parents are bad? add - length(setdiff(parents_(cpdag, v), vparents))
+# length(ns) possible parents are good (otherwise we could learn only the v structures)
+    
+Δscore(data::ParseData, parents, x, v) = score_(data, sort([parents;x]), v) - score_(data, sort(parents), v)
 
-@memoize LRU(maxsize=1_000_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
+@memoize LRU(maxsize=1_000_000) function score_(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
 
     # Unpack some variables from the dataParsed structure
     n = A(dataParsed.numObservations) #convert datatype

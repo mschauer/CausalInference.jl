@@ -24,7 +24,7 @@ Random.seed!(100)
     println("Wrong: $wrong")
 end
 
-Random.seed!(100)
+Random.seed!(reinterpret(UInt, time()))
 N = 2000
 d = Normal()
 p = 0.01
@@ -39,12 +39,12 @@ X = [x v w z s]
 
 g = fges(X)
 
-@test collect(Graphs.edges(g)) == map(x -> Edge(x...), [1 => 2
+@test sort(collect(Graphs.edges(g))) == sort(Edge.([1 => 2
                             1 => 3
                             2 => 1
                             2 => 4
                             3 => 1
                             3 => 4
-                            4 => 5])
+                            4 => 5]))
 
 
