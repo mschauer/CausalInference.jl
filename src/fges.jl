@@ -306,7 +306,7 @@ end
 function score(cpdag::DiGraph, vparents, v)
     # possible parents are good (otherwise we could learn only the v structures)
     # impossible parents are bad
-    return length(neighbors_undirected(cpdag, v) ∩ vparents)  -  length(setdiff(vparents, neighbors_adjacent(cpdag, v)))
+    return length(neighbors_undirected(cpdag, v) ∩ vparents)  -  length(setdiff(vparents, inneighbors(cpdag, v)))
 end
 # missing necessary parents are bad? add - length(setdiff(parents_(cpdag, v), vparents))
 
