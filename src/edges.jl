@@ -95,5 +95,5 @@ neighbors_undirected(g, x) = intersect(inneighbors(g, x), outneighbors(g, x))
 
 
 #these are just aliases for the functions above
-parents(g, x) = inneighbors(g, x)
-children(g, x) = outneighbors(g, x)
+parents(g, x) = setdiff(inneighbors(g, x), outneighbors(g, x))
+children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
