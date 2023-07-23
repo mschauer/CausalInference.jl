@@ -19,7 +19,7 @@ function meek_rules!(g; rule4=false)
             # check only case u->v, we'll check v->u later
             if meek_rule1(g, u, v) || meek_rule2(g, u, v) || meek_rule3(g, u, v) || (rule4 && meek_rule4(g, u, v))
                 # Make u→v
-                remove!(g, v => u)
+                remove!(g, v → u)
                 done = false
             end
         end

@@ -109,11 +109,11 @@ function _vskel(n::V, I, par...) where {V}
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
-            remove!(dg, v => u)
+            remove!(dg, v → u)
             remove!(g, (v, u))
         end
         if has_edge(g, (v, w))
-            remove!(dg, v => w)
+            remove!(dg, v → w)
             remove!(g, (v, w))
         end
     end
@@ -162,11 +162,11 @@ function orient_unshielded(g, dg, S)
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
-            remove!(dg, v => u)
+            remove!(dg, v → u)
             remove!(g, (v, u))
         end
         if has_edge(g, (v, w))
-            remove!(dg, v => w)
+            remove!(dg, v → w)
             remove!(g, (v, w))
         end
     end
@@ -195,7 +195,7 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                 # such that u and w are not adjacent
                 if meek_rule1(dg, v, w)
                     VERBOSE && println("rule 1: ", v => w)
-                    remove!(dg, w => v)
+                    remove!(dg, w → v)
                     push!(removed, (w, v))
                     @goto ende
                 end
@@ -204,7 +204,7 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                 # v->k->w.
                 if meek_rule2(dg, v, w)
                     VERBOSE && println("rule 2: ", v => w)
-                    remove!(dg, w => v)
+                    remove!(dg, w → v)
                     push!(removed, (w, v))
                     @goto ende
                 end
@@ -213,62 +213,11 @@ function apply_pc_rules(g, dg; VERBOSE = false)
                 # v-k->w and v-l->w such that k and l are nonadjacent 
                 if meek_rule3(dg, v, w)
                     VERBOSE && println("rule 3: ", v => w)
-                    remove!(dg, w => v)
-                    push!(removed, (w, v))
-                    @goto ende
-                end
-#=
-                # Rule 1: Orient v-w into v->w whenever there is u->v
-                # such that u and w are not adjacent
-                for u in inneighbors(dg, v)
-                    has_edge(dg, v => u) && continue # not directed
-                    isadjacent(dg, u, w) && continue
-                    VERBOSE && println("rule 1: ", v => w)
-                    remove!(dg, w => v)
+                    remove!(dg, w → v)
                     push!(removed, (w, v))
                     @goto ende
                 end
 
-                # Rule 2: Orient v-w into v->w whenever there is a chain
-                # v->k->w.
-                outs = Int[]
-                for k in outneighbors(dg, v)
-                    !has_edge(dg, k => v) && push!(outs, k)
-                end
-                ins = Int[]
-                for k in inneighbors(dg, w)
-                    !has_edge(dg, w => k) && push!(ins, k)
-                end
-
-                if !disjoint_sorted(ins, outs)
-                    VERBOSE && println("rule 2: ", v => w)
-                    remove!(dg, w => v)
-                    push!(removed, (w, v))
-                    @goto ende
-                end
-
-                # Rule 3: Orient v-w into v->w whenever there are two chains
-                # v-k->w and v-l->w such that k and l are nonadjacent
-                fulls = [] # Find nodes k where v-k
-                for k in outneighbors(dg, v)
-                    has_edge(dg, k => v) && push!(fulls, k)
-                end
-                for (k, l) in combinations(fulls, 2) # FIXME: 
-                    isadjacent(dg, k, l) && continue
-
-                    # Skip if not k->w or if not l->w
-                    if has_edge(dg, w => k) || !has_edge(dg, k => w)
-                        continue
-                    end
-                    if has_edge(dg, w => l) || !has_edge(dg, l => w)
-                        continue
-                    end
-                    VERBOSE && println("rule 3: ", v => w)
-                    remove!(dg, w => v)
-                    push!(removed, (w, v))
-                    @goto ende
-                end
-=#
             end
         end
 

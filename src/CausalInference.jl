@@ -25,7 +25,6 @@ export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export fges
 
-x → y = Edge(x, y)
 
 include("graphs.jl")
 include("combinations_without.jl")

@@ -245,7 +245,7 @@ function vskel(g::DiGraph)
         end
         for i in 1:n
             if protected[i]
-                remove!(g2, v=>ns[i])
+                remove!(g2, v → ns[i])
             end
         end
     end
