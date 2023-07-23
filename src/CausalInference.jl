@@ -37,7 +37,6 @@ include("fci.jl")
 include("misc.jl")
 include("recantingwitness.jl")
 include("backdoor.jl")
-include("fges_helper.jl")
 include("fges.jl")
 include("gensearch.jl")
 
