@@ -208,6 +208,14 @@ function findNextEquivClass!(newStep, data, g, findBestOperation::Function, verb
 end
 
 
+# for x-y, get undirected neighbors of y connected to x
+calcNAyx(g, y::Integer, x::Integer) = intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
+calcNAyx(g, edge) = calcNAyx(g, dst(edge), src(edge))
+
+#for x-y, undirected neighbors of y not connected to x
+calcT(g, y::Integer, x::Integer) = setdiff(neighbors_undirected(g,y), all_neighbors(g,x), x)
+calcT(g, edge) = calcT(g, dst(edge), src(edge))
+
 function findBestInsert(step, dataParsed, g, x, y)
     isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
