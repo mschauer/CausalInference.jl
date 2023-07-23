@@ -35,7 +35,7 @@ end
 
 # Simple structure to hold the current edge, a subset of neighbors, and a score change
 Base.@kwdef mutable struct Step{A,B}
-    edge::Edge = Edge(1,2)
+    edge::Graphs.SimpleEdge{A} = Edge{A}(1,2)
     subset::Vector{A} = A[]
     Δscore::B = zero(B)
 end
@@ -46,8 +46,8 @@ end
 ####################################################################
 
 # Print method to display the Step
-function show(io::IO, newStep::Step{A,B}) where {A,B}
-    print(io, "Edge: $(newStep.edge), Subset: $(newStep.subset), Δscore: $(newStep.Δscore)")
+function show(io::IO, nextstep::Step{A,B}) where {A,B}
+    print(io, "Edge: $(nextstep.edge), Subset: $(nextstep.subset), Δscore: $(nextstep.Δscore)")
 end
 
 # The @memoize macro has to check if ParseData is the same argument. 
@@ -83,11 +83,11 @@ function fges_internal(g, scoreT, data; penalty = 1.0, verbose=false)
     verbose && println("Start forward search")
     # Perform the forward search 
     
-    ges_search!(g, Step{Int, scoreT}(), data, Insert!, verbose)
+    ges_search!(g, scoreT, data, Insert!, verbose)
 
     verbose && println("Start backward search")
     # Perform the backward search 
-    ges_search!(g, Step{Int, scoreT}(), data, Delete!, verbose)
+    ges_search!(g, scoreT, data, Delete!, verbose)
     
     return g # Return the graph
 
@@ -140,14 +140,14 @@ function Delete!(g, x, y, H)
     return nothing
 end
 
-function Insert!(g, newStep::Step) 
-    x, y = Pair(newStep.edge)
-    T = newStep.subset
+function Insert!(g, nextstep::Step) 
+    x, y = Pair(nextstep.edge)
+    T = nextstep.subset
     Insert!(g, x, y, T)
 end
-function Delete!(g, newStep::Step) 
-    x, y = Pair(newStep.edge)
-    H = newStep.subset
+function Delete!(g, nextstep::Step) 
+    x, y = Pair(nextstep.edge)
+    H = nextstep.subset
     Delete!(g, x, y, H)
 end
 
@@ -155,44 +155,41 @@ end
 # Forward and Backward search
 ####################################################################
 
-function ges_search!(g, newStep, data, operator, verbose)
+function ges_search!(g, scoreT, data, operator, verbose)
 
     # Continually add/remove edges to the graph until the score stops increasing
     while true
         
         # Get the new best step (depends on if we're inserting or deleting)
         if operator == Insert!
-            find_insert!(newStep, data, g, verbose)
+            step = find_insert(scoreT, data, g, verbose)
         else
-            find_delete!(newStep, data, g, verbose)
+            step = find_delete(scoreT, data, g, verbose)
         end
         
         
         # If the score did not improve...
-        if newStep.Δscore ≤ 0
+        if step.Δscore ≤ 0
             #...stop searching
             break
         end
         
         # Use the insert or delete operator update the graph
-        operator(g, newStep)
+        operator(g, step)
         
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
         vskel!(g)
         # Apply the 4 Meek rules to orient some edges in the graph
         meek_rules!(g)
-
-        # Reset the score
-        newStep.Δscore = 0
-        
     end
 
     return nothing
 end
 
 
-function find_insert!(newStep, data, g, verbose)
+function find_insert(scoreT, data, g, verbose)
+    nextstep = Step{Int,scoreT}()
     # Loop through all possible node combinations
     for (x,y) in allpairs(vertices(g)) 
         # Skip over adjacent edges if we're trying to insert
@@ -200,22 +197,24 @@ function find_insert!(newStep, data, g, verbose)
             #For this pair of nodes, the following function will:
                 #(1) check if a valid operator exists
                 #(2) score all valid operators and return the one with the highest score
-            (bestSubset, bestScore) = findBestInsert(newStep, data, g, x, y)
+            bestset, bestScore = findBestInsert(nextstep, data, g, x, y)
 
             # If the best valid operator was better than any previously found...
-            if bestScore > newStep.Δscore 
-                #...update newStep
-                newStep.edge = Edge(x,y)
-                newStep.subset = bestSubset
-                newStep.Δscore = bestScore
+            if bestScore > nextstep.Δscore 
+                #...update nextstep
+                nextstep.edge = Edge(x,y)
+                nextstep.subset = bestset
+                nextstep.Δscore = bestScore
 
-                verbose && println(newStep)
+                verbose && println(nextstep)
             end
         end
     end
+    return nextstep
 end
 
-function find_delete!(newStep, data, g, verbose)
+function find_delete(scoreT, data, g, verbose)
+    nextstep = Step{Int,scoreT}()
     # Loop through all possible node combinations
     for e in edges(g) # go through edges
         x, y = Pair(e)
@@ -228,49 +227,43 @@ function find_delete!(newStep, data, g, verbose)
                 #(1) check if a valid operator exists
                 #(2) score all valid operators and return the one with the highest score
                 #findBestOperation is either "findBestInsert" or "findBestDelete"
-            (bestSubset, bestΔ) = findBestDelete(newStep, data, g, x, y)
+            bestset, bestΔ = findBestDelete(nextstep, data, g, x, y)
 
             # If the best valid operator was better than any previously found...
-            if bestΔ > newStep.Δscore 
-                newStep.edge = Edge(x,y)
-                newStep.subset = bestSubset
-                newStep.Δscore = bestΔ
+            if bestΔ > nextstep.Δscore 
+                nextstep.edge = Edge(x,y)
+                nextstep.subset = bestset
+                nextstep.Δscore = bestΔ
 
-                verbose && println(newStep)
+                verbose && println(nextstep)
             end
         end
     end
+    return nextstep
 end
 
 
 
 # for x-y, get undirected neighbors of y connected to x
-calcNAyx(g, y::Integer, x::Integer) = intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
-
+#calcNAyx(g, y::Integer, x::Integer) = intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
 #for x-y, undirected neighbors of y not connected to x
-calcT(g, y::Integer, x::Integer) = setdiff(neighbors_undirected(g,y), all_neighbors(g,x), x)
+#calcT(g, y::Integer, x::Integer) = setdiff(neighbors_undirected(g,y), all_neighbors(g,x), x)
 
 function tails_and_adj_neighbors(g, x, y)
     Nb = neighbors_undirected(g, y)
     a = Bool[isadjacent(g, t, x) for t in Nb]
-    sort!(Nb[.~ a]), sort!(Nb[a])
+    Nb[.~ a], Nb[a]
 end 
 function adj_neighbors(g, x, y)
-    Nb = neighbors_undirected(g, y)
-    a = Bool[isadjacent(g, t, x) for t in Nb]
-    sort!(Nb[a])
+    intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
 end 
 
 
 function findBestInsert(step, dataParsed, g, x, y)
     isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
-    Tyx = calcT(g, y, x)
-    NAyx = calcNAyx(g, y, x)
+    Tyx, NAyx = tails_and_adj_neighbors(g, x, y)
 
-    Ta, Nb = tails_and_adj_neighbors(g, x, y)
-    @assert sort(Tyx) == Ta
-    @assert sort(NAyx) == Nb
 
     # Create two containers to hold the best found score and best subset of Tyx
     bestΔ = zero(step.Δscore)
@@ -321,10 +314,8 @@ function findBestDelete(step, dataParsed, g, x, y)
     # Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Hyx: any subset of the undirected neighbors of y that are connected to x
-    NAyx = calcNAyx(g, y, x)
-    Na = adj_neighbors(g, x, y)
+    NAyx = adj_neighbors(g, x, y)
     Hyx = NAyx
-    @assert sort(NAyx) == Na
 
     # Best found score difference
     # and best subset of Hyx

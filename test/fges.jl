@@ -1,6 +1,9 @@
 using Distributions, CausalInference, Graphs
 using Test, Random
 
+# we use intersection of sorted arrays is sorted
+@test issorted(intersect((1:1000)[rand(Bool, 1000)], (1:1000)[rand(Bool, 1000)]))
+@test issorted(intersect((1:1000)[rand(Bool, 1000)], intersect((1:1000)[rand(Bool, 1000)], (1:1000)[rand(Bool, 1000)])))
 
 Random.seed!(100)
 @testset "GES " begin
