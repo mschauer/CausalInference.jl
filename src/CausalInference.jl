@@ -1,4 +1,5 @@
 module CausalInference
+
 using Graphs
 using Graphs.SimpleGraphs
 using Combinatorics
@@ -30,7 +31,7 @@ include("graphs.jl")
 include("combinations_without.jl")
 include("klentropy.jl")
 include("skeleton.jl")
-include("edges.jl")
+include("pdag.jl")
 include("dsep.jl")
 include("meek.jl")
 include("pc.jl")

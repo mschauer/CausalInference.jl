@@ -1,6 +1,30 @@
-# Edges in partially directed graphs
+# Partially directed graphs
 
-hasnoneighbors(g, v) = isempty(inneighbors(g, v)) && isempty(outneighbors(g, v))
+#= Terminology and representation
+
+PDAGs are implemented as DAG with undirected edges x --- y represented 
+as the pair x --> y and y --> x.
+
+parents(g, x) - Parents are vertices y such that there is a directed edge y --> x.
+children(g, x) - Children are vertices y such that there is a directed edge y <-- x.
+
+neighbors_undirected(g, x) - Neighbors of x in g are vertices y such that there is an undirected edge y --- x,
+thus different from `neighbors(g, x)` from Graphs. See .
+
+isadjacent(x, y) - Vertices x, y are adjacent if there is some edge between x and y
+   (i.e. x --- y, x --> y, or x <-- y)
+
+Unshielded collider: triple of vertices x, y, z with directed edges
+   x --> y <-- z, and x and z are not adjacent
+
+Semi-directed path: A path of directed and undirected edges, where no
+directed edge is going in the opposite direction. `outneighbors(g, x)` gives 
+possible continuations of semi-directed path. A directed path has only directed edges.
+`children(g, x)` gives possible continuations.
+=#
+
+
+isolated(g, v) = isempty(inneighbors(g, v)) && isempty(outneighbors(g, v))
 
 """
     isadjacent(g, x, y)
@@ -62,12 +86,12 @@ isoriented(g, x, y) = has_edge(g,x,y) ⊻ has_edge(g,y,x)
 """
     isclique(g, nodes)
 
-Return `true` if all vertices in `nodes` are connected to each other in the graph `g`.
+Return `true` if all vertices in `nodes` are adjacent to each other in the graph `g`.
+Chickering, "Learning equivalence classes" (2002).
 """
 function isclique(g, nodes)
     for (u, v) in allpairs(nodes)
-        #if !isadjacent(g, u, v)
-        if !has_both(g, u, v)
+        if !isadjacent(g, u, v)
             return false
         end
     end
@@ -96,7 +120,5 @@ neighbors_adjacent(g, x) = outneighbors(g, x) ∪ inneighbors(g, x)
 
 
 #these are just aliases for the functions above
-parents(g, x) = inneighbors(g, x)
-children(g, x) = outneighbors(g, x)
-parents_(g, x) = setdiff(inneighbors(g, x), outneighbors(g, x))
-children_(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
+parents(g, x) = setdiff(inneighbors(g, x), outneighbors(g, x))
+children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
