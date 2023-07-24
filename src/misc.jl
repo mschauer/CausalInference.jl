@@ -64,3 +64,22 @@ function randdag(n, alpha = 0.1)
     end
     g
 end
+
+
+"""
+    randdag(n, k, true)
+
+Create random DAG from randomly permuted random triangular matrix with
+expected degree `k`.
+"""
+function randdag(n, k, b)
+    b || return randdag(n, k)
+    g = DiGraph(n)
+    p = randperm(n)
+    for i in 1:n
+        for j in (i + 1):n
+            rand() < k/(n-i) && add_edge!(g, p[i], p[j])
+        end
+    end
+    g
+end
