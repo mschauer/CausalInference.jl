@@ -56,47 +56,48 @@ using LinearAlgebra
 # https://cran.r-project.org/web/packages/BCDAG/vignettes/bcdag_generatedata.html
 @testset "GES" begin
     seed = reinterpret(UInt, time())
-    seed = 0x41d92f901f6981c3
+    seed = 0x41d92fae13925cd9
     @show seed
     Random.seed!(seed)
     qu(x) = x * x'
-    d = 5
-    n = 2000
-    alpha = 3/d
+    d = 6
+    n = 20000
+    alpha = 2.5/d
     c1 = 1.0
-    c2 = 1.0
+    c2 = 2.0
     penalty = 1.0
-
-    E = Matrix(adjacency_matrix(randdag(d, alpha)))
-    Random.seed!(7)
-    L = E .* (0.9rand(d, d) .+ 0.1)
+    #g = digraph([1 => 2, 1 => 4, 2 => 4, 3 => 2, 3 => 4])
+    g = randdag(d, alpha)
+    E = Matrix(adjacency_matrix(g)) # Markov style
+    L = E .* (0.3rand(d, d) .+ 0.3)
     println("\nVertices: $d, Edges: ", sum(E))
     
-    X = (I - L) \ randn(d, n)
-    C = cor(X, dims = 2)
-    Σtrue = inv(qu((I - L)'))
+    # Do not actually sample
+    #X = (I - L)' \ randn(d, n)
+    #C = cor(X, dims = 2)
+    Σtrue = Float64.(inv(big.(qu((I - L)))))
     di = sqrt.(diag(Σtrue))
     Ctrue = (Σtrue) ./ (di * di')
 
-    @show cond(I - L)
-    g = DiGraph(E)
+    @assert g == DiGraph(E)
     cg = cpdag(g)
  
-    @time h1, _ = skeleton(d, gausscitest, (C, n), c1)
-    @time h2, _ = skeleton(d, dseporacle, g)
+    h1, _ = skeleton(d, gausscitest, (Ctrue, n), c1)
+    h2, _ = skeleton(d, dseporacle, g)
     println("skel edges ", ne(h2))
     println("skel missing edges ", length(setdiff(vpairs(h1), vpairs(h2))))
     println("skel wrong edges ", length(setdiff(vpairs(h2), vpairs(h1))))
 
     println("Vertices $(nv(g)) Edges $(ne(g))")
 
-    g1 = @time fges(Matrix(X'), penalty=penalty)
-    g2 = pcalg(d, gausscitest, (C, n), c2)
+    #g1 = @time fges(Matrix(X'), penalty=penalty)
+    g1 = @time CausalInference.fges_internal(d, Float64, GaussianScore(Ctrue, n, penalty))
+    g2 = pcalg(d, gausscitest, (Ctrue, n), c2)
 
     println("ges not in skel ", length(setdiff(vpairs(g1), vpairs(DiGraph(h2)))))
     println("pc not in skel ", length(setdiff(vpairs(g2), vpairs(DiGraph(h2)))))
 
-    println("cpdag dir ", ne(g) - (2ne(h2) - ne(cg)) , " undir ", 2ne(h2) - ne(cg))
+    println("cpdag undir ", ne(g) - (2ne(h2) - ne(cg)) , " dir ", 2ne(h2) - ne(cg))
     println("ges missing edges ", length(setdiff(vpairs(cg), vpairs(g1))))
     println("ges wrong edges ", length(setdiff(vpairs(g1), vpairs(cg))))
     println("pc missing edges ", length(setdiff(vpairs(cg), vpairs(g2))))

@@ -107,4 +107,24 @@ function meek_rule4(dg, v, w)
     return false
 end
 
+"""
+    pdag2dag!(g, rule4=false)
 
+Complete PDAG to DAG using meek_rules.
+"""
+function pdag2dag!(g, rule4=false)
+    while true
+        # find unoriented edge
+        for e in edges(g) # go through edges (bad to start in the beginning?)
+            x, y = Pair(e)
+            if has_edge(g, y → x)
+                orientedge!(g, rand(Bool) ? y → x : x → y)
+                @goto orient
+            end
+        end
+        return g # through without break 
+        # orient implied edges
+        @label orient
+        meek_rules!(g; rule4)
+    end
+end

@@ -83,11 +83,11 @@ function fges_internal(n, scoreT, data; penalty = 1.0, verbose=false)
     verbose && println("Start forward search")
     # Perform the forward search 
     
-    ges_search!(g, scoreT, data, Insert!, verbose)
+    ges_search_insert!(g, scoreT, data, verbose)
 
     verbose && println("Start backward search")
     # Perform the backward search 
-    ges_search!(g, scoreT, data, Delete!, verbose)
+    ges_search_delete!(g, scoreT, data, verbose)
    
     return g # Return the graph
 
@@ -155,27 +155,20 @@ end
 # Forward and Backward search
 ####################################################################
 
-function ges_search!(g, scoreT, data, operator, verbose)
-
-    # Continually add/remove edges to the graph until the score stops increasing
+function ges_search_insert!(g, scoreT, data, verbose)
+    # Continually add  edges to the graph until the score stops increasing
     while true
-        
-        # Get the new best step (depends on if we're inserting or deleting)
-        if operator == Insert!
-            step = find_insert(scoreT, data, g, verbose)
-        else
-            step = find_delete(scoreT, data, g, verbose)
-        end
-        
+        # Get the new best step
+        step = find_insert(scoreT, data, g, verbose)
         
         # If the score did not improve...
         if step.Δscore ≤ 0
-            #...stop searching
-            break
+            verbose && println(vpairs(g))
+            return g
         end
-        
+        verbose && println(step)
         # Use the insert or delete operator update the graph
-        operator(g, step)
+        Insert!(g, step)
         
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
@@ -184,8 +177,32 @@ function ges_search!(g, scoreT, data, operator, verbose)
         # Apply the 3 Meek rules to orient some edges in the graph
         meek_rules!(g)
     end
+end
 
-    return nothing
+function ges_search_delete!(g, scoreT, data, verbose)
+    # Continually add/remove edges to the graph until the score stops increasing
+    while true
+        
+        # Get the new best step
+        step = find_delete(scoreT, data, g, verbose)
+        
+        # If the score did not improve...
+        if step.Δscore ≤ 0
+            verbose && println(vpairs(g))
+            return g
+        end
+        verbose && println(step)
+        # Use the insert or delete operator update the graph
+        Delete!(g, step)
+        verbose && println(vpairs(g))
+
+        # Convert the PDAG to a complete PDAG
+        # Undirect all edges unless they participate in a v-structure
+        vskel!(g)
+        g2 = copy(g)
+        # Apply the 3 Meek rules to orient some edges in the graph
+        meek_rules!(g)
+    end
 end
 
 
@@ -207,7 +224,7 @@ function find_insert(scoreT, data, g, verbose)
                 nextstep.subset = bestset
                 nextstep.Δscore = bestScore
 
-                verbose && println(nextstep)
+                #verbose && println(nextstep)
             end
         end
     end
@@ -219,8 +236,8 @@ function find_delete(scoreT, data, g, verbose)
     # Loop through all possible node combinations
     for e in edges(g) # go through edges
         x, y = Pair(e)
-        if y < x && has_edge(g, y, x) # undirected only once
-            continue
+        if y < x && has_edge(g, y, x) # undirected only once ✓
+            continue 
         end
          # Check if there is an edge x->y between two vertices
         if has_edge(g, x, y)
@@ -229,14 +246,12 @@ function find_delete(scoreT, data, g, verbose)
                 #(2) score all valid operators and return the one with the highest score
                 #findBestOperation is either "findBestInsert" or "findBestDelete"
             bestset, bestΔ = findBestDelete(nextstep, data, g, x, y)
-
+            verbose && println("$x -> $y $bestΔ $bestset")
             # If the best valid operator was better than any previously found...
             if bestΔ > nextstep.Δscore 
                 nextstep.edge = Edge(x,y)
                 nextstep.subset = bestset
                 nextstep.Δscore = bestΔ
-
-                verbose && println(nextstep)
             end
         end
     end
@@ -363,7 +378,47 @@ end
 Δscoreinsert(data, parents, x, v, _) = Δscore(data, parents, x, v)
 Δscoredelete(data, parents, x, v, _) = -Δscore(data, parents, x, v)
 
-Δscore(data::ParseData, parents, x, v) = score(data, sort([parents;x]), v) - score(data, sort(parents), v)
+Δscore(data, parents, x, v) = score(data, sort([parents;x]), v) - score(data, sort(parents), v)
+
+
+
+export score_dag
+function score_dag(g, data) # g dag
+    s = 0.0
+    for v in vertices(g)
+        s += score(data, inneighbors(g, v), v)
+    end
+    s
+end
+
+struct GaussianScore{T}
+    C::Matrix{T} # correlation
+    n::Int # hypothetical number of obs
+    penalty::Float64
+end
+export GaussianScore
+
+
+# compare https://github.com/py-why/causal-learn/blob/f51195473b316662b6f7dce68cd73d734766a6a3/causallearn/score/LocalScoreFunction.py
+"""
+    score(os::GaussianScore, p, v)
+
+Local Gaussian BIC score.
+"""
+function score(os::GaussianScore, p, v)
+    C = os.C 
+    penalty = os.penalty
+    n = os.n
+    k = length(p) # dimension
+    if k == 0 
+        Cp = C[v, v]
+    else # compute conditional correlation
+        Cp = C[v, v] - dot(C[v, p], C[p, p]\C[p, v])
+    end
+    - n*log(Cp) - penalty*k*log(n) 
+end
+
+
 
 @memoize LRU(maxsize=1_000_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
 

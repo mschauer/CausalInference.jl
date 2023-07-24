@@ -24,7 +24,7 @@ export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export fges
-
+export pdag2dag!
 
 include("graphs.jl")
 include("combinations_without.jl")
