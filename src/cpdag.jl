@@ -230,14 +230,14 @@ end
 """
     vskel(g)
 
-Reduce a DAG to skeleton and `v`-structures. 
+Reduce a (P)DAG to skeleton and `v`-structures. 
 """
 function vskel(g::DiGraph)
     g2 = DiGraph(Graph(g))
     for v in vertices(g)
-        ns = inneighbors(g, v) # make PDAG save?
+        ns = parents(g, v) 
         n = length(ns)
-        protected = falses(n) # mark in-neighbours which are v structures
+        protected = falses(n) # mark parents which are v structures
         for (i, j) in combinations(1:n, 2) 
             if !isadjacent(g, ns[i], ns[j]) 
                 protected[i] = protected[j] = true
@@ -254,9 +254,9 @@ end
 function vskel!(g::DiGraph)
     es = Pair{Int,Int}[]
     for v in vertices(g)
-        ns = inneighbors(g, v)
+        ns = parents(g, v)
         n = length(ns)
-        protected = falses(n) # mark in-neighbours which are v structures
+        protected = falses(n) # mark parents which are v structures
         for (i, j) in combinations(1:n, 2) 
             if !isadjacent(g, ns[i], ns[j]) 
                 protected[i] = protected[j] = true

@@ -73,13 +73,13 @@ function fges(data; penalty = 1.0, verbose=false)
     dataParsed = ParseData(data, penalty)
 
     # Create an empty graph with one node for each feature
-    g = DiGraph(dataParsed.numFeatures)
+   
 
-    return fges_internal(g, scoreT, dataParsed; penalty, verbose)
+    return fges_internal(dataParsed.numFeatures, scoreT, dataParsed; penalty, verbose)
 end
 
-function fges_internal(g, scoreT, data; penalty = 1.0, verbose=false)
-
+function fges_internal(n, scoreT, data; penalty = 1.0, verbose=false)
+    g = DiGraph(n)
     verbose && println("Start forward search")
     # Perform the forward search 
     
@@ -88,7 +88,7 @@ function fges_internal(g, scoreT, data; penalty = 1.0, verbose=false)
     verbose && println("Start backward search")
     # Perform the backward search 
     ges_search!(g, scoreT, data, Delete!, verbose)
-    
+   
     return g # Return the graph
 
 end
@@ -180,7 +180,8 @@ function ges_search!(g, scoreT, data, operator, verbose)
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
         vskel!(g)
-        # Apply the 4 Meek rules to orient some edges in the graph
+        g2 = copy(g)
+        # Apply the 3 Meek rules to orient some edges in the graph
         meek_rules!(g)
     end
 
@@ -266,7 +267,7 @@ function findBestInsert(step, dataParsed, g, x, y)
 
 
     # Create two containers to hold the best found score and best subset of Tyx
-    bestΔ = zero(step.Δscore)
+    bestΔ = typemin(typeof(step.Δscore))
     bestT = Vector{Int}()
 
     # Keep a list of invalid sets
@@ -282,7 +283,7 @@ function findBestInsert(step, dataParsed, g, x, y)
                 # Score the insert operator
                 PAy = parents(g, y)
                 PAy⁺ = PAy ∪ x
-                newΔ = Δscore(dataParsed, NAyxT ∪ PAy, x, y)
+                newΔ = Δscoreinsert(dataParsed, NAyxT ∪ PAy, x, y, T)
                 
                 # Save the new score if it was better than any previous
                 if newΔ > bestΔ
@@ -333,7 +334,7 @@ function findBestDelete(step, dataParsed, g, x, y)
             # Score the operator 
             PAy = parents(g, y)
             PAy⁻ = setdiff(PAy, x)
-            newΔ = -Δscore(dataParsed, NAyx_H ∪ PAy⁻, x, y)
+            newΔ = Δscoredelete(dataParsed, NAyx_H ∪ PAy⁻, x, y, H)
             
             if newΔ > bestΔ
                 bestH = H
@@ -352,14 +353,19 @@ end
 
 # score equivalent (?) oracle score
 # two dag with the same cpdag need to have the same score sum
-function Δscore(cpdag::DiGraph, vparents, x, v)
-    2has_edge(cpdag, x → v) - 1 
+function Δscoreinsert(cpdag::DiGraph, vparents, x, v, T)
+    !dsep(cpdag, x, v, vparents)
 end
-# length(ns) possible parents are good (otherwise we could learn only the v structures)
-    
-Δscore(data::ParseData, parents, x, v) = score_(data, sort([parents;x]), v) - score_(data, sort(parents), v)
+function Δscoredelete(cpdag::DiGraph, vparents, x, v, H)
+    dsep(cpdag, x, v, vparents)
+end
 
-@memoize LRU(maxsize=1_000_000) function score_(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
+Δscoreinsert(data, parents, x, v, _) = Δscore(data, parents, x, v)
+Δscoredelete(data, parents, x, v, _) = -Δscore(data, parents, x, v)
+
+Δscore(data::ParseData, parents, x, v) = score(data, sort([parents;x]), v) - score(data, sort(parents), v)
+
+@memoize LRU(maxsize=1_000_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
 
     # Unpack some variables from the dataParsed structure
     n = A(dataParsed.numObservations) #convert datatype

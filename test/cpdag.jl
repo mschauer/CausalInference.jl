@@ -53,6 +53,7 @@ for n in 0:10
     alpha = 0.1
     @testset "randdag($n)" begin for k in 1:1000
         global g = randdag(n, alpha)
+        
         h1 = pc_oracle(g)
         h2 = cpdag(g)
         h1 == h2 || println(vpairs(g))
@@ -70,12 +71,20 @@ for n in 0:10
         h1 == h2 || println(vpairs(g))
         @test vpairs(h1) ⊆ vpairs(h2)
         @test vpairs(h2) ⊆ vpairs(h1)
+        h2 = meek_rules!(vskel!(g), rule4=true)
+        h1 == h2 || println(vpairs(g))
+        @test vpairs(h1) ⊆ vpairs(h2)
+        @test vpairs(h2) ⊆ vpairs(h1)
+
+        @test h1 == meek_rules!(vskel(h1)) # works for PDAGs
+        @test h1 == meek_rules!(vskel!(copy(h1)))
+        
     end end
 end
 
 @testset "randdag(50)" begin # up to level 10 or so
     n = 50
-    global g = randdag(n, 0.07)
+    global g = randdag(n, 0.07/2)
     h1 = pc_oracle(g)
     h2 = cpdag(g)
     h1 == h2 || println(vpairs(g))

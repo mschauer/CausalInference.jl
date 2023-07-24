@@ -51,15 +51,16 @@ pc_oracle(g) = pcalg(nv(g), dseporacle, g)
 """
     randdag(n, alpha = 0.1)
 
-Create random DAG from randomly permuted random triangular matrix with
+Create Erdős–Rényi random DAG from randomly permuted random triangular matrix with
 edge probability `alpha`.
 """
 function randdag(n, alpha = 0.1)
     g = DiGraph(n)
-    p = randperm(n)
+    p = randperm(n) 
     for i in 1:n
-        for j in (i + 1):n
-            rand() < alpha && add_edge!(g, p[i], p[j])
+        for j in 1:n
+            i == j && continue
+            rand() < alpha && add_edge!(g, p[min(i,j)], p[max(i,j)])
         end
     end
     g
