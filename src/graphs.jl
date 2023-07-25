@@ -3,9 +3,9 @@ using TabularDisplay
 export has_a_path, graph_to_text
 
 """
-    has_a_path(g::AbstractGraph, U::Vector, V::Vector, exclude_vertices::AbstractVector = T[], nbs=Graphs.outneighbors)
+    has_a_path(g::AbstractGraph, U::Vector, V::VectorOrVertex, exclude_vertices::AbstractVector = T[], nbs=Graphs.outneighbors)
 
-Find if there is a path connecting U with V not passing `exclude_vertices`, where ` nbs=Graphs.outneighbors`
+Find if there is a (semi-directed) path connecting U with V not passing `exclude_vertices`, where ` nbs=Graphs.outneighbors`
 determines the direction of traversal. 
 """
 function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector,
@@ -29,9 +29,42 @@ function has_a_path(g::AbstractGraph{T}, U::Vector, V::Vector,
     end
     while !isempty(next)
         src = popfirst!(next) # get new element from queue
-        for vertex in outneighbors(g, src)
+        for vertex in nbs(g, src)
             if !seen[vertex]
                 target[vertex] && return true
+                push!(next, vertex) # push onto queue
+                seen[vertex] = true
+            end
+        end
+    end
+    return false
+end
+
+has_a_path(g::AbstractGraph{T}, U::Vector, v::T,
+                    exclude_vertices::AbstractVector = T[],
+                    nbs = Graphs.outneighbors) where {T} = has_a_path(g, U, (g, x)->x==v,
+                    exclude_vertices,
+                    nbs) 
+
+function has_a_path(g::AbstractGraph{T}, U::Vector, target,
+                    exclude_vertices::AbstractVector = T[],
+                    nbs = Graphs.outneighbors) where {T}
+    seen = zeros(Bool, nv(g))
+    for ve in exclude_vertices # mark excluded vertices as seen
+        seen[ve] = true
+        target(g, ve) && return false
+    end
+    next = Vector{T}()
+    for u in U
+        target(g, u) && return true
+        push!(next, u)
+        seen[u] = true
+    end
+    while !isempty(next)
+        src = popfirst!(next) # get new element from queue
+        for vertex in nbs(g, src)
+            if !seen[vertex]
+                target(g, vertex) && return true
                 push!(next, vertex) # push onto queue
                 seen[vertex] = true
             end

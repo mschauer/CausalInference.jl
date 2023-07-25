@@ -1,3 +1,5 @@
+# Blocking and d-separation
+
 
 """
     dsep(g::AbstractGraph, u, v, s; verbose = false)

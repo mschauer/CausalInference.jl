@@ -227,3 +227,49 @@ function cpdag(skel::DiGraph)
     end
     g
 end
+"""
+    vskel(g)
+
+Reduce a (P)DAG to skeleton and `v`-structures. 
+"""
+function vskel(g::DiGraph)
+    g2 = DiGraph(Graph(g))
+    for v in vertices(g)
+        ns = parents(g, v) 
+        n = length(ns)
+        protected = falses(n) # mark parents which are v structures
+        for (i, j) in combinations(1:n, 2) 
+            if !isadjacent(g, ns[i], ns[j]) 
+                protected[i] = protected[j] = true
+            end
+        end
+        for i in 1:n
+            if protected[i]
+                remove!(g2, v → ns[i])
+            end
+        end
+    end
+    g2
+end
+function vskel!(g::DiGraph)
+    es = Pair{Int,Int}[]
+    for v in vertices(g)
+        ns = parents(g, v)
+        n = length(ns)
+        protected = falses(n) # mark parents which are v structures
+        for (i, j) in combinations(1:n, 2) 
+            if !isadjacent(g, ns[i], ns[j]) 
+                protected[i] = protected[j] = true
+            end
+        end
+        for i in 1:n
+            if !protected[i]
+                push!(es, v=>ns[i]) # make undirected
+            end
+        end
+    end
+    for e in es
+        add_edge!(g, e)
+    end
+    g
+end

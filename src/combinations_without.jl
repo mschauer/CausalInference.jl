@@ -1,3 +1,11 @@
+"""
+    allpairs(v)
+
+Iterator that is equivalent to combinations(x, 2) but iterates tuples.
+"""
+allpairs(v) = Iterators.filter(i -> isless(i...), Iterators.product(v,v))
+
+
 # Combinations iterator with tabu
 using Combinatorics
 import Base: iterate, eltype, length

@@ -95,18 +95,9 @@ function unshielded(g)
     Z
 end
 
-isadjacent(dg, v, w) = has_edge(dg, v, w) || has_edge(dg, w, v)
-has_both(dg, v, w) = has_edge(dg, v, w) && has_edge(dg, w, v)
 
-remove!(dg::DiGraph, e::Pair) = rem_edge!(dg, Edge(e))
-remove!(dg::Graph, e::Tuple) = rem_edge!(dg, Edge(e))
 
-"""
-    vskel(g)
-
-Skeleton and `v`-structures. (Currently from the first step of the pc-Alg.)
-"""
-vskel(g) = _vskel(nv(g), dseporacle, g)
+alt_vskel(g) = _vskel(nv(g), dseporacle, g)
 
 function _vskel(n::V, I, par...) where {V}
     # Step 1
@@ -118,11 +109,11 @@ function _vskel(n::V, I, par...) where {V}
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
-            remove!(dg, v => u)
+            remove!(dg, v → u)
             remove!(g, (v, u))
         end
         if has_edge(g, (v, w))
-            remove!(dg, v => w)
+            remove!(dg, v → w)
             remove!(g, (v, w))
         end
     end
@@ -143,16 +134,17 @@ function pcalg(n, I, par...; kwargs...)
     g = complete_graph(n)
     VERBOSE = false
     # Step 1
-    g, S = skeleton(g, I, par...; kwargs...)
+    g, S = skeleton(g, I, par, kwargs)
     dg = DiGraph(g) # use g to keep track of unoriented edges
     g, dg = orient_unshielded(g, dg, S)
-    apply_pc_rules(g, dg; kwargs...)
+    #apply_pc_rules(g, dg; kwargs...)
+    meek_rules!(dg)
 end
 
 """
     orient_unshielded(g, dg, S)
 
-Orient unshielded triples using the seperating sets.
+Orient unshielded triples using the separating sets.
 `g` is an undirected graph containing edges of unknown direction,
 `dg` is an directed graph containing edges of known direction and 
 both `v=>w` and `w=>v `if the direction of `Edge(v,w)`` is unknown.
@@ -170,11 +162,11 @@ function orient_unshielded(g, dg, S)
 
     for (u, v, w) in Z
         if has_edge(g, (u, v))
-            remove!(dg, v => u)
+            remove!(dg, v → u)
             remove!(g, (v, u))
         end
         if has_edge(g, (v, w))
-            remove!(dg, v => w)
+            remove!(dg, v → w)
             remove!(g, (v, w))
         end
     end
@@ -198,56 +190,34 @@ function apply_pc_rules(g, dg; VERBOSE = false)
         for e in edges(g)
             for e_ in (e, reverse(e))
                 v, w = Tuple(e_)
+
                 # Rule 1: Orient v-w into v->w whenever there is u->v
                 # such that u and w are not adjacent
-                for u in inneighbors(dg, v)
-                    has_edge(dg, v => u) && continue # not directed
-                    isadjacent(dg, u, w) && continue
+                if meek_rule1(dg, v, w)
                     VERBOSE && println("rule 1: ", v => w)
-                    remove!(dg, w => v)
+                    remove!(dg, w → v)
                     push!(removed, (w, v))
                     @goto ende
                 end
 
                 # Rule 2: Orient v-w into v->w whenever there is a chain
                 # v->k->w.
-                outs = Int[]
-                for k in outneighbors(dg, v)
-                    !has_edge(dg, k => v) && push!(outs, k)
-                end
-                ins = Int[]
-                for k in inneighbors(dg, w)
-                    !has_edge(dg, w => k) && push!(ins, k)
-                end
-
-                if !disjoint_sorted(ins, outs)
+                if meek_rule2(dg, v, w)
                     VERBOSE && println("rule 2: ", v => w)
-                    remove!(dg, w => v)
+                    remove!(dg, w → v)
                     push!(removed, (w, v))
                     @goto ende
                 end
 
                 # Rule 3: Orient v-w into v->w whenever there are two chains
-                # v-k->w and v-l->w such that k and l are nonadjacent
-                fulls = [] # Find nodes k where v-k
-                for k in outneighbors(dg, v)
-                    has_edge(dg, k => v) && push!(fulls, k)
-                end
-                for (k, l) in combinations(fulls, 2) # FIXME: 
-                    isadjacent(dg, k, l) && continue
-
-                    # Skip if not k->w or if not l->w
-                    if has_edge(dg, w => k) || !has_edge(dg, k => w)
-                        continue
-                    end
-                    if has_edge(dg, w => l) || !has_edge(dg, l => w)
-                        continue
-                    end
+                # v-k->w and v-l->w such that k and l are nonadjacent 
+                if meek_rule3(dg, v, w)
                     VERBOSE && println("rule 3: ", v => w)
-                    remove!(dg, w => v)
+                    remove!(dg, w → v)
                     push!(removed, (w, v))
                     @goto ende
                 end
+
             end
         end
 

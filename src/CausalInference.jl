@@ -1,13 +1,17 @@
 module CausalInference
+
 using Graphs
 using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
+using Memoization, LRUCache
+
+import Base: ==, show
 
 export ancestors, descendants, alt_test_dsep, test_covariate_adjustment, alt_test_backdoor, find_dsep, find_min_dsep, find_covariate_adjustment, find_backdoor_adjustment, find_frontdoor_adjustment, find_min_covariate_adjustment, find_min_backdoor_adjustment, find_min_frontdoor_adjustment, list_dseps, list_covariate_adjustment, list_backdoor_adjustment, list_frontdoor_adjustment
 export dsep, skeleton, gausscitest, dseporacle, partialcor
-export unshielded, pcalg, vskel
-export cpdag, alt_cpdag
+export unshielded, pcalg, vskel, vskel!, alt_vskel
+export cpdag, alt_cpdag, meek_rules!
 export digraph, vpairs, skel_oracle, pc_oracle, randdag
 export cmitest, kl_entropy, kl_renyi, kl_mutual_information
 export kl_cond_mi, kl_perm_mi_test, kl_perm_cond_mi_test
@@ -19,18 +23,23 @@ export plot_pc_graph_text, plot_fci_graph_text
 export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
+export ges
+export pdag2dag!
 
 include("graphs.jl")
 include("combinations_without.jl")
 include("klentropy.jl")
 include("skeleton.jl")
+include("pdag.jl")
 include("dsep.jl")
+include("meek.jl")
 include("pc.jl")
 include("cpdag.jl")
 include("fci.jl")
 include("misc.jl")
 include("recantingwitness.jl")
 include("backdoor.jl")
+include("ges.jl")
 include("gensearch.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
