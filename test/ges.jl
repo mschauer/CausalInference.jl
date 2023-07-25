@@ -37,7 +37,7 @@ end
 # https://cran.r-project.org/web/packages/BCDAG/vignettes/bcdag_generatedata.html
 @testset "GES randdag" begin
   #  seed = reinterpret(UInt, time())
-    seed = 0x41d92ffd25091486
+    seed = 123
     @show seed
     Random.seed!(seed)
     t0 = t1 = t2 = 0.0
@@ -48,7 +48,7 @@ end
         n = 20000
         alpha = 2.5/d
         c1 = 0.0001 # take small as no sampling error, only numerical errors
-        penalty = 0.0001 # same
+        penalty = 0.00005 # same
         #g = digraph([1 => 2, 1 => 4, 2 => 4, 3 => 2, 3 => 4])
         g = randdag(d, alpha)
         E = Matrix(adjacency_matrix(g)) # Markov operator multiplies from right 
