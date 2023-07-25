@@ -1,21 +1,21 @@
 # Library
 
 ## (Partially) directed acyclic graphs (PDAGs and DAGs)
-```
+```@docs
 has_a_path
-graph
-allpairs
-isclique
-parents
-children
-isundirected
-isparent
-neighbors_undirected
-isoriented
-orientedge!
-neighbors_adjacent
-isadjacents
-ischild
+CausalInference.graph
+CausalInference.allpairs
+CausalInference.isclique
+CausalInference.parents
+CausalInference.children
+CausalInference.isundirected
+CausalInference.isparent
+CausalInference.neighbors_undirected
+CausalInference.isoriented
+CausalInference.orientedge!
+CausalInference.neighbors_adjacent
+CausalInference.isadjacent
+CausalInference.ischild
 ```
 
 ## Causal graphs
@@ -27,10 +27,10 @@ vskel
 has_recanting_witness
 backdoor_criterion
 meek_rules!
-meek_rule1
-meek_rule2
-meek_rule3
-meek_rule4
+CausalInference.meek_rule1
+CausalInference.meek_rule2
+CausalInference.meek_rule3
+CausalInference.meek_rule4
 pdag2dag!
 ```
 
@@ -47,6 +47,7 @@ orientable_unshielded
 plot_pc_graph_tikz
 plot_pc_graph_recipes
 plot_pc_graph_text
+CausalInference.prepare_pc_graph
 ```
 
 ## Statistics
@@ -81,6 +82,7 @@ fcialg
 plot_fci_graph_tikz
 plot_fci_graph_recipes
 plot_fci_graph_text
+CausalInference.prepare_fci_graph
 ```
 
 ## Miscellaneous
@@ -94,6 +96,8 @@ CausalInference.disjoint_sorted
 CausalInference.ordered_edges
 CausalInference.insorted
 CausalInference.removesorted!
+graph_to_text
+CausalInference.combinations_without
 ```
 
 ## Adjustment
@@ -118,15 +122,9 @@ list_frontdoor_adjustment
 ```
 
 ## GES
-```
+```@docs
 ges
-localscore
-Insert!
-Delete!
-```
-
-## Miscellenous
-```
-graph_to_text
-combinations_without
+CausalInference.local_score
+CausalInference.Insert!
+CausalInference.Delete!
 ```
