@@ -1,7 +1,7 @@
 # Library
 
 ## (Partially) directed acyclic graphs (PDAGs and DAGs)
-```
+```@docs
 has_a_path
 graph
 allpairs
@@ -27,10 +27,10 @@ vskel
 has_recanting_witness
 backdoor_criterion
 meek_rules!
-meek_rule1
-meek_rule2
-meek_rule3
-meek_rule4
+CausalInference.meek_rule1
+CausalInference.meek_rule2
+CausalInference.meek_rule3
+CausalInference.meek_rule4
 pdag2dag!
 ```
 
@@ -94,6 +94,8 @@ CausalInference.disjoint_sorted
 CausalInference.ordered_edges
 CausalInference.insorted
 CausalInference.removesorted!
+graph_to_text
+combinations_without
 ```
 
 ## Adjustment
@@ -118,15 +120,9 @@ list_frontdoor_adjustment
 ```
 
 ## GES
-```
+```@docs
 ges
 localscore
 Insert!
 Delete!
-```
-
-## Miscellenous
-```
-graph_to_text
-combinations_without
 ```
