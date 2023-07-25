@@ -14,7 +14,7 @@ CausalInference.neighbors_undirected
 CausalInference.isoriented
 CausalInference.orientedge!
 CausalInference.neighbors_adjacent
-CausalInference.isadjacents
+CausalInference.isadjacent
 CausalInference.ischild
 ```
 
@@ -47,6 +47,7 @@ orientable_unshielded
 plot_pc_graph_tikz
 plot_pc_graph_recipes
 plot_pc_graph_text
+CausalInference.prepare_pc_graph
 ```
 
 ## Statistics
@@ -81,6 +82,7 @@ fcialg
 plot_fci_graph_tikz
 plot_fci_graph_recipes
 plot_fci_graph_text
+CausalInference.prepare_fci_graph
 ```
 
 ## Miscellaneous
@@ -122,7 +124,7 @@ list_frontdoor_adjustment
 ## GES
 ```@docs
 ges
-CausalInference.localscore
+CausalInference.local_score
 CausalInference.Insert!
 CausalInference.Delete!
 ```
