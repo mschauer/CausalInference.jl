@@ -25,9 +25,9 @@ Start with a subgraph `g` or the complete undirected graph on `n` vertices.
 Returns skeleton graph and separating set.
 """
 function skeleton(n::Integer, I, par...; kwargs...)
-    skeleton(complete_graph(n), I, par; kwargs)
+    skeleton(complete_graph(n), I, par, kwargs)
 end
-function skeleton(g, I, par; kwargs)
+function skeleton(g, I, par, kwargs)
     V = eltype(g)
     n = nv(g)
     S = Dict{edgetype(g), Vector{V}}()

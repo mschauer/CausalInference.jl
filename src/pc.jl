@@ -134,7 +134,7 @@ function pcalg(n, I, par...; kwargs...)
     g = complete_graph(n)
     VERBOSE = false
     # Step 1
-    g, S = skeleton(g, I, par...; kwargs...)
+    g, S = skeleton(g, I, par, kwargs)
     dg = DiGraph(g) # use g to keep track of unoriented edges
     g, dg = orient_unshielded(g, dg, S)
     #apply_pc_rules(g, dg; kwargs...)
