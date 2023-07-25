@@ -3,19 +3,19 @@
 ## (Partially) directed acyclic graphs (PDAGs and DAGs)
 ```@docs
 has_a_path
-graph
-allpairs
-isclique
-parents
-children
-isundirected
-isparent
-neighbors_undirected
-isoriented
-orientedge!
-neighbors_adjacent
-isadjacents
-ischild
+CausalInference.graph
+CausalInference.allpairs
+CausalInference.isclique
+CausalInference.parents
+CausalInference.children
+CausalInference.isundirected
+CausalInference.isparent
+CausalInference.neighbors_undirected
+CausalInference.isoriented
+CausalInference.orientedge!
+CausalInference.neighbors_adjacent
+CausalInference.isadjacents
+CausalInference.ischild
 ```
 
 ## Causal graphs
@@ -95,7 +95,7 @@ CausalInference.ordered_edges
 CausalInference.insorted
 CausalInference.removesorted!
 graph_to_text
-combinations_without
+CausalInference.combinations_without
 ```
 
 ## Adjustment
@@ -122,7 +122,7 @@ list_frontdoor_adjustment
 ## GES
 ```@docs
 ges
-localscore
-Insert!
-Delete!
+CausalInference.localscore
+CausalInference.Insert!
+CausalInference.Delete!
 ```
