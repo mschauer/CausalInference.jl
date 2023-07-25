@@ -8,30 +8,6 @@ using LinearAlgebra, StatsBase
     @test issorted(intersect((1:1000)[rand(Bool, 1000)], intersect((1:1000)[rand(Bool, 1000)], (1:1000)[rand(Bool, 1000)])))
 end
 
-@testset "GES oracle (broken)" begin
-    Random.seed!(100)
-    total = 0
-    wrong0 = wrong1 = wrong2 = 0
-    for n in 0:10
-        alpha = 0.1
-        @testset "randdag($n)" begin for k in 1:100
-            global g = randdag(n, alpha)
-            skel = DiGraph(Graph(g))
-            h2 = cpdag(g)
-            h1 = CausalInference.ges_internal(n, Float64, h2)
-            wrong0 += !(vpairs(h1) ⊆ vpairs(skel))
-            #h1 == h2 || println(vpairs(g))
-            #@test vpairs(h1) ⊆ vpairs(h2)
-            #@test vpairs(h2) ⊆ vpairs(h1)
-
-            wrong1 += !(vpairs(h1) ⊆ vpairs(h2))
-            wrong2 += !(vpairs(h2) ⊆ vpairs(h1))
-            total += 1
-        end end
-    end
-    println("$(wrong0/total) too large $(wrong1/total) too many $(wrong2/total) missing")
-end
-
 @testset "GES example" begin
     Random.seed!(100)
     N = 2000
@@ -46,7 +22,7 @@ end
     X = [x v w z s]
 
 
-    g = ges(X)
+    g, _ = ges(X)
 
     @test sort(collect(Graphs.edges(g))) == sort(Edge.([1 => 2
                             1 => 3
@@ -108,7 +84,7 @@ end
         h1, _ = skeleton(d, gausscitest, (Ctrue, n), c1)
         h2, _ = skeleton(d, dseporacle, g)
 
-        t1 += @elapsed g1 = CausalInference.ges_internal(d, Float64, GaussianScore(Ctrue, n, penalty))
+        t1 += @elapsed g1, _ = ges(d, GaussianScore(Ctrue, n, penalty))
         t2 += @elapsed g2 = pcalg(d, gausscitest, (Ctrue, n), c1)
         
         test_pcges = g1 == g2

@@ -59,7 +59,7 @@ Test if `x` and `y` are connected by a undirected edge in the graph `g`.
 """
 isundirected(g, x, y) = has_edge(g, x, y) && has_edge(g, y, x)
 isundirected(g, edge) = has_edge(g, edge) && has_edge(g, reverse(edge))
-has_both = isundirected
+const has_both = isundirected
 
 """
     isparent(g, x, y)

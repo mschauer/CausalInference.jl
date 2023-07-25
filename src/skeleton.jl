@@ -25,9 +25,9 @@ Start with a subgraph `g` or the complete undirected graph on `n` vertices.
 Returns skeleton graph and separating set.
 """
 function skeleton(n::Integer, I, par...; kwargs...)
-    skeleton(complete_graph(n), I, par...; kwargs...)
+    skeleton(complete_graph(n), I, par; kwargs)
 end
-function skeleton(g, I, par...; kwargs...)
+function skeleton(g, I, par; kwargs)
     V = eltype(g)
     n = nv(g)
     S = Dict{edgetype(g), Vector{V}}()
@@ -91,8 +91,8 @@ function partialcor(i, j, s, C)
         for k in 1:n
             is[k + 2] = s[k]
         end
-        C0 = C[is, is]
-        P = pinv(C0, 1.5e-8)
+        C0 = @view C[is, is]
+        P = pinv(C0, rtol=1.5e-8)
         -P[1, 2] / sqrt(P[1, 1] * P[2, 2])
     end
 end

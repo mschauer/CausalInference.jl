@@ -1,7 +1,24 @@
 # Library
 
-## Directed acyclic graphs (DAGs)
+## (Partially) directed acyclic graphs (PDAGs and DAGs)
+```
+has_a_path
+graph
+allpairs
+isclique
+parents
+children
+isundirected
+isparent
+neighbors_undirected
+isoriented
+orientedge!
+neighbors_adjacent
+isadjacents
+ischild
+```
 
+## Causal graphs
 ```@docs
 dsep
 cpdag
@@ -9,7 +26,12 @@ alt_cpdag
 vskel
 has_recanting_witness
 backdoor_criterion
-has_a_path
+meek_rules!
+meek_rule1
+meek_rule2
+meek_rule3
+meek_rule4
+pdag2dag!
 ```
 
 ## PC algorithm
@@ -93,4 +115,18 @@ list_dseps
 list_covariate_adjustment
 list_backdoor_adjustment
 list_frontdoor_adjustment
+```
+
+## GES
+```
+ges
+localscore
+Insert!
+Delete!
+```
+
+## Miscellenous
+```
+graph_to_text
+combinations_without
 ```

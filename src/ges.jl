@@ -52,7 +52,7 @@ end
 
 # The @memoize macro has to check if ParseData is the same argument. 
 # We only ever define one immutable ParseData. We check equality of data.
-==(a::T, b::T) where T <: ParseData = a.data == b.data
+==(a::T, b::T) where T <: ParseData = a.data === b.data
 
 
 ####################################################################
@@ -60,44 +60,44 @@ end
 ####################################################################
 
 """
-    ges(data; penalty = 1.0, verbose=false)
+    ges(data; verbose=false)
 
 Compute a causal graph for the given observed data using GES.
 """
 function ges(data; penalty = 1.0, verbose=false)
 
-    # data type / precision
-    scoreT = eltype(data)
+    # Data type / precision
+    score = zero(eltype(data))
 
     # Parse the inputted data
     dataParsed = ParseData(data, penalty)
 
-    # Create an empty graph with one node for each feature
-   
-
-    return ges_internal(dataParsed.numFeatures, scoreT, dataParsed; penalty, verbose)
+  
+    return ges(dataParsed.numFeatures, dataParsed; score, penalty, verbose)
 end
 
-function ges_internal(n, scoreT, data; penalty = 1.0, verbose=false)
+"""
+    ges(n, data; score=0.0, penalty = 1.0, verbose=false)
+
+Estimate a causal graph for the given observed data using GES.
+"""
+function ges(n, data; score=0.0, penalty = 1.0, verbose=false)
+    # Create an empty graph with one node for each feature
     g = DiGraph(n)
+
     verbose && println("Start forward search")
-    # Perform the forward search 
-    
-    ges_search_insert!(g, scoreT, data, verbose)
+    g, score = ges_search_insert!(g, score, data, verbose)
 
     verbose && println("Start backward search")
-    # Perform the backward search 
-    ges_search_delete!(g, scoreT, data, verbose)
+    g, score = ges_search_delete!(g, score, data, verbose)
    
-    return g # Return the graph
-
+    return g, score
 end
 
 ####################################################################
 # Insert and Delete Operators
 ####################################################################
 """
-
     Insert!(g, x, y, T)
 
 Inserts x->y and directs previously undirected edges t->y, t ∈ T.
@@ -114,11 +114,8 @@ function Insert!(g, x, y, T)
     return g
 end
 
-
-
 """
-
-    Deletes!(g, x, y, H)
+    Delete!(g, x, y, H)
 
 Deletes x-y or x->y and directs previously undirected edges x->h and y->h
 for h in H.
@@ -155,20 +152,21 @@ end
 # Forward and Backward search
 ####################################################################
 
-function ges_search_insert!(g, scoreT, data, verbose)
-    # Continually add  edges to the graph until the score stops increasing
+function ges_search_insert!(g, score, data, verbose)
+    # Continually add edges to the graph until the score stops increasing
     while true
         # Get the new best step
-        step = find_insert(scoreT, data, g, verbose)
+        step = find_insert(score, data, g, verbose)
         
         # If the score did not improve...
         if step.Δscore ≤ 0
             verbose && println(vpairs(g))
-            return g
+            return g, score
         end
         verbose && println(step)
         # Use the insert or delete operator update the graph
         Insert!(g, step)
+        score += step.Δscore
         
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
@@ -179,21 +177,22 @@ function ges_search_insert!(g, scoreT, data, verbose)
     end
 end
 
-function ges_search_delete!(g, scoreT, data, verbose)
-    # Continually add/remove edges to the graph until the score stops increasing
+function ges_search_delete!(g, score, data, verbose)
+    # Continually remove edges to the graph until the score stops increasing
     while true
         
         # Get the new best step
-        step = find_delete(scoreT, data, g, verbose)
+        step = find_delete(score, data, g, verbose)
         
         # If the score did not improve...
         if step.Δscore ≤ 0
             verbose && println(vpairs(g))
-            return g
+            return g, score
         end
         verbose && println(step)
         # Use the insert or delete operator update the graph
         Delete!(g, step)
+        score += step.Δscore
         verbose && println(vpairs(g))
 
         # Convert the PDAG to a complete PDAG
@@ -206,8 +205,8 @@ function ges_search_delete!(g, scoreT, data, verbose)
 end
 
 
-function find_insert(scoreT, data, g, verbose)
-    nextstep = Step{Int,scoreT}()
+function find_insert(score, data, g, verbose)
+    nextstep = Step{Int,typeof(score)}()
     # Loop through all possible node combinations
     for (x,y) in product(vertices(g), vertices(g)) 
         # Skip over diagonal and adjacent edges
@@ -231,8 +230,8 @@ function find_insert(scoreT, data, g, verbose)
     return nextstep
 end
 
-function find_delete(scoreT, data, g, verbose)
-    nextstep = Step{Int,scoreT}()
+function find_delete(score, data, g, verbose)
+    nextstep = Step{Int,typeof(score)}()
     # Loop through all possible node combinations
     for e in edges(g) # go through edges
         x, y = Pair(e)
@@ -297,7 +296,6 @@ function findBestInsert(step, dataParsed, g, x, y)
 
                 # Score the insert operator
                 PAy = parents(g, y)
-                PAy⁺ = PAy ∪ x
                 newΔ = Δscoreinsert(dataParsed, NAyxT ∪ PAy, x, y, T)
                 
                 # Save the new score if it was better than any previous
@@ -378,7 +376,7 @@ end
 Δscoreinsert(data, parents, x, v, _) = Δscore(data, parents, x, v)
 Δscoredelete(data, parents, x, v, _) = -Δscore(data, parents, x, v)
 
-Δscore(data, parents, x, v) = score(data, sort([parents;x]), v) - score(data, sort(parents), v)
+Δscore(data, parents, x, v) = local_score(data, sort(push!(copy(parents), x)), v) - local_score(data, sort(parents), v)
 
 
 
@@ -391,13 +389,17 @@ function score_dag(g, data) # g dag
     s
 end
 
-struct GaussianScore{T}
-    C::Matrix{T} # correlation
+struct GaussianScore{T, S<:AbstractMatrix{T}}
+    C::S # correlation compares identically
     n::Int # hypothetical number of obs
     penalty::Float64
+    hash::UInt
 end
+GaussianScore(C, n, penalty) = GaussianScore(C, n, penalty, hash((C, n, penalty)))
 export GaussianScore
-
+import Base.:(==), Base.hash
+is_equal(a::T, b::T) where T <: GaussianScore = ((a.C === b.C) || is_equal(a.C, b.C)) && is_equal(a.n, b.n) &&  is_equal(a.penalty, b.penalty)
+hash(a::GaussianScore, u::UInt) = hash(a.hash, u)
 
 # compare https://github.com/py-why/causal-learn/blob/f51195473b316662b6f7dce68cd73d734766a6a3/causallearn/score/LocalScoreFunction.py
 """
@@ -405,7 +407,7 @@ export GaussianScore
 
 Local Gaussian BIC score.
 """
-function score(os::GaussianScore, p, v)
+@memoize LRU(maxsize=1_000_000) function local_score(os::GaussianScore, p, v)
     C = os.C 
     penalty = os.penalty
     n = os.n
@@ -420,7 +422,7 @@ end
 
 
 
-@memoize LRU(maxsize=1_000_000) function score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
+@memoize LRU(maxsize=1_000_000) function local_score(dataParsed::ParseData{Matrix{A}}, nodeParents, node) where A
 
     # Unpack some variables from the dataParsed structure
     n = A(dataParsed.numObservations) #convert datatype
@@ -434,13 +436,14 @@ end
         parentsAndIncept = [nodeParents; dataParsed.numFeatures+1]
     end
 
-    # To calculate the score we need a mean-squared error which we can get by regessing the the child node onto the parents
+    # To calculate the score we need a mean-squared 
+    # error which we can get by regessing the the child node onto the parents
     # Create variables for a linear regression y = X*b
 
     # Use views to avoid creating copies of the data in memory
-        # X is the design matrix, augmented with a column of ones at the end
-        # X is also been standardized so mean(columns)=0 and std(column)=1
-        # y is data from the child node being tested
+    # X is the design matrix, augmented with a column of ones at the end
+    # X is also been standardized so mean(columns)=0 and std(column)=1
+    # y is data from the child node being tested
     @views begin
         y = data[:,node]
         X = data[:,parentsAndIncept]
@@ -462,7 +465,7 @@ end
     mse = sum(x->x^2, y-ŷ) / n
 
     # return the final score we want to maximize (which is technically -2BIC)
-    return -p*k*log(n) - n*log(mse)
+    return -n*log(mse) - p*k*log(n) 
 end
 
 

@@ -12,9 +12,9 @@ function meek_rules!(g; rule4=false)
         done = true
         # Loop through all the edges in the graph (u-v)
         for e in collect(edges(g)) # collect iterator as we are deleting
-            (u, v) = src(e), dst(e)
+            u, v = Pair(e)
             # We only need to update (still) undirected edges
-            !has_both(g, e) && continue
+            !has_both(g, u, v) && continue
 
             # check only case u->v, we'll check v->u later
             if meek_rule1(g, u, v) || meek_rule2(g, u, v) || meek_rule3(g, u, v) || (rule4 && meek_rule4(g, u, v))
