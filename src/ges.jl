@@ -2,7 +2,7 @@
 # Data Structures
 ####################################################################
 
-# Collection of variables to pass along to different functions in the FGES algorithm.  
+# Collection of variables to pass along to different functions in the GES algorithm.  
 struct ParseData{M, F<:AbstractFloat}
     data::M # original data
     normAugData::M # standardized by the mean and std of each column, appended with ones column at end
@@ -60,11 +60,11 @@ end
 ####################################################################
 
 """
-    fges(data; penalty = 1.0, verbose=false)
+    ges(data; penalty = 1.0, verbose=false)
 
 Compute a causal graph for the given observed data using GES.
 """
-function fges(data; penalty = 1.0, verbose=false)
+function ges(data; penalty = 1.0, verbose=false)
 
     # data type / precision
     scoreT = eltype(data)
@@ -75,10 +75,10 @@ function fges(data; penalty = 1.0, verbose=false)
     # Create an empty graph with one node for each feature
    
 
-    return fges_internal(dataParsed.numFeatures, scoreT, dataParsed; penalty, verbose)
+    return ges_internal(dataParsed.numFeatures, scoreT, dataParsed; penalty, verbose)
 end
 
-function fges_internal(n, scoreT, data; penalty = 1.0, verbose=false)
+function ges_internal(n, scoreT, data; penalty = 1.0, verbose=false)
     g = DiGraph(n)
     verbose && println("Start forward search")
     # Perform the forward search 

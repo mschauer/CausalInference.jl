@@ -15,7 +15,7 @@ Random.seed!(100)
             global g = randdag(n, alpha)
             skel = DiGraph(Graph(g))
             h2 = cpdag(g)
-            h1 = CausalInference.fges_internal(n, Float64, h2)
+            h1 = CausalInference.ges_internal(n, Float64, h2)
             wrong0 += !(vpairs(h1) ⊆ vpairs(skel))
             #h1 == h2 || println(vpairs(g))
             #@test vpairs(h1) ⊆ vpairs(h2)
@@ -42,7 +42,7 @@ s = z + randn(N)*0.5
 X = [x v w z s]
 
 
-g = fges(X)
+g = ges(X)
 
 @test sort(collect(Graphs.edges(g))) == sort(Edge.([1 => 2
                             1 => 3
@@ -90,8 +90,8 @@ using LinearAlgebra
 
     println("Vertices $(nv(g)) Edges $(ne(g))")
 
-    #g1 = @time fges(Matrix(X'), penalty=penalty)
-    g1 = @time CausalInference.fges_internal(d, Float64, GaussianScore(Ctrue, n, penalty))
+    #g1 = @time ges(Matrix(X'), penalty=penalty)
+    g1 = @time CausalInference.ges_internal(d, Float64, GaussianScore(Ctrue, n, penalty))
     g2 = pcalg(d, gausscitest, (Ctrue, n), c2)
 
     println("ges not in skel ", length(setdiff(vpairs(g1), vpairs(DiGraph(h2)))))
