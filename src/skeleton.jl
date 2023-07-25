@@ -91,7 +91,7 @@ function partialcor(i, j, s, C)
         for k in 1:n
             is[k + 2] = s[k]
         end
-        C0 = @view C[is, is]
+        C0 = C[is, is] # @view not supported on older versions
         P = pinv(C0, rtol=1.5e-8)
         -P[1, 2] / sqrt(P[1, 1] * P[2, 2])
     end

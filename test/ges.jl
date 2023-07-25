@@ -37,7 +37,7 @@ end
 # https://cran.r-project.org/web/packages/BCDAG/vignettes/bcdag_generatedata.html
 @testset "GES randdag" begin
   #  seed = reinterpret(UInt, time())
-    seed = 0x41d92ffd25091487
+    seed = 0x41d92ffd25091486
     @show seed
     Random.seed!(seed)
     t0 = t1 = t2 = 0.0
