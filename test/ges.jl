@@ -1,5 +1,5 @@
 using Distributions, CausalInference, Graphs
-using Test, Random, Statistics
+using Test, Random, Statistics, Combinatorics
 
 # we use intersection of sorted arrays is sorted
 @test issorted(intersect((1:1000)[rand(Bool, 1000)], (1:1000)[rand(Bool, 1000)]))
@@ -52,20 +52,20 @@ g = ges(X)
                             3 => 4
                             4 => 5]))
 
-using LinearAlgebra
+using LinearAlgebra, StatsBase
 # https://cran.r-project.org/web/packages/BCDAG/vignettes/bcdag_generatedata.html
-@testset "GES" begin
+#@testset "GES" begin
+begin
     seed = reinterpret(UInt, time())
-    seed = 0x41d92fae13925cd9
+  #  seed = 0x41d92fae13925cd9
     @show seed
     Random.seed!(seed)
     qu(x) = x * x'
     d = 6
     n = 20000
     alpha = 2.5/d
-    c1 = 1.0
-    c2 = 2.0
-    penalty = 1.0
+    c1 = 0.001
+    penalty = 0.01
     #g = digraph([1 => 2, 1 => 4, 2 => 4, 3 => 2, 3 => 4])
     g = randdag(d, alpha)
     E = Matrix(adjacency_matrix(g)) # Markov style
@@ -78,8 +78,25 @@ using LinearAlgebra
     Σtrue = Float64.(inv(big.(qu((I - L)))))
     di = sqrt.(diag(Σtrue))
     Ctrue = (Σtrue) ./ (di * di')
-
+    println("Cond ", cond(Ctrue))
     @assert g == DiGraph(E)
+
+    for i in 1:d
+        for j in 1:d
+            i == j && continue
+            #I = setdiff(sample(1:d, rand(0:d), replace=false), [i,j])
+            for I in powerset(setdiff(1:d, [i,j]))
+                t = dseporacle(i, j, I, g) == gausscitest(i, j, I, (Ctrue, n), c1)
+                if t == false
+                    println(vpairs(g))
+                    println("$i $j $I")
+                    println(dsep(g, i, j, I), " ", CausalInference.partialcor(i, j, I, Ctrue))
+                    error()
+                end
+            end
+        end
+    end
+
     cg = cpdag(g)
  
     h1, _ = skeleton(d, gausscitest, (Ctrue, n), c1)
@@ -92,7 +109,7 @@ using LinearAlgebra
 
     #g1 = @time ges(Matrix(X'), penalty=penalty)
     g1 = @time CausalInference.ges_internal(d, Float64, GaussianScore(Ctrue, n, penalty))
-    g2 = pcalg(d, gausscitest, (Ctrue, n), c2)
+    g2 = pcalg(d, gausscitest, (Ctrue, n), c1)
 
     println("ges not in skel ", length(setdiff(vpairs(g1), vpairs(DiGraph(h2)))))
     println("pc not in skel ", length(setdiff(vpairs(g2), vpairs(DiGraph(h2)))))
