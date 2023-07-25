@@ -9,7 +9,8 @@ makedocs(modules = [CausalInference],
                                        "examples/pc_cmi_examples.md",
                                        "examples/pc_real_example.md",
                                        "examples/backdoor_example.md"],
-                     "Library" => "library.md"])
+                     "Library" => "library.md",
+                     "Developer comments", => "comments.md"])
 
 # Documenter can also automatically deploy documentation to gh-pages.
 # See "Hosting Documentation" and deploydocs() in the Documenter manual

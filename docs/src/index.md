@@ -4,7 +4,7 @@ A Julia package for causal inference, graphical models and structure learning. T
 
 ## Introduction
 
-The first aim of this package is to provide Julia implementations of popular algorithms for causal structure identification, the PC algorithm and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data. Secondly, similarly to DAGitty, covariate adjustment sets for estimating causal effects for example by regression can be computed. 
+The first aim of this package is to provide Julia implementations of popular algorithms for causal structure identification, the PC algorithm, the GES algorithm and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data. Secondly, similarly to DAGitty, covariate adjustment sets for estimating causal effects for example by regression can be computed. 
 
 Causal inference is by no means an easy subject. Readers without any prior exposure to these topics are encouraged to go over the following resources in order to get a basic idea of what's involved in causal inference:
 
