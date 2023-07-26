@@ -22,9 +22,9 @@ end
     X = [x v w z s]
 
 
-    g, _ = ges(X)
+    g, _ = ges(X; penalty=2.0)
 
-    @test sort(collect(Graphs.edges(g))) == sort(Edge.([1 => 2
+    @test sort(vpairs(g)) == sort(([1 => 2
                             1 => 3
                             2 => 1
                             2 => 4

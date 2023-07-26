@@ -3,6 +3,7 @@ using Graphs
 using Test
 
 include("ges.jl")
+include("gesvsR.jl")
 include("gensearch.jl")
 include("cpdag.jl")
 include("skeleton.jl")
