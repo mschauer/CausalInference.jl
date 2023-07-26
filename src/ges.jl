@@ -63,7 +63,7 @@ end
 
 Compute a causal graph for the given observed data using GES.
 """
-function ges(data; penalty = 1.0, verbose=false)
+function ges(data; penalty=1.0, parallel=false, verbose=false)
 
     # Data type / precision
     score = zero(eltype(data))
@@ -72,7 +72,7 @@ function ges(data; penalty = 1.0, verbose=false)
     dataParsed = ParseData(data, penalty)
 
   
-    return ges(dataParsed.numFeatures, dataParsed; score, penalty, verbose)
+    return ges(dataParsed.numFeatures, dataParsed; score, parallel, verbose)
 end
 
 """
