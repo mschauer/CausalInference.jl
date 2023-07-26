@@ -1,6 +1,6 @@
 # CausalInference.jl
 
-A Julia package for causal inference, graphical models and structure learning. This package contains the stable PC algorithm [`pcalg`](@ref) and the extended FCI algorithm, as well as functionality to compute adjustment sets which can be used as control variables to compute causal effects by regression. 
+A Julia package for causal inference, graphical models and structure learning. This package contains the PC algorithm [`pcalg`](@ref) and the extended FCI algorithm, as well as functionality to compute adjustment sets which can be used as control variables to compute causal effects by regression. 
 
 ## Introduction
 
