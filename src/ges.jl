@@ -34,12 +34,11 @@ struct ParseData{M, F<:AbstractFloat}
 end  
 
 # Simple structure to hold the current edge, a subset of neighbors, and a score change
-Base.@kwdef mutable struct Step{A,B}
+Base.@kwdef struct Step{A,B}
     edge::Graphs.SimpleEdge{A} = Edge{A}(1,2)
     subset::Vector{A} = A[]
     Δscore::B = zero(B)
 end
-
 
 ####################################################################
 # Base Function Overloads
@@ -64,7 +63,7 @@ end
 
 Compute a causal graph for the given observed data using GES.
 """
-function ges(data; penalty = 1.0, verbose=false)
+function ges(data; penalty=1.0, parallel=false, verbose=false)
 
     # Data type / precision
     score = zero(eltype(data))
@@ -73,20 +72,20 @@ function ges(data; penalty = 1.0, verbose=false)
     dataParsed = ParseData(data, penalty)
 
   
-    return ges(dataParsed.numFeatures, dataParsed; score, penalty, verbose)
+    return ges(dataParsed.numFeatures, dataParsed; score, parallel, verbose)
 end
 
 """
-    ges(n, data; score=0.0, penalty = 1.0, verbose=false)
+    ges(n, data; score=0.0, parallel=false, verbose=false)
 
 Estimate a causal graph for the given observed data using GES.
 """
-function ges(n, data; score=0.0, penalty = 1.0, verbose=false)
+function ges(n, data; score=0.0, parallel=false, verbose=false)
     # Create an empty graph with one node for each feature
     g = DiGraph(n)
 
     verbose && println("Start forward search")
-    g, score = ges_search_insert!(g, score, data, verbose)
+    g, score = ges_search_insert!(g, score, data, parallel, verbose)
 
     verbose && println("Start backward search")
     g, score = ges_search_delete!(g, score, data, verbose)
@@ -152,16 +151,16 @@ end
 # Forward and Backward search
 ####################################################################
 
-function ges_search_insert!(g, score, data, verbose)
+function ges_search_insert!(g, score, data, parallel, verbose)
     # Continually add edges to the graph until the score stops increasing
-    while true
+    while ne(g) < nv(g)*(nv(g)-1) # there are still missing edges
         # Get the new best step
-        step = find_insert(score, data, g, verbose)
+        step = find_insert(score, data, g, parallel, verbose)
         
         # If the score did not improve...
         if step.Δscore ≤ 0
             verbose && println(vpairs(g))
-            return g, score
+            break
         end
         verbose && println(step)
         # Use the insert or delete operator update the graph
@@ -175,11 +174,12 @@ function ges_search_insert!(g, score, data, verbose)
         # Apply the 3 Meek rules to orient some edges in the graph
         meek_rules!(g)
     end
+    return g, score
 end
 
 function ges_search_delete!(g, score, data, verbose)
     # Continually remove edges to the graph until the score stops increasing
-    while true
+    while ne(g) > 0 # there are still edges
         
         # Get the new best step
         step = find_delete(score, data, g, verbose)
@@ -187,7 +187,7 @@ function ges_search_delete!(g, score, data, verbose)
         # If the score did not improve...
         if step.Δscore ≤ 0
             verbose && println(vpairs(g))
-            return g, score
+            break
         end
         verbose && println(step)
         # Use the insert or delete operator update the graph
@@ -202,59 +202,31 @@ function ges_search_delete!(g, score, data, verbose)
         # Apply the 3 Meek rules to orient some edges in the graph
         meek_rules!(g)
     end
+    return g, score
 end
 
+best(a::Step, b::Step) = a.Δscore > b.Δscore ? a : b
 
-function find_insert(score, data, g, verbose)
-    nextstep = Step{Int,typeof(score)}()
-    # Loop through all possible node combinations
-    for (x,y) in product(vertices(g), vertices(g)) 
-        # Skip over diagonal and adjacent edges
-        if x != y && !isadjacent(g,x,y)
-            #For this pair of nodes, the following function will:
-                #(1) check if a valid operator exists
-                #(2) score all valid operators and return the one with the highest score
-            bestset, bestScore = findBestInsert(nextstep, data, g, x, y)
-
-            # If the best valid operator was better than any previously found...
-            if bestScore > nextstep.Δscore 
-                #...update nextstep
-                nextstep.edge = Edge(x,y)
-                nextstep.subset = bestset
-                nextstep.Δscore = bestScore
-
-                #verbose && println(nextstep)
-            end
-        end
+function find_insert(score, data, g, parallel, verbose)
+    # Loop through all possible node combinations, skip over diagonal and adjacent edges
+    if parallel
+        return ThreadsX.reduce(best, (findBestInsert(score, data, g, x, y) for x in vertices(g), 
+                                                                               y in vertices(g) 
+                                      if x != y && !isadjacent(g, x, y)),
+                               init=Step(Edge(0,0), Int[], typemin(typeof(score))))
+    else
+        return reduce(best, (findBestInsert(score, data, g, x, y) for x in vertices(g), 
+                                                                               y in vertices(g) 
+                                      if x != y && !isadjacent(g, x, y)))
     end
-    return nextstep
 end
 
 function find_delete(score, data, g, verbose)
-    nextstep = Step{Int,typeof(score)}()
-    # Loop through all possible node combinations
-    for e in edges(g) # go through edges
-        x, y = Pair(e)
-        if y < x && has_edge(g, y, x) # undirected only once ✓
-            continue 
-        end
-         # Check if there is an edge x->y between two vertices
-        if has_edge(g, x, y)
-            #For this pair of nodes, the following function will:
-                #(1) check if a valid operator exists
-                #(2) score all valid operators and return the one with the highest score
-                #findBestOperation is either "findBestInsert" or "findBestDelete"
-            bestset, bestΔ = findBestDelete(nextstep, data, g, x, y)
-            verbose && println("$x -> $y $bestΔ $bestset")
-            # If the best valid operator was better than any previously found...
-            if bestΔ > nextstep.Δscore 
-                nextstep.edge = Edge(x,y)
-                nextstep.subset = bestset
-                nextstep.Δscore = bestΔ
-            end
-        end
-    end
-    return nextstep
+
+    # Loop through all possible edges
+   return reduce(best, (findBestDelete(score, data, g, src(e), dst(e)) for e in edges(g) 
+                        if !(dst(e) < src(e) && has_edge(g, reverse(e)))  # undirected only once ✓
+                            && has_edge(g, e)))
 end
 
 
@@ -274,14 +246,14 @@ function adj_neighbors(g, x, y)
 end 
 
 
-function findBestInsert(step, dataParsed, g, x, y)
+function findBestInsert(score, dataParsed, g, x, y)
     isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
     Tyx, NAyx = tails_and_adj_neighbors(g, x, y)
 
 
-    # Create two containers to hold the best found score and best subset of Tyx
-    bestΔ = typemin(typeof(step.Δscore))
+    # Best found score and best subset of Tyx
+    bestΔ = typemin(typeof(score))
     bestT = Vector{Int}()
 
     # Keep a list of invalid sets
@@ -310,7 +282,7 @@ function findBestInsert(step, dataParsed, g, x, y)
         end
     end
 
-    return (bestT, bestΔ)
+    return Step(Edge(x,y), bestT, bestΔ)
 end
 
 # Check if the set T is a superset of any invalid set
@@ -324,7 +296,7 @@ function checkSupersets(T, invalid)
 end
 
 
-function findBestDelete(step, dataParsed, g, x, y)
+function findBestDelete(score, dataParsed, g, x, y)
     # Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Hyx: any subset of the undirected neighbors of y that are connected to x
@@ -333,7 +305,7 @@ function findBestDelete(step, dataParsed, g, x, y)
 
     # Best found score difference
     # and best subset of Hyx
-    bestΔ = zero(step.Δscore)
+    bestΔ = zero(score)
     bestH = Vector{Int}()
 
     # Loop through all possible subsets of Hyx
@@ -356,7 +328,7 @@ function findBestDelete(step, dataParsed, g, x, y)
         end
     end
 
-    return (bestH, bestΔ)
+    return Step(Edge(x,y), bestH, bestΔ)
 end
 
 

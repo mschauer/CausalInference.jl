@@ -5,6 +5,7 @@ using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
 using Memoization, LRUCache
+using ThreadsX
 
 import Base: ==, show
 

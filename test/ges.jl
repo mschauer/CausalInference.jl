@@ -33,14 +33,16 @@ end
                             4 => 5]))
 end
 
-
+if Threads.nthreads() == 1
+    println("Skipping parallel tests.")
+end
 # https://cran.r-project.org/web/packages/BCDAG/vignettes/bcdag_generatedata.html
 @testset "GES randdag" begin
   #  seed = reinterpret(UInt, time())
     seed = 123
     @show seed
     Random.seed!(seed)
-    t0 = t1 = t2 = 0.0
+    t0 = t1 = t2 = t3 = 0.0
     K = 50
     for k in 1:K
         qu(x) = x * x'
@@ -86,7 +88,12 @@ end
 
         t1 += @elapsed g1, _ = ges(d, GaussianScore(Ctrue, n, penalty))
         t2 += @elapsed g2 = pcalg(d, gausscitest, (Ctrue, n), c1)
-        
+        if Threads.nthreads() > 1
+            t3 += @elapsed g3, _ = ges(d, GaussianScore(Ctrue, n, penalty), parallel=true)
+            @test g1 == g3
+        else
+            @test_skip g1 == g3
+        end
         test_pcges = g1 == g2
         if !test_pcges
             println("cond(C) ", cond(Ctrue))
@@ -108,6 +115,6 @@ end
         end
         @test test_pcges
     end
-    println("timing: PC ", t2/K, " GES ", t1/K, " (", t0/K, ")")
+    println("timing: PC ", t2/K, " GES ", t1/K, " GES-P ", t3/K, " (", t0/K, ")")
 end
                             
