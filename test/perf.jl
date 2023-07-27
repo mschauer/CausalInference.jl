@@ -56,10 +56,10 @@ using ProfileView
 @time g2 = @profview ges(d, GaussianScore(C, n, penalty))
 #@time g2 = @profview ges(d, GaussianScore(C, n, penalty), parallel=true)
 
-h, s = @profview  CausalInference.skeleton_stable(d, gausscitest, (cor(X), n), 5.0)
+h, s = @profview  CausalInference.skeleton(d, gausscitest, (cor(X), n), 5.0)
 
 alpha = 0.001
-h, s = @time CausalInference.skeleton_stable(d, gausscitest, (cor(X), n), -quantile(Normal(), alpha/2)); h
+h, s = @time CausalInference.skeleton(d, gausscitest, (cor(X), n), -quantile(Normal(), alpha/2)); h
 h3 = Graph(readdlm("nci60skel.csv", ',')[2:end,2:end])
 length(setdiff(vpairs(h), vpairs(h3)))
 

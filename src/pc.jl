@@ -115,18 +115,19 @@ function _vskel(n::V, I, par...) where {V}
 end
 
 """
-    pcalg(n::V, I, par...)
-    pcalg(g, I, par...)
+    pcalg(n::V, I, par...; stable=true)
+    pcalg(g, I, par...; stable=true)
 
 Perform the PC algorithm for a set of 1:n variables using the tests
 
     I(u, v, [s1, ..., sn], par...)
 
-Returns the CPDAG as DiGraph.   
+Returns the CPDAG as DiGraph. By default uses a stable and threaded versions
+of the skeleton algorithm.
 """
-function pcalg(n, I, par...)
+function pcalg(n, I, par...; stable=true)
     # Step 1
-    g, S = skeleton(n, I, par...)
+    g, S = skeleton(n, I, par...; stable)
     dg = DiGraph(g) # use g to keep track of unoriented edges
     g, dg = orient_unshielded(g, dg, S)
     #apply_pc_rules(g, dg)

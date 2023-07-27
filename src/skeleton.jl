@@ -46,8 +46,12 @@ Perform the undirected PC skeleton algorithm for a set of `1:n` variables using 
 Start with a subgraph `g` or the complete undirected graph on `n` vertices.
 Returns skeleton graph and separating set.
 """
-function skeleton(n::Integer, I, par...)
-    skeleton(complete_graph(n), IClosure(I, par))
+function skeleton(n::Integer, I, par...; stable=true)
+    if stable
+        skeleton_stable(complete_graph(n), IClosure(I, par))
+    else 
+        skeleton(complete_graph(n), IClosure(I, par))
+    end
 end
 function skeleton(g::SimpleGraph, I)
     V = eltype(g)
