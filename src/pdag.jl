@@ -95,9 +95,12 @@ Chickering, "Learning equivalence classes" (2002).
 Note that a 3-clique with already two undirected edges is also a clique in the neighbor sense.
 """
 function isclique(g, nodes)
-    for (u, v) in allpairs(nodes)
-        if !isadjacent(g, u, v)
-            return false
+    for u in nodes
+        for v in nodes
+            u < v || continue
+            if !isadjacent(g, u, v)
+                return false
+            end
         end
     end
     return true

@@ -1,13 +1,6 @@
 using Graphs, Tables, Statistics, Distributions
 
 """
-    insorted(a, x)
-
-Check if `x` is in the sorted collection `a`
-"""
-insorted(a, x) = !isempty(searchsorted(a, x))
-
-"""
     disjoint_sorted(u, v)
 
 Check if the intersection of sorted collections is empty. The intersection
@@ -58,12 +51,12 @@ function orientable_unshielded(g, S)
         @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
-            insorted(neighbors(g, z), v) && continue
+            insorted(v, neighbors(g, z)) && continue
             w in S[Edge(v, z)] || push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
-            insorted(neighbors(g, z), w) && continue
+            insorted(w, neighbors(g, z)) && continue
             v in S[Edge(minmax(z, w)...)] || push!(Z, (z, v, w))
         end
     end
@@ -83,12 +76,12 @@ function unshielded(g)
         @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
-            insorted(neighbors(g, z), v) && continue
+            insorted(v, neighbors(g, z)) && continue
             push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
-            insorted(neighbors(g, z), w) && continue
+            insorted(w, neighbors(g, z)) && continue
             push!(Z, (z, v, w))
         end
     end
