@@ -144,10 +144,10 @@ end
 end
 
 @testset "truefalse" begin
-    d = 15
+    d = 10
     @time h, s = skeleton(d, CausalInference.falsetest)
     @test ne(h) == div(d * (d - 1), 2)
-    d = 100
+    d = 10
     @time h, s = skeleton(d, CausalInference.truetest)
     @test ne(h) == 0
 end

@@ -4,7 +4,6 @@
 ```
 has_a_path
 graph
-allpairs
 isclique
 parents
 children
@@ -92,7 +91,6 @@ skel_oracle
 randdag
 CausalInference.disjoint_sorted
 CausalInference.ordered_edges
-CausalInference.insorted
 CausalInference.removesorted!
 ```
 

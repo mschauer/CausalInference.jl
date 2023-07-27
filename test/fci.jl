@@ -112,7 +112,7 @@ end
     add_edge!(true_g, 7, 3)
     add_edge!(true_g, 3, 4)
     add_edge!(true_g, 6, 4)
-    g_oracle = fcialg(4, dseporacle, true_g, sel = [7], verbose = true)
+    g_oracle = fcialg(4, (x, y, s) -> dseporacle(x, y, s, true_g, sel=[7]),  verbose = true)
 
     # test for that weird edge I don't understand...
     @test has_marks(g_oracle, 1, 4, arrow"o->")

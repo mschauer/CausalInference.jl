@@ -124,14 +124,12 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 
 Returns the CPDAG as DiGraph.   
 """
-function pcalg(n, I, par...; kwargs...)
-    g = complete_graph(n)
-    VERBOSE = false
+function pcalg(n, I, par...)
     # Step 1
-    g, S = skeleton(g, I, par, kwargs)
+    g, S = skeleton(n, I, par...)
     dg = DiGraph(g) # use g to keep track of unoriented edges
     g, dg = orient_unshielded(g, dg, S)
-    #apply_pc_rules(g, dg; kwargs...)
+    #apply_pc_rules(g, dg)
     meek_rules!(dg)
 end
 

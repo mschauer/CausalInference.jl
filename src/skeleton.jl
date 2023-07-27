@@ -16,6 +16,28 @@ function removesorted!(n, v)
     true
 end
 
+#=
+function remove_edges!(g::SimpleDiGraph, es)
+    bs = falses(nv(g))
+    fs = falses(nv(g))
+    
+    for e in es
+        u, v = Pair(e)
+        push!(g.fadjlist[u], v)
+        push!(g.badjlist[v], u)
+        fs[u] = bs[v] = true 
+    end      
+end
+=#
+
+struct IClosure{F,S,T}
+    I::F
+    args::S
+    kwargs::T
+end
+IClosure(I, args) = IClosure(I, args, (;))
+(I::IClosure)(x, y, s) = I.I(x, y, s, I.args...; I.kwargs...)
+
 """
     skeleton(n::Integer, I) -> g, S
     skeleton(g, I) -> g, S
@@ -24,10 +46,10 @@ Perform the undirected PC skeleton algorithm for a set of `1:n` variables using 
 Start with a subgraph `g` or the complete undirected graph on `n` vertices.
 Returns skeleton graph and separating set.
 """
-function skeleton(n::Integer, I, par...; kwargs...)
-    skeleton(complete_graph(n), I, par, kwargs)
+function skeleton(n::Integer, I, par...)
+    skeleton(complete_graph(n), IClosure(I, par))
 end
-function skeleton(g, I, par, kwargs)
+function skeleton(g::SimpleGraph, I)
     V = eltype(g)
     n = nv(g)
     S = Dict{edgetype(g), Vector{V}}()
@@ -39,22 +61,76 @@ function skeleton(g, I, par, kwargs)
             for e in (e0, reverse(e0))
                 nb = neighbors(g, src(e))
                 if length(nb) > d  # i.e. |nb\{dst(e)}| >= d
-                    r = searchsorted(nb, dst(e))
+                    r = searchsorted(nb, dst(e)) # neighbors are sorted in SimpleGraph
                     isempty(r) && continue # the edge does not exist anymore
                     isdone = false
-                    for s in combinations_without(nb, d, first(r)) # do not modify s!                nb0 = neighbors(g, src(e))
-                        if I(src(e), dst(e), s, par...; kwargs...)
+                    for s in combinations_without(nb, d, first(r)) # do not modify s!
+                        if I(src(e), dst(e), s)
                             @debug "Removing edge $(e0) given $(s)"
                             rem_edge!(g, e0)
                             if !(e0 in keys(S))
                                 S[e0] = s
                             end
-                            break
+                            @goto nextedge
                         end
                     end
                 end
             end
+            @label nextedge
         end
+        d = d + 1
+        if isdone
+            return g, S
+        end
+    end
+end
+
+"""
+    skeleton_stable(n::Integer, I) -> g, S
+    skeleton_stable(g, I) -> g, S
+
+Perform the undirected stable PC skeleton algorithm for a set of `1:n` variables using the test `I`.
+Start with a subgraph `g` or the complete undirected graph on `n` vertices.
+Returns skeleton graph and separating set.
+"""
+function skeleton_stable(n::Integer, I, par...)
+    skeleton_stable(complete_graph(n), IClosure(I, par))
+end
+function skeleton_stable(g, I)
+    l = ReentrantLock()
+    V = eltype(g)
+    n = nv(g)
+    S = Dict{edgetype(g), Vector{V}}()
+    d = 0 # depth
+    remove = Vector{edgetype(g)}()
+    while true
+        isdone = true
+        Threads.@threads for e0 in collect(edges(g)) # cannot remove edges while iterating
+            for e in (e0, reverse(e0))
+                nb = neighbors(g, src(e))
+                if length(nb) > d  # i.e. |nb\{dst(e)}| >= d
+                    r = searchsorted(nb, dst(e))
+                    isempty(r) && continue # the edge does not exist anymore
+                    isdone = false
+                    for s in combinations_without(nb, d, first(r)) # do not modify s!                
+                        if I(src(e), dst(e), s)
+                            lock(l) do                            
+                                push!(remove, e)
+                                if !(e0 in keys(S))
+                                    S[e0] = s
+                                end
+                            end
+                            @goto nextedge
+                        end
+                    end
+                end
+            end
+            @label nextedge
+        end
+        for r in remove
+            rem_edge!(g, r) # could be efficienter
+        end
+        empty!(remove)
         d = d + 1
         if isdone
             return g, S
@@ -83,7 +159,7 @@ function partialcor(i, j, s, C)
         C[i, j]
     elseif n == 1
         k = s[1]
-        (C[i, j] - C[i, k] * C[j, k]) / sqrt((1 - C[j, k]^2) * (1 - C[i, k]^2))
+        (C[i, j] - C[i, k] * C[j, k]) / sqrt(max(eps(), (1 - C[j, k]^2) * (1 - C[i, k]^2)))
     else
         is = zeros(Int, n + 2)
         is[1] = i

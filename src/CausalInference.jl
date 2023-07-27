@@ -27,6 +27,7 @@ export orient_unshielded, orientable_unshielded, apply_pc_rules
 export ges
 export pdag2dag!
 
+#include("pinv.jl")
 include("graphs.jl")
 include("combinations_without.jl")
 include("klentropy.jl")
