@@ -6,7 +6,7 @@
 
 Julia package for causal inference, graphical models and structure learning.
 
-This package contains code for the stable version of the PC algorithm and the extended FCI algorithm, the score based GES algorithm and intervention search.
+This package contains code for the PC algorithm and the extended FCI algorithm, the score based GES algorithm and adjustment set search.
 
 See the [documentation](https://mschauer.github.io/CausalInference.jl/latest/) for implemented functionality and [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInference.jl/issues/1) for coordination of the development.
 
