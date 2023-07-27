@@ -1,13 +1,6 @@
 using Graphs, Tables, Statistics, Distributions
 
 """
-    insorted(a, x)
-
-Check if `x` is in the sorted collection `a`
-"""
-insorted(a, x) = !isempty(searchsorted(a, x))
-
-"""
     disjoint_sorted(u, v)
 
 Check if the intersection of sorted collections is empty. The intersection
@@ -52,18 +45,19 @@ Find the orientable unshielded triples in the skeleton. Triples are connected ve
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
 """
 function orientable_unshielded(g, S)
+    is_directed(typeof(g)) && throw(ArgumentError("Argument is directed."))
     Z = Tuple{Int64, Int64, Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
         @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
-            insorted(neighbors(g, z), v) && continue
+            has_edge(g, v,  z) && continue
             w in S[Edge(v, z)] || push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
-            insorted(neighbors(g, z), w) && continue
+            has_edge(g, w,  z) && continue
             v in S[Edge(minmax(z, w)...)] || push!(Z, (z, v, w))
         end
     end
@@ -83,12 +77,12 @@ function unshielded(g)
         @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
-            insorted(neighbors(g, z), v) && continue
+            has_edge(g, v, z) && continue
             push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
-            insorted(neighbors(g, z), w) && continue
+            has_edge(g, w, z) && continue
             push!(Z, (z, v, w))
         end
     end
@@ -121,23 +115,22 @@ function _vskel(n::V, I, par...) where {V}
 end
 
 """
-    pcalg(n::V, I, par...)
-    pcalg(g, I, par...)
+    pcalg(n::V, I, par...; stable=true)
+    pcalg(g, I, par...; stable=true)
 
 Perform the PC algorithm for a set of 1:n variables using the tests
 
     I(u, v, [s1, ..., sn], par...)
 
-Returns the CPDAG as DiGraph.   
+Returns the CPDAG as DiGraph. By default uses a stable and threaded versions
+of the skeleton algorithm.
 """
-function pcalg(n, I, par...; kwargs...)
-    g = complete_graph(n)
-    VERBOSE = false
+function pcalg(n, I, par...; stable=true)
     # Step 1
-    g, S = skeleton(g, I, par, kwargs)
+    g, S = skeleton(n, I, par...; stable)
     dg = DiGraph(g) # use g to keep track of unoriented edges
     g, dg = orient_unshielded(g, dg, S)
-    #apply_pc_rules(g, dg; kwargs...)
+    #apply_pc_rules(g, dg)
     meek_rules!(dg)
 end
 

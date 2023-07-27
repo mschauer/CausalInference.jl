@@ -4,7 +4,6 @@
 ```@docs
 has_a_path
 CausalInference.graph
-CausalInference.allpairs
 CausalInference.isclique
 CausalInference.parents
 CausalInference.children
@@ -94,7 +93,6 @@ skel_oracle
 randdag
 CausalInference.disjoint_sorted
 CausalInference.ordered_edges
-CausalInference.insorted
 CausalInference.removesorted!
 graph_to_text
 CausalInference.combinations_without

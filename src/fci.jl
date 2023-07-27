@@ -158,7 +158,7 @@ function fcialg(n::V, I, par...; augmented = true, verbose = false,
                 kwargs...) where {V <: Integer}
 
     # Step F1 and F2
-    g, S = skeleton(n, I, par...; kwargs...)
+    g, S = skeleton(n, I, par...)
 
     # Apply R0 once
     Z = orientable_unshielded(g, S)
