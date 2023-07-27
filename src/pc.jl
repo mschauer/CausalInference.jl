@@ -45,18 +45,19 @@ Find the orientable unshielded triples in the skeleton. Triples are connected ve
 z is not a neighbour of v. Uses that `edges` iterates in lexicographical order.
 """
 function orientable_unshielded(g, S)
+    is_directed(typeof(g)) && throw(ArgumentError("Argument is directed."))
     Z = Tuple{Int64, Int64, Int64}[]
     for e in edges(g)
         v, w = Tuple(e)
         @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
-            insorted(v, neighbors(g, z)) && continue
+            has_edge(g, v,  z) && continue
             w in S[Edge(v, z)] || push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
-            insorted(w, neighbors(g, z)) && continue
+            has_edge(g, w,  z) && continue
             v in S[Edge(minmax(z, w)...)] || push!(Z, (z, v, w))
         end
     end
@@ -76,12 +77,12 @@ function unshielded(g)
         @assert(v<w)
         for z in neighbors(g, w) # case `∨` or `╎`
             z <= v && continue   # longer arm of `∨` is visited first
-            insorted(v, neighbors(g, z)) && continue
+            has_edge(g, v, z) && continue
             push!(Z, (v, w, z))
         end
         for z in neighbors(g, v) # case `∧` 
             (z <= w) && continue # shorter arm is visited first
-            insorted(w, neighbors(g, z)) && continue
+            has_edge(g, w, z) && continue
             push!(Z, (z, v, w))
         end
     end
