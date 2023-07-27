@@ -35,18 +35,18 @@ Return the edge-list as `Pair`s.
 vpairs(g) = map(Pair, collect(edges(g)))
 
 """
-    skel_oracle(g)
+    skel_oracle(g; stable=true)
 
 Compute the `skeleton` using the `dseporacle` for the DAG `g`.
 """
-skel_oracle(g) = skeleton(nv(g), dseporacle, g)
+skel_oracle(g; stable=true) = skeleton(nv(g), dseporacle, g; stable)
 
 """
-    pc_oracle(g)
+    pc_oracle(g; stable=true)
 
 Compute CPDAG using the PC algorithm using the `dseporacle` on the DAG `g`. 
 """
-pc_oracle(g) = pcalg(nv(g), dseporacle, g)
+pc_oracle(g; stable=true) = pcalg(nv(g), dseporacle, g; stable)
 
 """
     randdag(n, alpha = 0.1)
@@ -61,25 +61,6 @@ function randdag(n, alpha = 0.1)
         for j in 1:n
             i == j && continue
             rand() < alpha && add_edge!(g, p[min(i,j)], p[max(i,j)])
-        end
-    end
-    g
-end
-
-
-"""
-    randdag(n, k, true)
-
-Create random DAG from randomly permuted random triangular matrix with
-expected degree `k`.
-"""
-function randdag(n, k, b)
-    b || return randdag(n, k)
-    g = DiGraph(n)
-    p = randperm(n)
-    for i in 1:n
-        for j in (i + 1):n
-            rand() < k/(n-i) && add_edge!(g, p[i], p[j])
         end
     end
     g
