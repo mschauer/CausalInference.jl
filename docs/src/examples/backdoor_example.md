@@ -1,6 +1,6 @@
-# Reasoning about experiments
+# Reasoning about experiments (Backdoors and adjustments)
 
-The following examples is discussed as Example 3.4 in Chapter 3-4 (http://bayes.cs.ucla.edu/BOOK-2K/ch3-3.pdf). See also http://causality.cs.ucla.edu/blog/index.php/category/back-door-criterion/.
+The following example is discussed as Example 3.4 in Chapter 3-4 (http://bayes.cs.ucla.edu/BOOK-2K/ch3-3.pdf). See also http://causality.cs.ucla.edu/blog/index.php/category/back-door-criterion/.
 
 The causal model we are going to study can be represented using the following DAG concerning a set of variables numbered `1` to `8`:
 

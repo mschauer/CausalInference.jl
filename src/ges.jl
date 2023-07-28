@@ -38,6 +38,8 @@ function ges(X::AbstractMatrix; method=:gaussian_bic, penalty=0.5, parallel=fals
         throw(ArgumentError("method=$method"))
     end
 end
+ges(X; method=:gaussian_bic, penalty=0.5, parallel=false, verbose=false) = ges(Tables.matrix(X); method, penalty, parallel, verbose)
+
 
 """
     ges(n, local_score; score=0.0, parallel=false, verbose=false)
