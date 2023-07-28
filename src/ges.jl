@@ -51,10 +51,10 @@ function ges(n, data; score=0.0, parallel=false, verbose=false)
     g = DiGraph(n)
     parallel && Threads.nthreads() == 1 && @warn "Only one thread available"
     verbose && println("Start forward search")
-    t1 = @elapsed g, score = ges_search_insert!(g, score, data, parallel, verbose)
+    t1 = @elapsed g, score = ges_forward_search!(g, score, data, parallel, verbose)
 
     verbose && println("Start backward search")
-    t2 = @elapsed g, score = ges_search_delete!(g, score, data, verbose)
+    t2 = @elapsed g, score = ges_backward_search!(g, score, data, verbose)
    
     return g, score, (t1, t2)
 end
@@ -117,11 +117,11 @@ end
 # Forward and Backward search
 ####################################################################
 
-function ges_search_insert!(g, score, data, parallel, verbose)
+function ges_forward_search!(g, score, data, parallel, verbose)
     # Continually add edges to the graph until the score stops increasing
     while ne(g) < nv(g)*(nv(g)-1) # there are still missing edges
         # Get the new best step
-        step = find_insert(score, data, g, parallel, verbose)
+        step = find_best_insert(score, data, g, parallel, verbose)
         
         # If the score did not improve...
         if step.Δscore ≤ 0
@@ -143,12 +143,12 @@ function ges_search_insert!(g, score, data, parallel, verbose)
     return g, score
 end
 
-function ges_search_delete!(g, score, data, verbose)
+function ges_backward_search!(g, score, data, verbose)
     # Continually remove edges to the graph until the score stops increasing
     while ne(g) > 0 # there are still edges
         
         # Get the new best step
-        step = find_delete(score, data, g, verbose)
+        step = find_best_delete(score, data, g, verbose)
         
         # If the score did not improve...
         if step.Δscore ≤ 0
@@ -173,24 +173,24 @@ end
 
 best(a::Step, b::Step) = a.Δscore > b.Δscore ? a : b
 
-function find_insert(score, data, g, parallel, verbose)
+function find_best_insert(score, data, g, parallel, verbose)
     # Loop through all possible node combinations, skip over diagonal and adjacent edges
     if parallel
-        return ThreadsX.reduce(best, (findBestInsert(score, data, g, x, y) for x in vertices(g), 
+        return ThreadsX.reduce(best, (score_edge_inserts(score, data, g, x, y) for x in vertices(g), 
                                                                                y in vertices(g) 
                                       if x != y && !isadjacent(g, x, y)),
                                init=Step(Edge(0,0), Int[], typemin(typeof(score))))
     else
-        return reduce(best, (findBestInsert(score, data, g, x, y) for x in vertices(g), 
+        return reduce(best, (score_edge_inserts(score, data, g, x, y) for x in vertices(g), 
                                                                                y in vertices(g) 
                                       if x != y && !isadjacent(g, x, y)))
     end
 end
 
-function find_delete(score, data, g, verbose)
+function find_best_delete(score, data, g, verbose)
 
     # Loop through all possible edges
-   return reduce(best, (findBestDelete(score, data, g, src(e), dst(e)) for e in edges(g) 
+   return reduce(best, (score_edge_deletions(score, data, g, src(e), dst(e)) for e in edges(g) 
                         if !(dst(e) < src(e) && has_edge(g, reverse(e)))  # undirected only once ✓
                             && has_edge(g, e)))
 end
@@ -212,7 +212,7 @@ function adj_neighbors(g, x, y)
 end 
 
 
-function findBestInsert(score, dataParsed, g, x, y)
+function score_edge_inserts(score, dataParsed, g, x, y)
     isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
     Tyx, NAyx = tails_and_adj_neighbors(g, x, y)
@@ -262,7 +262,7 @@ function checkSupersets(T, invalid)
 end
 
 
-function findBestDelete(score, dataParsed, g, x, y)
+function score_edge_deletions(score, dataParsed, g, x, y)
     # Calculate two (possibly empty) sets of nodes
     # NAxy: any nodes that are undirected neighbors of y and connected to x by any edge
     # Hyx: any subset of the undirected neighbors of y that are connected to x
