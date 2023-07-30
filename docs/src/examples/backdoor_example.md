@@ -53,14 +53,14 @@ because that conditioning opens up a non-causal path via 6 ← 3 ← 1 → 4 ←
 ![Opened new path](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/backdoor2.png)
 
 
-But conditioning on both `Z = [3, 4]` solves the problem, as verified by the backdoor criterion.
+But conditioning on both `Z = [4, 5]` solves the problem, as verified by the backdoor criterion.
 ```julia
 backdoor_criterion(dag, 6, 8, [3, 4]) # true
 backdoor_criterion(dag, 6, 8, [4, 5]) # true
 ```
-(also conditioning on `Z = [4, 5]` would be possible.)
+(also conditioning on `Z = [3, 4]` would be possible.)
 
-Thus, regressing `Y` on `X` and controlling for variables numbered `Z=[3, 4]` we measure the average causal effect.
+Thus, regressing `Y` on `X` and controlling for variables numbered `Z = [4, 5]` we measure the average causal effect.
 
 ![Good controls](https://raw.githubusercontent.com/mschauer/CausalInference.jl/master/assets/backdoor3.png)
 
