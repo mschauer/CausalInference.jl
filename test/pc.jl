@@ -52,15 +52,15 @@ X = [x v w z s]
 C = cor(X)
 df = (x = x, v = v, w = w, z = z, s = s)
 
-println("Timing Gaussian tests")
+println("Timing Gaussian pcalg")
 @time gaussci_g = pcalg(df, p, gausscitest)
 
-#println("Running CMI tests")
-#@time cmi_g = pcalg(df, 0.1, cmitest)
+println("Timing CMI pcalg")
+@time cmi_g = pcalg(map(x->getindex(x, 1:100), df), 0.1, cmitest) # use less observations for test performance
 
 @testset "pcalg_edgde_test" begin
     @test collect(Graphs.edges(gaussci_g)) == collect(Graphs.edges(dg))
-#    @test collect(Graphs.edges(cmi_g)) == collect(Graphs.edges(dg))
+    @test_broken collect(Graphs.edges(cmi_g)) == collect(Graphs.edges(dg)) # not enough observations
 end
 
 @testset "PC alg plotting utils" begin
