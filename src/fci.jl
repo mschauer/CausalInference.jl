@@ -432,15 +432,9 @@ function fcialg(n::V, I, par...; augmented = true, verbose = false,
 end
 
 function fcialg(t, p::Float64, test::typeof(gausscitest); kwargs...)
-    @assert Tables.istable(t)
-
-    c = Tables.columns(t)
-    sch = Tables.schema(t)
-    n = length(sch.names)
-
-    X = reduce(hcat,
-               map(c -> Tables.getcolumn(Tables.columns(t), c), Tables.columnnames(t)))
-    N = size(X, 1)
+    Tables.istable(t) || throw(ArgumentError("Argument does not support Tables.jl"))
+    X = Tables.matrix(t)
+    N, n = size(X)
     C = Statistics.cor(X)
     return fcialg(n, gausscitest, (C, N), quantile(Normal(), 1 - p / 2); kwargs...)
 end
