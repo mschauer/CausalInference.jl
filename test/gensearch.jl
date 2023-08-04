@@ -90,4 +90,7 @@ end
 @testset "dsep vs alt_test_dsep" begin
     test_dsep(g1)
     test_dsep(g2)
+    @test_throws ArgumentError dsep(g1, [1,2], [2,3], [4,5])
+    @test_throws ArgumentError dsep(g1, [1,2], [3,4], [4,5])
+    @test_throws ArgumentError dsep(g1, [1,2], [3,4], [5,1])
 end
