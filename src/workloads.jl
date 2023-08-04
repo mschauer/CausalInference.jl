@@ -19,6 +19,6 @@ using PrecompileTools
 
     @compile_workload begin
         dsep(dag__, 6, 8, 1)
-        collect(list_covariate_adjustment(dag, 6, 8, Int[], setdiff(Set(1:8), [1, 2])))
+        collect(list_covariate_adjustment(dag__, 6, 8, Int[], setdiff(Set(1:8), [1, 2])))
     end
 end
