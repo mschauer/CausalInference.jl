@@ -7,6 +7,8 @@ using Test
 # however, the algorithms should be deterministic, so we think the
 # tests are okay for now
 
+
+
 g1 = SimpleDiGraph(Edge.([(1, 2), (2, 3), (3, 4), (5, 1), (6, 5), (6, 4), (1, 7)]))
 X = Set(1)
 Xint = 1
@@ -76,4 +78,19 @@ Y = Set(8)
     @test Set(list_covariate_adjustment(g2, Set([6]), Set([8]), Set(Int[]), setdiff(Set(1:8), [1,2]))) == Set([Set([3,4]), Set([4,5]), Set([3,4,5])])
     @test Set(list_backdoor_adjustment(g2, Set([6]), Set([8]), Set(Int[]), setdiff(Set(1:8), [1,2]))) == Set([Set([3,4]), Set([4,5]), Set([3,4,5])])
     @test Set(list_frontdoor_adjustment(g2, X, Y)) == Set([Set(7)]) 
+end
+
+using Test, CausalInference, Combinatorics
+function test_dsep(g) 
+    n = nv(g)
+    for (_, v, w, z) in partitions(1:n, 4)
+        @test dsep(g, v, w, z) == alt_test_dsep(g, v, w, z)
+    end
+end
+@testset "dsep vs alt_test_dsep" begin
+    test_dsep(g1)
+    test_dsep(g2)
+    @test_throws ArgumentError dsep(g1, [1,2], [2,3], [4,5])
+    @test_throws ArgumentError dsep(g1, [1,2], [3,4], [4,5])
+    @test_throws ArgumentError dsep(g1, [1,2], [3,4], [5,1])
 end

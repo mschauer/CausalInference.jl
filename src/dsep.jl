@@ -8,21 +8,18 @@ Check  whether `u` and `v` are d-separated given set `s`.
 Algorithm: unrolled https://arxiv.org/abs/1304.1505
 
 """
-function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
+function dsep(g::AbstractGraph, U, V, S; verbose = false)
     T = eltype(g)
     in_seen = falses(nv(g)) # nodes reached earlier backwards
     out_seen = falses(nv(g)) # nodes reached earlier forwards
     descendant = falses(nv(g)) # descendant in s
+    isv = falses(nv(g))
     blocked = falses(nv(g))
 
     for ve in S
         in_seen[ve] = true
         blocked[ve] = true
     end
-
-    (in_seen[u] || in_seen[v]) && throw(ArgumentError("S should not contain u or v"))
-
-    u == v && throw(ArgumentError("u == v"))
 
     next = Vector{T}()
 
@@ -47,9 +44,25 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
     in_next = Vector{T}()
     out_next = Vector{T}()
 
-    push!(in_next, u) # treat u as vertex reached backwards
-    in_seen[u] = true
+    for u in U
+        push!(in_next, u) # treat u as vertex reached backwards
+        in_seen[u] && throw(ArgumentError("U and S not disjoint."))
+        in_seen[u] = true
+    end
+    if V isa Integer
+        in_seen[V] && throw(ArgumentError("U, V and S not disjoint."))
+        return dsep_inner!(g, in_next, out_next, descendant, ==(V), blocked, out_seen, in_seen; verbose)
+    else
+        isv = falses(nv(g))
+        for v in V
+            in_seen[v] && throw(ArgumentError("U, V and S not disjoint."))
+            isv[v] = true
+        end
+        return dsep_inner!(g, in_next, out_next, descendant, w->isv[w], blocked, out_seen, in_seen; verbose)
+    end
+end
 
+function dsep_inner!(g, in_next, out_next, descendant, found, blocked, out_seen, in_seen; verbose=false)
     while true
         sin = isempty(in_next)
         sout = isempty(out_next)
@@ -60,7 +73,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
             for w in outneighbors(g, src) # possible collider at destination
                 if !out_seen[w] && (!blocked[w] || descendant[w])
                     verbose && println("<- $src -> $w")
-                    w == v && return false
+                    found(w) && return false
                     push!(out_next, w)
                     out_seen[w] = true
                 end
@@ -68,7 +81,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
             for w in inneighbors(g, src)
                 if !in_seen[w]
                     verbose && println("<- $src <- $w")
-                    w == v && return false
+                    found(w) && return false
                     push!(in_next, w)
                     in_seen[w] = true
                 end
@@ -79,7 +92,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
             for w in outneighbors(g, src) # possible collider at destination
                 if !out_seen[w] && !blocked[src] && (!blocked[w] || descendant[w])
                     verbose && println("-> $src -> $w")
-                    w == v && return false
+                    found(w) && return false
                     push!(out_next, w)
                     out_seen[w] = true
                 end
@@ -87,7 +100,7 @@ function dsep(g::AbstractGraph, u::Integer, v::Integer, S; verbose = false)
             for w in inneighbors(g, src) # collider at source
                 if !in_seen[w] && descendant[src] # shielded collider
                     verbose && println("-> $src <- $w")
-                    w == v && return false
+                    found(w) && return false
                     push!(out_next, w)
                     in_seen[w] = true
                 end
