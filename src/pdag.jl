@@ -149,7 +149,7 @@ Returns sorted array.
 children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
 
 """
-    pdag2dag!(g, rule4=false)
+    pdag2dag!(g)
 
 Complete PDAG to DAG using Dor & Tasi (1992).
 """
