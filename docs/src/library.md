@@ -31,6 +31,7 @@ CausalInference.meek_rule2
 CausalInference.meek_rule3
 CausalInference.meek_rule4
 pdag2dag!
+pdag2dag_meek!
 ```
 
 ## PC algorithm

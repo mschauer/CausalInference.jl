@@ -147,3 +147,40 @@ Children of x in g are vertices y such that there is a directed edge y <-- x.
 Returns sorted array.
 """
 children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
+
+"""
+    pdag2dag!(g, rule4=false)
+
+Complete PDAG to DAG using Dor & Tasi (1992).
+"""
+function pdag2dag!(g)
+    removed = falses(nv(g)) # Mark vertices removed from (sub-)graph A. Efficient if degree small?
+    while !all(removed)
+        touched = false
+        for x in vertices(g)
+            removed[x] && continue
+            for y in outneighbors(g, x)
+                removed[y] && continue
+                has_edge(g, y, x) || @goto skip # not a sink
+            end
+            for y in neighbors_undirected(g, x)
+                removed[y] && continue
+                for z in inneighbors(g, x) # contains all adjacents by assumption
+                    removed[z] && continue
+                    y==z || isadjacent(g, y, z) || @goto skip
+                end
+            end
+            for y in copy(outneighbors(g, x))
+                removed[y] && continue
+                rem_edge!(g, x, y)
+            end
+            touched = true
+            removed[x] = true
+            @label skip
+        end
+        if !touched
+            error("PDAG has no consistent extension to a DAG")
+        end
+    end
+    return g
+end

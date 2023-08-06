@@ -57,6 +57,16 @@ for stable in (true, false)
             
             h1 = pc_oracle(g; stable)
             h2 = cpdag(g)
+           
+            g2 = pdag2dag!(copy(h2))
+            @test !is_cyclic(g2)
+            @test h2 == cpdag(g2)
+     
+            g2 = pdag2dag_meek!(copy(h2))
+            @test !is_cyclic(g2)
+            @test h2 == cpdag(g2)
+        
+
             h1 == h2 || println(vpairs(g))
             @test vpairs(h1) ⊆ vpairs(h2)
             @test vpairs(h2) ⊆ vpairs(h1)
