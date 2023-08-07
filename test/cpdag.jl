@@ -58,11 +58,11 @@ for stable in (true, false)
             h1 = pc_oracle(g; stable)
             h2 = cpdag(g)
            
-            g2 = pdag2dag!(copy(h2))
+            g2 = pdag_to_dag_dortasi!(copy(h2))
             @test !is_cyclic(g2)
             @test h2 == cpdag(g2)
      
-            g2 = pdag2dag_meek!(copy(h2))
+            g2 = pdag_to_dag_meek!(copy(h2))
             @test !is_cyclic(g2)
             @test h2 == cpdag(g2)
         

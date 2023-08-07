@@ -25,7 +25,7 @@ export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export ges
-export pdag2dag!, pdag2dag_meek!
+export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortasi!
 
 #include("pinv.jl")
 include("graphs.jl")
