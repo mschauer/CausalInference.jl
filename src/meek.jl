@@ -108,11 +108,11 @@ function meek_rule4(dg, v, w)
 end
 
 """
-    pdag2dag!(g, rule4=false)
+    pdag_to_dag_meek!(g, rule4=false)
 
 Complete PDAG to DAG using meek_rules.
 """
-function pdag2dag!(g, rule4=false)
+function pdag_to_dag_meek!(g, rule4=false)
     while true
         # find unoriented edge
         for e in edges(g) # go through edges (bad to start in the beginning?)
@@ -127,4 +127,9 @@ function pdag2dag!(g, rule4=false)
         @label orient
         meek_rules!(g; rule4)
     end
+    g
 end
+"""
+Deprecated alias for `pdag_to_dag_meek!`.
+"""
+const pdag2dag! = pdag_to_dag_meek!
