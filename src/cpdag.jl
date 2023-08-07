@@ -1,6 +1,6 @@
 import Base: iterate, length
 
-# replace by struct TODO
+# replace by struct?
 function fac(n, fmemo)
     fmemo[n] != 0 && return fmemo[n]
     n == 1 && return BigInt(1)
