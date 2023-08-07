@@ -1,5 +1,130 @@
 import Base: iterate, length
 
+# replace by struct TODO
+function fac(n, fmemo)
+    fmemo[n] != 0 && return fmemo[n]
+    n == 1 && return BigInt(1)
+    res = fac(n-1, fmemo) * n
+    return fmemo[n] = res
+end
+
+function phi(cliquesize, i, fp, fmemo, pmemo)
+    pmemo[i] != 0 && return pmemo[i]
+    sum = fac(cliquesize-fp[i], fmemo)
+    for j = (i+1):length(fp)
+        sum -= fac(fp[j]-fp[i], fmemo) * phi(cliquesize, j, fp, fmemo, pmemo)
+    end
+    return pmemo[i] = sum
+end
+
+# TODO: rename
+function subproblems(G, K)
+    _, _, subgraphs = mcs(G, K)
+    return subgraphs
+end
+
+function count(cc, memo, fmemo)
+    G = cc[1] # graph
+    mapping = cc[2] # mapping to original vertex numbers
+    n = nv(G)
+    
+    # check memoization table
+    mapG = Set(map(x -> mapping[x], vertices(G)))
+    haskey(memo, mapG) && return memo[mapG]
+    
+    # do bfs over the clique tree
+    # TODO: this is dfs!
+    K, T = cliquetree(G)
+    sum = BigInt(0)
+    Q = [1]
+    vis = falses(nv(T))
+    vis[1] = true
+    pred = -1 * ones(Int, nv(T))
+    while !isempty(Q)
+        v = pop!(Q)
+        for x in inneighbors(T, v)
+            if !vis[x]
+                push!(Q, x)
+                vis[x] = true
+                pred[x] = v
+            end
+        end
+
+        # product of #AMOs for the subproblems
+        prod = BigInt(1)
+        for H in subproblems(G, K[v])
+            HH = induced_subgraph(G, H)
+            prod *= count((HH[1], map(x -> mapping[x], HH[2])), memo, fmemo)
+        end
+
+        # compute correction term phi
+        FP = []
+        curr = v
+        curr_succ = -1
+        intersect_pred = -1
+        while pred[curr] != -1
+            curr = pred[curr]
+            intersect_v = length(intersect(K[v], K[curr]))
+            if curr_succ != -1
+                intersect_pred = length(intersect(K[curr], K[curr_succ]))
+            end
+            curr_succ = curr
+            if intersect_v == 0
+                break
+            end
+            #if lastcut were strictly greater, v is not in bouquet
+            # defined by cut between curr and curr_succ
+            if intersect_v >= intersect_pred && (isempty(FP) || intersect_v < FP[end])
+                push!(FP, intersect_v)
+            end
+        end
+        push!(FP, 0)
+        pmemo = zeros(BigInt, length(FP))
+        sum += prod * phi(length(K[v]), 1, reverse(FP), fmemo, pmemo)
+    end
+    return memo[mapG] = sum
+end
+
+"""
+    MECsize(G)
+
+Return the number of Markov equivalent DAGs in the class represented by CPDAG G.
+
+# Examples
+```julia-repl
+julia> G = readgraph("example.in", true)
+{6, 22} directed simple Int64 graph
+julia> MECsize(G)
+54
+```
+"""
+function MECsize(G)
+    n = nv(G)
+    memo = Dict{Set, BigInt}() #mapping set of vertices -> AMO sum
+    fmemo = zeros(BigInt, n)
+    U = copy(G)
+    U.ne = 0
+    for i = 1:n
+        filter!(j->has_edge(G, j, i), U.fadjlist[i])
+        filter!(j->has_edge(G, i, j), U.badjlist[i])
+        U.ne += length(U.fadjlist[i])
+    end
+    tres = 1
+    for component in connected_components(U)
+        cc = induced_subgraph(U, component)
+        if !ischordal(cc[1])
+            println("Undirected connected components are NOT chordal...Abort")
+            println("Are you sure the graph is a CPDAG?")
+            # is there anything more clever than just returning?
+            return
+        end
+        tres *= count(cc, memo, fmemo)
+    end
+
+    return tres
+end
+
+
 # REMARKS:
 # - implemented own topological sort temporarily as topological_sort_by_dfs from Julia Graphs appears to have an issue (quadratic run-time for sparse graphs)
 # - cpdag(g) potentially has O(m * sqrt(m)) worst-case run-time due to iterating over all w -> x, not only compelled ones. However, in contrast to topological_sort_by_dfs, quadratic run-time behaviour for sparse graphs (e.g. O(n*n*)/O(m*m)) does not seem to appear.

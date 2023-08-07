@@ -4,6 +4,7 @@ using Graphs
 using Graphs.SimpleGraphs
 using Combinatorics
 using Base.Iterators
+using LinkedLists
 using Memoization, LRUCache
 using ThreadsX
 
@@ -44,6 +45,7 @@ include("backdoor.jl")
 include("ges.jl")
 include("gensearch.jl")
 include("workloads.jl")
+include("chordal.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
 const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)
