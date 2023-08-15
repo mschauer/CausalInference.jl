@@ -136,7 +136,6 @@ function ges_forward_search!(g, score, data, parallel, verbose)
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
         vskel!(g)
-        g2 = copy(g)
         # Apply the 3 Meek rules to orient some edges in the graph
         meek_rules!(g)
     end
@@ -164,7 +163,6 @@ function ges_backward_search!(g, score, data, verbose)
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
         vskel!(g)
-        g2 = copy(g)
         # Apply the 3 Meek rules to orient some edges in the graph
         meek_rules!(g)
     end
