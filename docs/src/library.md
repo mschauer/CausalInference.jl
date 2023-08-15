@@ -69,6 +69,7 @@ kl_cond_mi
 kl_perm_mi_test
 kl_perm_cond_mi_test
 ```
+
 ## FCI algorithm
 ```@docs
 has_marks
@@ -97,6 +98,7 @@ CausalInference.disjoint_sorted
 CausalInference.ordered_edges
 CausalInference.removesorted!
 graph_to_text
+kwargs_pdag_graphmakie
 CausalInference.combinations_without
 ```
 

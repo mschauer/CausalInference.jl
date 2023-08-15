@@ -20,7 +20,7 @@ export n_ball
 export fcialg, is_collider, is_triangle, is_parent
 export is_discriminating_path, has_marks, set_marks!, is_uncovered_circle_path
 export is_uncovered_PD_path, @arrow_str
-export plot_pc_graph_text, plot_fci_graph_text
+export plot_pc_graph_text, plot_fci_graph_text, kwargs_pdag_graphmakie
 export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules

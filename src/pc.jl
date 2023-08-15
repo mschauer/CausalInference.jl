@@ -290,6 +290,36 @@ function prepare_pc_graph(g::AbstractGraph,
 end
 
 """
+    kwargs_pdag_graphmakie(g; ilabels=1:nv(g), arrowsize=25, ilabels_fontsize=25)
+
+Generates the keywords for `GraphMakie.graphplot` to plot causal graphs and (C)PDAGs
+represented as `SimpleDiGraph` as partially directed graphs.
+
+Usage:
+```
+graphplot(g; kwargs_pdag_graphmakie(G)...)
+```
+"""
+function kwargs_pdag_graphmakie(g; ilabels=1:nv(g), arrowsize=25, ilabels_fontsize=25)
+    es = edges(g)
+    arrow_size = Int[]
+    edge_width = Dict{Graphs.SimpleEdge{Int}, Int}()
+    arrow_shift = :end
+    for e in es     
+        if reverse(e) ∉ es 
+            push!(arrow_size, arrowsize)
+            continue
+        end
+        push!(arrow_size, 0) # remove arrows for double lines
+        if e.dst < e.src
+            edge_width[e] = 0 # set draw width of one of the double edges to 0
+        end
+    end
+    
+    (;curve_distance_usage=false, arrow_shift, arrow_size, edge_width, ilabels, ilabels_fontsize)
+end
+
+"""
     plot_pc_graph_text(g::AbstractGraph, node_labels::AbstractVector{<:AbstractString}=String[])
 
 Plot the output of the PC algorithm (text-based output).
