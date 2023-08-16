@@ -297,7 +297,7 @@ represented as `SimpleDiGraph` as partially directed graphs.
 
 Usage:
 ```
-graphplot(g; kwargs_pdag_graphmakie(G)...)
+graphplot(g; kwargs_pdag_graphmakie(g)...)
 ```
 """
 function kwargs_pdag_graphmakie(g; ilabels=1:nv(g), arrowsize=25, ilabels_fontsize=25)
