@@ -28,35 +28,38 @@ function meek_rules!(g; rule4=false)
 end
 
 """
-    meek_rule1(dg, v, w)
+    meek_rule1(g, v, w)
 
 Rule 1: Orient v-w into v->w whenever there is u->v
 such that u and w are not adjacent
 (otherwise a new v-structure is created.)
 """
-function meek_rule1(dg, v, w)
-    for u in inneighbors(dg, v)
-        has_edge(dg, v => u) && continue # not directed
-        isadjacent(dg, u, w) && continue
+function meek_rule1(g, v, w)
+    for u in inneighbors(g, v)
+        u == w && continue 
+        has_edge(g, v => u) && continue # not directed
+        isadjacent(g, u, w) && continue
         return true
     end
     return false
 end
 
 """
-    meek_rule2(dg, v, w)
+    meek_rule2(g, v, w)
 
 Rule 2: Orient v-w into v->w whenever there is a chain v->k->w
 (otherwise a directed cycle is created.)
 """
-function meek_rule2(dg, v, w)
+function meek_rule2(g, v, w)
     outs = Int[]
-    for k in outneighbors(dg, v)
-        !has_edge(dg, k => v) && push!(outs, k)
+    for k in outneighbors(g, v)
+        k == w && continue 
+        !has_edge(g, k => v) && push!(outs, k)
     end
     ins = Int[]
-    for k in inneighbors(dg, w)
-        !has_edge(dg, w => k) && push!(ins, k)
+    for k in inneighbors(g, w)
+        k == v && continue 
+        !has_edge(g, w => k) && push!(ins, k)
     end
     if !disjoint_sorted(ins, outs)
         return true
@@ -65,42 +68,42 @@ function meek_rule2(dg, v, w)
 end
 
 """
-    meek_rule3(dg, v, w)
+    meek_rule3(g, v, w)
 
 Rule 3 (Diagonal): Orient v-w into v->w whenever there are two chains
 v-k->w and v-l->w such that k and l are nonadjacent
 (otherwise a new v-structure or a directed cycle is created.)
 """
-function meek_rule3(dg, v, w)
-    fulls = [] # Find nodes k where v-k
-    for k in outneighbors(dg, v)
-        has_edge(dg, k => v) || continue 
+function meek_rule3(g, v, w)
+    fulls = Int[] # Find nodes k where v-k
+    for k in outneighbors(g, v)
+        has_edge(g, k => v) || continue 
         # Skip if not k->w (or if not l->w)
-        if has_edge(dg, w => k) || !has_edge(dg, k => w)
+        if has_edge(g, w => k) || !has_edge(g, k => w)
             continue
         end
         push!(fulls, k)
     end
     for (k, l) in combinations(fulls, 2) # FIXME: 
-        isadjacent(dg, k, l) && continue
+        isadjacent(g, k, l) && continue
         return true
     end
     return false
 end
 
 """
-    meek_rule4(dg, v, w)
+    meek_rule4(g, v, w)
 
 Rule 4: Orient v-w into v→w if v-k→l→w where adj(v,l) and not adj(k,w) [check].
 """
-function meek_rule4(dg, v, w)
-    for l in inneighbors(dg, w)
-        has_edge(dg, w => l) && continue # undirected
-        !isadjacent(dg, v, l) && continue # not adjacent to v      
-        for k in inneighbors(dg, l)
-            has_edge(dg, l => k) && continue # undirected
-            !has_both(dg, v, k) && continue # not undirected to v
-            isadjacent(dg, k, w) && continue # adjacent to w
+function meek_rule4(g, v, w)
+    for l in inneighbors(g, w)
+        has_edge(g, w => l) && continue # undirected
+        !isadjacent(g, v, l) && continue # not adjacent to v      
+        for k in inneighbors(g, l)
+            has_edge(g, l => k) && continue # undirected
+            !has_both(g, v, k) && continue # not undirected to v
+            isadjacent(g, k, w) && continue # adjacent to w
             return true
         end
     end

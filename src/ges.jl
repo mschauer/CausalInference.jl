@@ -208,7 +208,8 @@ function tails_and_adj_neighbors(g, x, y)
     Nb[.~ a], Nb[a]
 end 
 function adj_neighbors(g, x, y)
-    intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
+#    a = intersect(inneighbors(g,y), outneighbors(g,y), all_neighbors(g,x))
+    sorted_intersect_(neighbors_undirected(g,y), all_neighbors(g,x))
 end 
 
 

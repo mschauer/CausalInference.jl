@@ -4,8 +4,7 @@ using Random
 
 Create `DiGraph` from edge-list.
 """
-function digraph(E)
-    d = maximum(flatten(E))
+function digraph(E, d = maximum(flatten(E)))
     g = DiGraph(d)
     for (i, j) in E
         add_edge!(g, i, j)
@@ -32,7 +31,7 @@ end
 
 Return the edge-list as `Pair`s.
 """
-vpairs(g) = map(Pair, collect(edges(g)))
+vpairs(g::DiGraph{T}) where T = nv(g) > 0 ? map(Pair, collect(edges(g))) : Pair{T,T}[]
 
 """
     skel_oracle(g; stable=true)
