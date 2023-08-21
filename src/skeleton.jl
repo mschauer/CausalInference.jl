@@ -30,7 +30,7 @@ function remove_edges!(g::SimpleDiGraph, es)
 end
 =#
 
-struct IClosure{F,S,T}
+struct IClosure{F<:Function,S,T}
     I::F
     args::S
     kwargs::T
@@ -204,7 +204,7 @@ at p-value crit.
 keyword arguments:
 kwargs...: keyword arguments passed to independence tests
 """
-@inline function cmitest(i, j, s, data, crit; kwargs...)
+function cmitest(i, j, s, data, crit; kwargs...)
     columns = Tables.columns(data)
 
     x = collect(transpose(convert(Array, Tables.getcolumn(columns, i))))

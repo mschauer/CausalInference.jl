@@ -125,7 +125,7 @@ Perform the PC algorithm for a set of 1:n variables using the tests
 Returns the CPDAG as DiGraph. By default uses a stable and threaded versions
 of the skeleton algorithm.
 """
-function pcalg(n, I, par...; stable=true)
+function pcalg(n::Integer, I, par...; stable=true)
     # Step 1
     g, S = skeleton(n, I, par...; stable)
     dg = DiGraph(g) # use g to keep track of unoriented edges
@@ -244,15 +244,24 @@ end
 Run PC algorithm for tabular input data t using a p-value p to detect 
 conditional independeces using a conditional mutual information permutation test.
 """
-function pcalg(t, p::Float64, test::typeof(cmitest); kwargs...)
+function pcalg(t, p::Float64, test::typeof(cmitest); stable=true, kwargs...)
     @assert Tables.istable(t)
     @assert all(t -> t == Float64, Tables.schema(t).types)
 
     c = Tables.columns(t)
     sch = Tables.schema(t)
     n = length(sch.names)
+    cl = IClosure(cmitest, (c, p), kwargs)
 
-    return pcalg(n, cmitest, c, p; kwargs...)
+    if stable
+        g, S = skeleton_stable(complete_graph(n), cl)
+    else 
+        g, S = skeleton(complete_graph(n), cl)
+    end
+    dg = DiGraph(g) # use g to keep track of unoriented edges
+    g, dg = orient_unshielded(g, dg, S)
+
+    meek_rules!(dg)
 end
 
 """
