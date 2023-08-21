@@ -32,6 +32,7 @@ end
 Return the edge-list as `Pair`s.
 """
 vpairs(g::DiGraph{T}) where T = nv(g) > 0 ? map(Pair, collect(edges(g))) : Pair{T,T}[]
+vpairs(g::Graph{T}) where T = nv(g) > 0 ? map(Tuple, collect(edges(g))) : Tuple{T,T}[]
 
 """
     skel_oracle(g; stable=true)
