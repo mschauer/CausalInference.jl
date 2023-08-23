@@ -23,7 +23,7 @@ C3 = copy(E3)
 append!(C3, reverse.(E3))
 
 h, S = skel_oracle(digraph(E1a))
-@test vpairs(h) == E1a
+@test map(Pair, edges(h)) == E1a
 @test length(S) == 2
 @test S[Edge(2, 3)] == [1]
 @test S[Edge(1, 4)] == [2, 3]

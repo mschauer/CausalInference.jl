@@ -27,12 +27,12 @@ function graph(E)
 end
 
 """
-    vpairs(g)
+    arrows(g)
 
 Return the edge-list as `Pair`s.
 """
-vpairs(g::DiGraph{T}) where T = nv(g) > 0 ? map(Pair, collect(edges(g))) : Pair{T,T}[]
-vpairs(g::Graph{T}) where T = nv(g) > 0 ? map(Tuple, collect(edges(g))) : Tuple{T,T}[]
+arrows(g::SimpleDiGraph{T}) where T = nv(g) > 0 ? map(Pair, edges(g)) : Pair{T,T}[]
+const vpairs = arrows
 
 """
     skel_oracle(g; stable=true)
