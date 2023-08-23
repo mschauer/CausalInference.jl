@@ -122,7 +122,13 @@ orientedge!(g, x, y) = @assert has_edge(g, x, y) && rem_edge!(g, y, x)
 All vertices in `g` connected to `x` by an undirected edge.
 Returns sorted array.
 """
-neighbors_undirected(g, x) = inneighbors(g, x) ∩ outneighbors(g, x)
+function neighbors_undirected(g, x) 
+    a = outneighbors(g, x) 
+    b = inneighbors(g, x)
+    z = sorted_intersect_(a, b)
+#    @assert z == a ∩ b
+    z
+end
 
 """
     neighbors_adjacent(g, x)
@@ -130,7 +136,57 @@ neighbors_undirected(g, x) = inneighbors(g, x) ∩ outneighbors(g, x)
 All vertices in `g` connected to `x` by an any edge.
 Returns sorted array.
 """
-neighbors_adjacent(g, x) = sort(outneighbors(g, x) ∪ inneighbors(g, x))
+function neighbors_adjacent(g::SimpleDiGraph, x) 
+    a = outneighbors(g, x) 
+    b = inneighbors(g, x)
+    z = sorted_union_(a, b)
+    #@assert z == sort(a ∪ b)
+    z
+end
+function sorted_union_(x::Vector{T}, y::Vector{T}) where T
+    z = T[]
+    i = j = 1
+    while true
+        if j > length(y)
+            append!(z, @view x[i:end])
+            return z
+        end
+        if i > length(x)
+            append!(z, @view y[j:end])
+            return z
+        end        
+        if x[i] < y[j]
+            push!(z, x[i])
+            i += 1
+        elseif x[i] == y[j]
+            push!(z, x[i])
+            i += 1
+            j += 1
+        else #x[i] < y[]
+            push!(z, y[j])
+            j += 1
+        end
+    end
+end
+function sorted_intersect_(x::Vector{T}, y::Vector{T}) where T
+    z = T[]
+    i = j = 1
+    while true
+        if j > length(y) ||  i > length(x)
+            return z
+        end    
+        if x[i] < y[j]
+            i += 1
+        elseif x[i] == y[j]
+            push!(z, x[i])
+            i += 1
+            j += 1
+        else #x[i] < y[]
+            j += 1
+        end
+    end
+end
+
 
 """
     parents(g, x)
