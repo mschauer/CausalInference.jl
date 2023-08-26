@@ -130,6 +130,77 @@ function exact2(g, κ, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
+function countcliques(g)
+    n = nv(g)
+    preceding = mcs(g)
+    # maybe use BigInt at some point
+    cnt = 0
+    for i = 1:n
+        cnt += 2^preceding[i]
+    end
+    return cnt
+end
+
+function sampleclique(g, r)
+    TODO
+end
+
+function exactup(g)
+    for x in vertices(g)
+        # => find undirected neighbors of x
+        for z in neighbors_undirected(g, x)
+            # => find all vertices reachable by semidirected path (with other neighbors of x and x itself blocked) from z and save somewhere
+        end
+        for y in neighbors_adjacent(g, x)
+            # => find NAyx
+            # => get all other undirected neighbors we have to take to close semidirected paths
+            # => keep all other undirected neighbors which are connected to all the must have ones
+            # => count number of cliques in chordal graph
+        end
+    end
+    # store counts for each pair x,y and sample one of them
+    # then sample a clique randomly in chordal graph -> by same procedure find # highest index node and then take random subset of prev visited neighbors
+end
+
+# WIP
+function exactdown(g)
+    ttcnt = 0
+    cnts = Vector{Int64}()
+    cntids = Vector{Pair{Int64, Int64}}()
+    for x in vertices(g)
+        for y in vertices(g)
+            x == y && continue
+            has_edge(g, x, y) && continue
+            NAyx = adj_neighbors(g, x, y)
+            sg, _ = induced_subgraph(g, NAyx)
+            cnt = countcliques(sg)
+            ttcnt += cnt
+            push!(cnts, ttcnt)
+            push!(cntids, (x,y))
+        end
+    end 
+    # sample clique as above
+    r = rand(1:ttcnt)
+    for i = 1:length(cnts)
+        if r >= cnts[i]
+            (x, y) = cntids[i]
+            cnt = cnts[i]
+            i > 1 && (cnt -= cnts[i-1])
+            r2 = rand(1:cnt)
+            NAyx = adj_neighbors(g, x, y)
+            sg, _ = induced_subgraph(g, NAyx)
+            cl = sampleclique(sg, r2)
+            return ttcnt, (x, y, cl) # combine cl with NAyx
+        end
+    end
+end
+
+function exact3(g)
+    s1, (x1, y1, T1) = exactup(g)
+    s2, (x2, y2, H2) = exactdown(g)
+    return s1, s2, (x1, y1, T1), (x2, y2, H2)
+end
+
 function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
                         κ = min(n - 1, 10), iterations=10, verbose=false)
     g, total = G
