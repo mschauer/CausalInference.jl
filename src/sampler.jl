@@ -244,7 +244,7 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
                 @assert x != y
                 push!(gs, (g, τ, dir, total))
                 total += 1
-		h = next_CPDAG(g, :up, x, y, T)
+		g = next_CPDAG(g, :up, x, y, T)
                 #g = copy(g)
                 #Insert!(g, x, y, T)
                 #vskel!(g)
@@ -256,7 +256,7 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
                 @assert x != y
                 push!(gs, (g, τ, dir, total))
                 total -= 1
-		h = next_CPDAG(g, :down, x, y, H)
+		g = next_CPDAG(g, :down, x, y, H)
                 #g = copy(g)
                 #Delete!(g, x, y, H)
                 #vskel!(g)
