@@ -146,12 +146,12 @@ function sampleclique(g, r)
 end
 
 function exactup(g)
-    for x in vertices(g)
+    for y in vertices(g)
         # => find undirected neighbors of x
-        for z in neighbors_undirected(g, x)
-            # => find all vertices reachable by semidirected path (with other neighbors of x and x itself blocked) from z and save somewhere
+        for z in neighbors_undirected(g, y)
+            # => find all vertices reachable by semidirected path (with other neighbors of y and y itself blocked) from z and save somewhere
         end
-        for y in neighbors_adjacent(g, x)
+        for x in neighbors_adjacent(g, y)
             # => find NAyx
             # => get all other undirected neighbors we have to take to close semidirected paths
             # => keep all other undirected neighbors which are connected to all the must have ones
