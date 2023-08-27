@@ -173,7 +173,7 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
                 @assert x != y
                 push!(gs, (g, τ, dir, total))
                 total += 1
-		h = next_CPDAG(g, :up, x, y, T)
+		        g = next_CPDAG(g, :up, x, y, T)
                 #g = copy(g)
                 #Insert!(g, x, y, T)
                 #vskel!(g)
@@ -185,7 +185,7 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
                 @assert x != y
                 push!(gs, (g, τ, dir, total))
                 total -= 1
-		h = next_CPDAG(g, :down, x, y, H)
+		        g = next_CPDAG(g, :down, x, y, H)
                 #g = copy(g)
                 #Delete!(g, x, y, H)
                 #vskel!(g)
@@ -210,6 +210,7 @@ n = 50 # vertices
 reversible_too = true # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
+
 gs = @time randcpdag(n; ρ=1.0, σ=0.0, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
@@ -242,22 +243,21 @@ println("mean repetitions ", mean(rle(hash.(graph_pairs))[2]))
 
 
 function figure() 
+    
     fig = Figure()
     ax1 = fig[1,1] = Axis(fig)
     ax2 = fig[2,1] = Axis(fig)
-    r1 = eachindex(hsnonrev)[end-2000:end]
-    
-    stairs!(ax1, cumsum(wsnonrev[r1]), hsnonrev[r1], step=:post)
+    tim = cumsum(wsnonrev)
+    stairs!(ax1, tim, hsnonrev, step=:post)
     lines!(ax2, autocor(hsnonrev))
 
     if @isdefined hsrev 
-        r2 = eachindex(hsrev)[end-2000:end]
-        stairs!(ax1, cumsum(wsrev[r2]), hsrev[r2], color=:orange, step=:post)
+        stairs!(ax1, cumsum(wsrev), hsrev, color=:orange, step=:post)
         lines!(ax2, autocor(hsrev))
     end
 
     ylims!(ax1, 0, n*(n-1)÷2)
-
+    xlims!(ax1, tim[max(1, length(hsnonrev) - 1000)], tim[end])
 
     fig
 end
@@ -265,3 +265,4 @@ end
 @isdefined(Figure) && (fig = figure(); display(fig))
 
 cm
+
