@@ -108,7 +108,7 @@ function exact(g, κ, score, dir=:both)
 end
 
 """
-    exact2(g, κ, dir=:both)
+    exact2(g, κ, score, dir=:both)
 
 Return 
 """
@@ -138,7 +138,7 @@ function exact2(g, κ, score, dir=:both)
                             x1, y1 = x, y
                             T1 = T
                         end
-                        s1 = s1 + valid*s
+                        s1 = s1 + s
                     end
                 end
             elseif has_edge(g, x, y) && dir != :up
@@ -160,7 +160,7 @@ function exact2(g, κ, score, dir=:both)
                         x2, y2 = x, y
                         H2 = H
                     end
-                    s2 = s2 + valid*s
+                    s2 = s2 + s
                 end
             end 
         end
@@ -423,7 +423,7 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
                 total -= 1
                 secs += @elapsed begin
                     if wien
-    		        g = next_CPDAG(g, :down, x, y, H)
+    		            g = next_CPDAG(g, :down, x, y, H)
                     else
                         g = copy(g)
                         Delete!(g, x, y, H)
@@ -448,8 +448,8 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
     gs
 end
 
-iterations = 100_000; verbose = false
-n = 5 # vertices
+iterations = 10_000; verbose = false
+n = 3 # vertices
 κ = n - 1 # max degree
 reversible_too = false # do baseline 
 #iterations = 50; verbose = true
@@ -458,9 +458,8 @@ uniform = false
 
 if uniform # sample uniform
     score = UniformScore()
-else # infer example data from https://mschauer.github.io/CausalInference.jl/latest/examples/ges_basic_examples/
-    @assert n == 5
-    score = let N = 20000
+elseif n == 5 # infer example data from https://mschauer.github.io/CausalInference.jl/latest/examples/ges_basic_examples/
+    score = let N = 200
         Random.seed!(100)
         x = randn(N)
         v = x + randn(N)*0.5
@@ -470,9 +469,36 @@ else # infer example data from https://mschauer.github.io/CausalInference.jl/lat
         X = [x v w z s]
         penalty = 0.5
         C = Symmetric(cov(X, dims = 1, corrected=false))
-        GaussianScore(C, n, penalty)
+        GaussianScore(C, N, penalty)
     end
     true_cpdag = [1 => 2, 1 => 3, 2 => 1, 2 => 4, 3 => 1, 3 => 4, 4 => 5]
+elseif n == 4
+    score = let N = 200
+        Random.seed!(100)
+        v = randn(N)*0.5
+        w = randn(N)*0.5
+        z = v + w + randn(N)*0.5
+        s = z + randn(N)*0.5
+        X = [v w z s]
+        penalty = 0.5
+        C = Symmetric(cov(X, dims = 1, corrected=false))
+        GaussianScore(C, N, penalty)
+    end
+    true_cpdag = [1 => 3, 2 => 3, 3 => 4]
+elseif n == 3
+    score = let N = 200
+        Random.seed!(100)
+        v = randn(N)*0.5
+        w = randn(N)*0.5
+        z = v + w + randn(N)*0.5
+        X = [v w z]
+        penalty = 0.5
+        C = Symmetric(cov(X, dims = 1, corrected=false))
+        GaussianScore(C, N, penalty)
+    end
+    true_cpdag = [1 => 2, 1 => 3]
+else
+    error("not implemented")
 end 
 
 
@@ -503,6 +529,8 @@ end
 
 @show sum(τs)
 cm = keyedreduce(+, graph_pairs, ws)
+cm = sort(cm; byvalue=true, rev=true)
+
 dirs = map(x->getindex(x, 3), gs)
 cm2 = keyedreduce(+, graph_pairs, ws .* dirs)
 
@@ -537,7 +565,7 @@ end
 
 if score != UniformScore()
     println("Maximum a posteriory estimate: ", argmax(cm))
-    println("True CPDAG: ", true_cpdag)
+    println("True CPDAG:                    ", true_cpdag)
 end
 
 cm
