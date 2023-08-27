@@ -43,6 +43,23 @@ function keyedreduce(op, key::AbstractVector{T}, a, init=0.0) where T
 end
 
 """
+    ne_total(g)
+
+Number of directed or undirected edges in a PDAG represented as DiGraph.
+"""
+function ne_total(g)
+    s = 0
+    for x in vertices(g)
+        for y in vertices(g)
+            y < x && continue
+            s += isadjacent(g, x, y)
+        end
+    end
+    s
+end
+
+
+"""
     ne_undirected(g)
 
 Number of undirected edges in a PDAG represented as DiGraph.
