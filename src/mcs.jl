@@ -15,6 +15,50 @@ using LinkedLists
 end
 
 """
+    countmcs(G)
+
+TODO.
+
+"""
+
+function countmcs(G)
+    n = nv(G)
+    sets = [LinkedLists.LinkedList{Int64}() for i = 1:n+1]
+    pointers = Vector{ListNode{Int64}}(undef,n)
+    size = ones(Int64, n)
+    visited = falses(n) 
+
+    # init
+    for v in vertices(G)
+        vispush!(sets[1], pointers, v, visited[v])
+    end
+    maxcard = 1
+
+    for i = 1:n
+        v = first(sets[maxcard])
+        size[v] = -size[v] + 1
+
+        deleteat!(sets[maxcard], pointers[v])
+
+        # update the neighbors
+        for w in inneighbors(G, v)
+            if size[w] >= 1
+                deleteat!(sets[size[w]], pointers[w])
+                size[w] += 1
+                vispush!(sets[size[w]], pointers, w, visited[w])
+            end
+        end
+        maxcard += 1
+        while maxcard >= 1 && isempty(sets[maxcard])
+            maxcard -= 1
+        end
+    end
+
+    return -size
+    
+end
+
+"""
     mcs(G, K)
 
 Perform a Maximum Cardinality Search on graph G. The elements of clique K are of prioritized and chosen first.If K is empty a normal MCS is performed. Return the visit order.
