@@ -100,7 +100,8 @@ function exact2(g, κ, dir=:both)
             if !isadjacent(g, x, y) && dir != :down
                 if length(neighbors_adjacent(g, x)) < κ && length(neighbors_adjacent(g, y)) < κ 
                     Tyx, NAyx = tails_and_adj_neighbors(g, x, y)
-                    for i in 0:2^length(Tyx) - 1
+                    @assert length(Tyx) < 127
+                    for i in 0:UInt128(2)^length(Tyx) - 1
                         T = Tyx[digits(Bool, i, base=2, pad=length(Tyx))]
                         NAyxT = CausalInference.sorted_union_(NAyx, T)
                         valid = (isclique(g, NAyxT) && isblocked(g, y, x, NAyxT))
@@ -113,7 +114,8 @@ function exact2(g, κ, dir=:both)
                 end
             elseif has_edge(g, x, y) && dir != :up
                 Hyx = adj_neighbors(g, x, y)
-                for i in 0:2^length(Hyx) - 1
+                @assert length(Hyx) < 127
+                for i in 0:UInt128(2)^length(Hyx) - 1
                     mask = digits(Bool, i, base=2, pad=length(Hyx))
                     H = Hyx[mask] 
                     NAyx_H = Hyx[map(~, mask)] 
@@ -201,7 +203,7 @@ function exact3(g)
     return s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
+function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
                         κ = min(n - 1, 10), iterations=10, verbose=false)
     g, total = G
     if κ >= n 
@@ -211,11 +213,19 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
     total = 0
     gs = Vector{Tuple{typeof(g),Float64,Int,Int}}()
     dir = 1
+    traversals = 0
     τ = 0.0
+    secs = 0.0
     @showprogress for iter in 1:iterations
         τ = 0.0
         total_old = total
         dir_old = dir
+
+        if isodd(traversals) && total == 0 # count number of traversal from empty to full
+            traversals += 1
+        elseif iseven(traversals) && total == nv(g)*(nv(g) - 1)÷2 
+            traversals += 1
+        end
         
         s1, s2, up1, down1 = exact2(g, κ)
         λbar = max(dir*(-s1 + s2), 0.0)
@@ -244,24 +254,32 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
                 @assert x != y
                 push!(gs, (g, τ, dir, total))
                 total += 1
-		        g = next_CPDAG(g, :up, x, y, T)
-                #g = copy(g)
-                #Insert!(g, x, y, T)
-                #vskel!(g)
-                #meek_rules!(g)
-		#@assert g == h
+                secs += @elapsed begin
+                    if wien
+                        g = next_CPDAG(g, :up, x, y, T)
+                    else
+                        g = copy(g)
+                        Insert!(g, x, y, T)
+                        vskel!(g)
+                        meek_rules!(g)
+                    end
+                end
                 break
             else
                 x, y, H = down1
                 @assert x != y
                 push!(gs, (g, τ, dir, total))
                 total -= 1
-		        g = next_CPDAG(g, :down, x, y, H)
-                #g = copy(g)
-                #Delete!(g, x, y, H)
-                #vskel!(g)
-                #meek_rules!(g)
-		#@assert g == h
+                secs += @elapsed begin
+                    if wien
+    		            g = next_CPDAG(g, :down, x, y, H)
+                    else
+                        g = copy(g)
+                        Delete!(g, x, y, H)
+                        vskel!(g)
+                        meek_rules!(g)
+                    end
+                end
                 break
             end
             @label flip
@@ -272,17 +290,19 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0,
         verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total, " ", round(τ, digits=8))
         verbose && println("\t", vpairs(g))
     end
+    println("time moves $secs")
+    println("nr. traversals $traversals")
     gs
 end
 
 iterations = 10_000; verbose = false
 n = 50 # vertices
 κ = n - 1 # max degree
-reversible_too = true # do baseline 
+reversible_too = false # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
 
-gs = @time randcpdag(n; ρ=1.0, σ=0.0, κ, iterations, verbose)[burnin:end]
+gs = @time randcpdag(n; ρ=1.0, σ=0.0, wien=false, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)
@@ -329,7 +349,7 @@ function figure()
 
     ylims!(ax1, 0, n*(n-1)÷2)
     xlims!(ax1, tim[max(1, length(hsnonrev) - 1000)], tim[end])
-
+    ax1.yzoomlock = true
     fig
 end
 # using GLMakie
