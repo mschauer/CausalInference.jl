@@ -44,6 +44,8 @@ include("backdoor.jl")
 include("ges.jl")
 include("gensearch.jl")
 include("workloads.jl")
+include("sampler.jl")
+include("mcs.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
 const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)

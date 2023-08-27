@@ -134,9 +134,9 @@ end
 
 function countcliques(g)
     n = nv(g)
-    preceding = mcs(g)
+    preceding, _ = countmcs(g)
     # maybe use BigInt at some point
-    cnt = 0
+    cnt = 1 # don't forget "empty" clique
     for i = 1:n
         cnt += 2^preceding[i]
     end
@@ -144,61 +144,161 @@ function countcliques(g)
 end
 
 function sampleclique(g, r)
-    TODO
-end
-
-function exactup(g)
-    for y in vertices(g)
-        # => find undirected neighbors of x
-        for z in neighbors_undirected(g, y)
-            # => find all vertices reachable by semidirected path (with other neighbors of y and y itself blocked) from z and save somewhere
-        end
-        for x in neighbors_adjacent(g, y)
-            # => find NAyx
-            # => get all other undirected neighbors we have to take to close semidirected paths
-            # => keep all other undirected neighbors which are connected to all the must have ones
-            # => count number of cliques in chordal graph
+    n = nv(g)
+    preceding, invmcsorder = countmcs(g)
+    cnt = 1 # don't forget "empty" clique
+    r <= cnt && return Vector{Int64}()
+    for i = 1:n
+        cnt += 2^preceding[i]
+        if r <= cnt
+            p = Vector{Int64}()
+            for j in inneighbors(g, i)
+                invmcsorder[j] < invmcsorder[i] && push!(p, j) 
+            end
+            subset = rand(0:2^preceding[i]-1)
+            ret = Vector{Int64}()
+            for d = 1:length(p)
+                if ((1 << d) & subset) > 0
+                    push!(ret, p[d])
+                end
+            end
+            return ret
         end
     end
-    # store counts for each pair x,y and sample one of them
-    # then sample a clique randomly in chordal graph -> by same procedure find # highest index node and then take random subset of prev visited neighbors
 end
 
-# WIP
-function exactdown(g)
+function exactup(g, κ)
+    n = nv(g)
     ttcnt = 0
     cnts = Vector{Int64}()
-    cntids = Vector{Pair{Int64, Int64}}()
-    for x in vertices(g)
-        for y in vertices(g)
+    cntids = Vector{Tuple{Int64, Int64}}()
+    need = Vector{Set{Int64}}()
+    pot = Vector{Vector{Int64}}()
+    for y in vertices(g)
+        length(neighbors_adjacent(g, y)) == κ && continue
+        blocked = falses(n)
+        nu = neighbors_undirected(g, y)
+        push!(nu, y)
+        for v in nu
+            blocked[v] = true
+        end
+        visfrom = Vector{BitVector}()
+        for z in nu
+            # => find all vertices reachable by semidirected path (with other neighbors of y and y itself blocked) from z and save somewhere
+            vis = falses(n)
+            q = Vector{Int64}()
+            push!(q, z)
+            vis[z] = true
+            # can optimize further by not looking at undir after first dir edge
+            while !isempty(q)
+                w = popfirst!(q)
+                for v in outneighbors(g, w)
+                    vis[v] && continue
+                    blocked[v] && continue
+                    push!(q, v)
+                    vis[v] = true
+                end
+            end
+            push!(visfrom, vis)
+        end
+        for x in vertices(g)
             x == y && continue
-            has_edge(g, x, y) && continue
-            NAyx = adj_neighbors(g, x, y)
-            sg, _ = induced_subgraph(g, NAyx)
+            isadjacent(g, x, y) && continue
+            last(visfrom)[x] && continue
+            length(neighbors_adjacent(g, x)) == κ && continue
+            needtotake = Set(adj_neighbors(g, x, y))
+            # => get all other undirected neighbors we have to take to close semidirected paths
+            for i = 1:length(nu)
+                if visfrom[i][x]
+                    push!(needtotake, nu[i])
+                end
+            end
+            !isclique(g, needtotake) && continue
+            # => keep all other undirected neighbors which are connected to all the must have ones
+            potential = Vector{Int64}()
+            for v in nu
+                v == y && continue
+                v in needtotake && continue
+                fullyconnected = true
+                for w in needtotake
+                    if !isadjacent(g, v, w)
+                        fullyconnected = false
+                        break
+                    end
+                end
+                fullyconnected && push!(potential, v)
+            end
+            # => count number of cliques in chordal graph
+            sg, _ = induced_subgraph(g, potential)
             cnt = countcliques(sg)
             ttcnt += cnt
             push!(cnts, ttcnt)
             push!(cntids, (x,y))
+            push!(need, needtotake)
+            push!(pot, potential)
+            # println(x, " ", y, " ", ttcnt) 
         end
-    end 
-    # sample clique as above
+    end
+    # store counts for each pair x,y and sample one of them
+    # then sample a clique randomly in chordal graph -> by same procedure find# highest index node and then take random subset of prev visited neighbors
     r = rand(1:ttcnt)
     for i = 1:length(cnts)
-        if r >= cnts[i]
+        if r <= cnts[i]
+            (x, y) = cntids[i]
+            cnt = cnts[i]
+            i > 1 && (cnt -= cnts[i-1])
+            r2 = rand(1:cnt)
+            #println(NAyx)
+            sg, _ = induced_subgraph(g, pot[i])
+            cl = sampleclique(sg, r2)
+            append!(cl, need[i])
+            #println(cl)
+            return ttcnt, (x, y, cl) 
+        end
+    end
+end
+
+function exactdown(g)
+    ttcnt = 0
+    cnts = Vector{Int64}()
+    cntids = Vector{Tuple{Int64, Int64}}()
+    for x in vertices(g)
+        for y in [neighbors_undirected(g, x); children(g, x)]
+            NAyx = adj_neighbors(g, x, y)
+            if length(NAyx) == 0
+                ttcnt += 1
+            elseif length(NAyx) == 1
+                ttcnt += 2
+            else
+                sg, _ = induced_subgraph(g, NAyx)
+                cnt = countcliques(sg)
+                ttcnt += cnt
+            end
+            push!(cnts, ttcnt)
+            push!(cntids, (x,y))
+        end
+    end 
+    ttcnt == 0 && return 0, undef
+    # sample clique
+    r = rand(1:ttcnt)
+    for i = 1:length(cnts)
+        if r <= cnts[i]
             (x, y) = cntids[i]
             cnt = cnts[i]
             i > 1 && (cnt -= cnts[i-1])
             r2 = rand(1:cnt)
             NAyx = adj_neighbors(g, x, y)
+            #println(NAyx)
             sg, _ = induced_subgraph(g, NAyx)
             cl = sampleclique(sg, r2)
-            return ttcnt, (x, y, cl) # combine cl with NAyx
+            #println(cl)
+            return ttcnt, (x, y, setdiff(NAyx, cl)) 
         end
     end
 end
 
-function exact3(g)
-    s1, (x1, y1, T1) = exactup(g)
+function exact3(g, κ)
+    s1, (x1, y1, T1) = exactup(g, κ)
     s2, (x2, y2, H2) = exactdown(g)
     return s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
@@ -216,6 +316,11 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
     traversals = 0
     τ = 0.0
     secs = 0.0
+    olddown = 0.0
+    newdown = 0.0
+    oldup = 0.0
+    newup = 0.0
+    avgdeg = Vector{Float64}()
     @showprogress for iter in 1:iterations
         τ = 0.0
         total_old = total
@@ -246,6 +351,20 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
                 @goto flip
             end
             up = rand() < λup/λrw           
+
+            olddown += @elapsed _, ss2, _, _ = exact2(g, κ, :down)
+            newdown += @elapsed t2, _ = exactdown(g) 
+            @assert ss2 == t2
+           
+            oldup += @elapsed ss1, _, _, _ = exact2(g, κ, :up)
+            newup += @elapsed t1, _ = exactup(g, κ) 
+            @assert ss1 == t1
+
+            avg = 0
+            for i = 1:n
+                avg += length(neighbors_undirected(g, i))
+            end
+            push!(avgdeg, avg / n)
          
             if  (Δτ < Δτrw  && dir == 1) || (Δτ > Δτrw  && up)
 
@@ -272,7 +391,7 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
                 total -= 1
                 secs += @elapsed begin
                     if wien
-    		            g = next_CPDAG(g, :down, x, y, H)
+    		        g = next_CPDAG(g, :down, x, y, H)
                     else
                         g = copy(g)
                         Delete!(g, x, y, H)
@@ -292,6 +411,9 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
     end
     println("time moves $secs")
     println("nr. traversals $traversals")
+    println("cmpdown $olddown $newdown")
+    println("cmpup $oldup $newup")
+    println("avgdeg " * string(sum(avgdeg) / length(avgdeg)))
     gs
 end
 
@@ -302,7 +424,7 @@ reversible_too = false # do baseline
 #iterations = 50; verbose = true
 burnin = iterations÷2
 
-gs = @time randcpdag(n; ρ=1.0, σ=0.0, wien=false, κ, iterations, verbose)[burnin:end]
+gs = @time randcpdag(n; ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)

@@ -27,6 +27,7 @@ function countmcs(G)
     pointers = Vector{ListNode{Int64}}(undef,n)
     size = ones(Int64, n)
     visited = falses(n) 
+    invmcsorder = zeros(Int64, n)
 
     # init
     for v in vertices(G)
@@ -37,6 +38,7 @@ function countmcs(G)
     for i = 1:n
         v = first(sets[maxcard])
         size[v] = -size[v] + 1
+        invmcsorder[v] = i
 
         deleteat!(sets[maxcard], pointers[v])
 
@@ -54,7 +56,7 @@ function countmcs(G)
         end
     end
 
-    return -size
+    return -size, invmcsorder
     
 end
 
