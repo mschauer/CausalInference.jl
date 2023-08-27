@@ -52,7 +52,7 @@ function ne_undirected(g)
     for x in vertices(g)
         for y in vertices(g)
             y < x && continue
-            s += isadjacent(g, x, y)
+            s += isundirected(g, x, y)
         end
     end
     s
@@ -241,6 +241,7 @@ function exactup(g, κ)
     end
     # store counts for each pair x,y and sample one of them
     # then sample a clique randomly in chordal graph -> by same procedure find# highest index node and then take random subset of prev visited neighbors
+    ttcnt == 0 && return ttcnt, (0, 0, Int[]) 
     r = rand(1:ttcnt)
     for i = 1:length(cnts)
         if r <= cnts[i]
@@ -278,7 +279,7 @@ function exactdown(g)
             push!(cntids, (x,y))
         end
     end 
-    ttcnt == 0 && return 0, undef
+    ttcnt == 0 && return 0, (0, 0, Int[])
     # sample clique
     r = rand(1:ttcnt)
     for i = 1:length(cnts)
@@ -320,7 +321,6 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
     newdown = 0.0
     oldup = 0.0
     newup = 0.0
-    avgdeg = Vector{Float64}()
     @showprogress for iter in 1:iterations
         τ = 0.0
         total_old = total
@@ -331,6 +331,14 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
         elseif iseven(traversals) && total == nv(g)*(nv(g) - 1)÷2 
             traversals += 1
         end
+        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, :down)
+        newdown += @elapsed t2, _ = exactdown(g) 
+        @assert ss2 == t2
+       
+        oldup += @elapsed ss1, _, _, _ = exact2(g, κ, :up)
+        newup += @elapsed t1, _ = exactup(g, κ) 
+        @assert ss1 == t1
+
         
         s1, s2, up1, down1 = exact2(g, κ)
         λbar = max(dir*(-s1 + s2), 0.0)
@@ -352,19 +360,7 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
             end
             up = rand() < λup/λrw           
 
-            olddown += @elapsed _, ss2, _, _ = exact2(g, κ, :down)
-            newdown += @elapsed t2, _ = exactdown(g) 
-            @assert ss2 == t2
-           
-            oldup += @elapsed ss1, _, _, _ = exact2(g, κ, :up)
-            newup += @elapsed t1, _ = exactup(g, κ) 
-            @assert ss1 == t1
-
-            avg = 0
-            for i = 1:n
-                avg += length(neighbors_undirected(g, i))
-            end
-            push!(avgdeg, avg / n)
+     
          
             if  (Δτ < Δτrw  && dir == 1) || (Δτ > Δτrw  && up)
 
@@ -413,7 +409,6 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
     println("nr. traversals $traversals")
     println("cmpdown $olddown $newdown")
     println("cmpup $oldup $newup")
-    println("avgdeg " * string(sum(avgdeg) / length(avgdeg)))
     gs
 end
 
@@ -429,12 +424,18 @@ gs = @time randcpdag(n; ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burn
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)
 hs = hsnonrev = map(last, gs)
+undirecteds = ne.(graphs) - hs
+
 
 i = rand(eachindex(hs))
 g, h = graphs[i], hs[i]
 
 τs = map(x->getindex(x, 2), gs)
 ws = wsnonrev = normalize(τs, 1)
+
+println("Average nr. of undirected edges: " , sum(undirecteds .* ws))
+
+
 
 if reversible_too
     gsrev = @time randcpdag(n; ρ=0.0, σ=1.0, κ, iterations, verbose)[burnin:end]
