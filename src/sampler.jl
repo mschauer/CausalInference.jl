@@ -7,14 +7,20 @@ using ProgressMeter
 const as_pairs = vpairs
 using Random
 Random.seed!(2)
+balance(t) = min(one(t), t)
 
 include("mcs.jl")
 
 using CausalInference: isadjacent, tails_and_adj_neighbors, adj_neighbors, isclique, Insert!, Delete!
 using CausalInference: isundirected, parents, meek_rule1, meek_rule2, meek_rule3, meek_rule4, children, 
-    neighbors_adjacent, neighbors_undirected
+    neighbors_adjacent, neighbors_undirected, Δscoreinsert, Δscoredelete
 using CausalInference.Combinatorics
 const adjacents = neighbors_adjacent
+
+struct UniformScore
+end
+import CausalInference.local_score
+local_score(::UniformScore, _, _) = 0.0
 
 """
     keyedreduce(op, key::AbstractVector{T}, a, init=0.0) where T
@@ -96,8 +102,8 @@ ndown(g, total) = ne(g)
 
 
 
-function exact(g, κ, dir=:both) 
-    s1, s2, _ = exact2(g, κ, dir)
+function exact(g, κ, score, dir=:both) 
+    s1, s2, _ = exact2(g, κ, score, dir)
     -s1 + s2
 end
 
@@ -106,7 +112,7 @@ end
 
 Return 
 """
-function exact2(g, κ, dir=:both)
+function exact2(g, κ, score, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -122,11 +128,17 @@ function exact2(g, κ, dir=:both)
                         T = Tyx[digits(Bool, i, base=2, pad=length(Tyx))]
                         NAyxT = CausalInference.sorted_union_(NAyx, T)
                         valid = (isclique(g, NAyxT) && isblocked(g, y, x, NAyxT))
-                        if valid && rand() > s1/(s1 + 1) # sequentially draw sample
+                        if valid
+                            PAy = parents(g, y)
+                            s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                        else 
+                            s = 0.0
+                        end
+                        if valid && rand() > s1/(s1 + s) # sequentially draw sample
                             x1, y1 = x, y
                             T1 = T
                         end
-                        s1 = s1 + valid
+                        s1 = s1 + valid*s
                     end
                 end
             elseif has_edge(g, x, y) && dir != :up
@@ -137,11 +149,18 @@ function exact2(g, κ, dir=:both)
                     H = Hyx[mask] 
                     NAyx_H = Hyx[map(~, mask)] 
                     valid = isclique(g, NAyx_H)
-                    if valid && rand() > s2/(s2 + 1)
+                    if valid
+                        PAy = parents(g, y)
+                        PAy⁻ = setdiff(PAy, x)
+                        s = balance(exp(Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                    else 
+                        s = 0.0
+                    end
+                    if valid && rand() > s2/(s2 + s)
                         x2, y2 = x, y
                         H2 = H
                     end
-                    s2 = s2 + valid 
+                    s2 = s2 + valid*s
                 end
             end 
         end
@@ -321,7 +340,7 @@ function exact3(g, κ)
     return s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
+function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 1.0, wien=true,
                         κ = min(n - 1, 10), iterations=10, verbose=false)
     g, total = G
     if κ >= n 
@@ -348,16 +367,16 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
         elseif iseven(traversals) && total == nv(g)*(nv(g) - 1)÷2 
             traversals += 1
         end
-        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, :down)
+        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, score, :down)
         newdown += @elapsed t2, _ = exactdown(g) 
-        @assert ss2 == t2
+        @assert score != UniformScore() || ss2 == t2
        
-        oldup += @elapsed ss1, _, _, _ = exact2(g, κ, :up)
+        oldup += @elapsed ss1, _, _, _ = exact2(g, κ, score, :up)
         newup += @elapsed t1, _ = exactup(g, κ) 
-        @assert ss1 == t1
+        @assert score != UniformScore() || ss1 == t1
 
         
-        s1, s2, up1, down1 = exact2(g, κ)
+        s1, s2, up1, down1 = exact2(g, κ, score)
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
         λup = s1   
@@ -424,19 +443,40 @@ function randcpdag(n, G = (DiGraph(n), 0); σ = 0.0, ρ = 1.0, wien=true,
     end
     println("time moves $secs")
     println("nr. traversals $traversals")
-    println("cmpdown $olddown $newdown")
-    println("cmpup $oldup $newup")
+    println("cmpdown $olddown -> $newdown")
+    println("cmpup $oldup -> $newup")
     gs
 end
 
-iterations = 10_000; verbose = false
-n = 50 # vertices
+iterations = 100_000; verbose = false
+n = 5 # vertices
 κ = n - 1 # max degree
 reversible_too = false # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
+uniform = false
 
-gs = @time randcpdag(n; ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
+if uniform # sample uniform
+    score = UniformScore()
+else # infer example data from https://mschauer.github.io/CausalInference.jl/latest/examples/ges_basic_examples/
+    @assert n == 5
+    score = let N = 20000
+        Random.seed!(100)
+        x = randn(N)
+        v = x + randn(N)*0.5
+        w = x + randn(N)*0.5
+        z = v + w + randn(N)*0.5
+        s = z + randn(N)*0.5
+        X = [x v w z s]
+        penalty = 0.5
+        C = Symmetric(cov(X, dims = 1, corrected=false))
+        GaussianScore(C, n, penalty)
+    end
+    true_cpdag = [1 => 2, 1 => 3, 2 => 1, 2 => 4, 3 => 1, 3 => 4, 4 => 5]
+end 
+
+
+gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)
@@ -494,6 +534,11 @@ function figure()
 end
 # using GLMakie
 @isdefined(Figure) && (fig = figure(); display(fig))
+
+if score != UniformScore()
+    println("Maximum a posteriory estimate: ", argmax(cm))
+    println("True CPDAG: ", true_cpdag)
+end
 
 cm
 
