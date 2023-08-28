@@ -277,7 +277,7 @@ function exactup(g, κ)
     end
     # store counts for each pair x,y and sample one of them
     # then sample a clique randomly in chordal graph -> by same procedure find# highest index node and then take random subset of prev visited neighbors
-    ttcnt == 0 && return ttcnt, (0, 0, Int[]) 
+    ttcnt == 0 && return ttcnt, (0, 0, Int[]), cnts, cntids
     r = rand(1:ttcnt)
     for i = 1:length(cnts)
         if r <= cnts[i]
@@ -290,7 +290,7 @@ function exactup(g, κ)
             cl = sampleclique(sg, r2)
             append!(cl, need[i])
             #println(cl)
-            return ttcnt, (x, y, cl)
+            return ttcnt, (x, y, cl), cnts, cntids
         end
     end
 end
@@ -315,7 +315,7 @@ function exactdown(g)
             push!(cntids, (x,y))
         end
     end 
-    ttcnt == 0 && return 0, (0, 0, Int[])
+    ttcnt == 0 && return 0, (0, 0, Int[]), cnts, cntids
     # sample clique
     r = rand(1:ttcnt)
     for i = 1:length(cnts)
@@ -329,7 +329,7 @@ function exactdown(g)
             sg, _ = induced_subgraph(g, NAyx)
             cl = sampleclique(sg, r2)
             #println(cl)
-            return ttcnt, (x, y, setdiff(NAyx, cl)) 
+            return ttcnt, (x, y, setdiff(NAyx, cl)), cnts, cntids
         end
     end
 end
@@ -357,6 +357,9 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
     newdown = 0.0
     oldup = 0.0
     newup = 0.0
+    oldcounts = zeros(Int64, n, n)
+    newcounts = zeros(Int64, n, n)
+    avgchanges = Vector{Int64}()
 
     @showprogress for iter in 1:iterations
         τ = 0.0
@@ -369,12 +372,36 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
             traversals += 1
         end
         olddown += @elapsed _, ss2, _, _ = exact2(g, κ, score, :down)
-        newdown += @elapsed t2, _ = exactdown(g) 
+        newdown += @elapsed t2, _, downcnts, downcntids = exactdown(g) 
         @assert score != UniformScore() || ss2 == t2
        
         oldup += @elapsed ss1, _, _, _ = exact2(g, κ, score, :up)
-        newup += @elapsed t1, _ = exactup(g, κ) 
+        newup += @elapsed t1, _, upcnts, upcntids = exactup(g, κ) 
         @assert score != UniformScore() || ss1 == t1
+        
+        diff = 0
+        newcounts = zeros(n, n)
+        for i = 1:length(downcnts)
+            (x, y) = downcntids[i]
+            cnt = downcnts[i]
+            i > 1 && (cnt -= downcnts[i-1])
+            newcounts[x,y] = cnt
+            if newcounts[x,y] != oldcounts[x,y]
+                diff += 1
+            end
+        end
+
+        for i = 1:length(upcnts)
+            (x, y) = upcntids[i]
+            cnt = upcnts[i]
+            i > 1 && (cnt -= upcnts[i-1])
+            newcounts[x,y] = cnt
+            if newcounts[x,y] != oldcounts[x,y]
+                diff += 1
+            end
+        end
+        push!(avgchanges, diff)
+        oldcounts = newcounts
 
         
         s1, s2, up1, down1 = exact2(g, κ, score)
@@ -446,16 +473,19 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
     println("nr. traversals $traversals")
     println("cmpdown $olddown -> $newdown")
     println("cmpup $oldup -> $newup")
+    println("avg changes " * string(sum(avgchanges) / length(avgchanges)) * " " * string(sum(avgchanges) / length(avgchanges) / (n^2 - n)))
+    #println(newcounts)
+    #println(last(avgchanges, 4))
     gs
 end
 
 iterations = 10_000; verbose = false
-n = 3 # vertices
+n = 50 # vertices
 κ = n - 1 # max degree
 reversible_too = false # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
-uniform = false
+uniform = true
 
 if uniform # sample uniform
     score = UniformScore()
