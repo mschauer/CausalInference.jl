@@ -188,16 +188,18 @@ function sampleclique(g, r)
         cnt += 2^preceding[i]
         if r <= cnt
             p = Vector{Int64}()
-            for j in inneighbors(g, i)
+            for j in neighbors(g, i)
                 invmcsorder[j] < invmcsorder[i] && push!(p, j) 
             end
-            subset = rand(0:2^preceding[i]-1)
-            ret = Vector{Int64}()
-            for d = 1:length(p)
-                if ((1 << d) & subset) > 0
-                    push!(ret, p[d])
-                end
-            end
+             ret = randsubseq(p, 0.5)
+        #    subset = rand(0:2^preceding[i]-1)
+        #    ret = Vector{Int64}()
+         #   for d = 0:length(p)
+         #       if ((1 << (d-1)) & subset) > 0
+         #           push!(ret, p[d])
+         #       end
+         #   end
+            push!(ret, i)
             return ret
         end
     end
@@ -225,7 +227,6 @@ function exactup(g, κ)
             q = Vector{Int64}()
             push!(q, z)
             vis[z] = true
-            # can optimize further by not looking at undir after first dir edge
             while !isempty(q)
                 w = popfirst!(q)
                 for v in outneighbors(g, w)
@@ -285,12 +286,10 @@ function exactup(g, κ)
             cnt = cnts[i]
             i > 1 && (cnt -= cnts[i-1])
             r2 = rand(1:cnt)
-            #println(NAyx)
-            sg, _ = induced_subgraph(g, pot[i])
-            cl = sampleclique(sg, r2)
+            sg, vmap = induced_subgraph(g, pot[i])
+            cl = map(v -> vmap[v], sampleclique(sg, r2))
             append!(cl, need[i])
-            #println(cl)
-            return ttcnt, (x, y, cl)
+            return ttcnt, (x, y, setdiff(cl, adj_neighbors(g, x, y)))
         end
     end
 end
@@ -325,10 +324,8 @@ function exactdown(g)
             i > 1 && (cnt -= cnts[i-1])
             r2 = rand(1:cnt)
             NAyx = adj_neighbors(g, x, y)
-            #println(NAyx)
-            sg, _ = induced_subgraph(g, NAyx)
-            cl = sampleclique(sg, r2)
-            #println(cl)
+            sg, vmap = induced_subgraph(g, NAyx)
+            cl = map(v -> vmap[v], sampleclique(sg, r2))
             return ttcnt, (x, y, setdiff(NAyx, cl)) 
         end
     end
@@ -368,16 +365,20 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
         elseif iseven(traversals) && total == nv(g)*(nv(g) - 1)÷2 
             traversals += 1
         end
-        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, score, :down)
-        newdown += @elapsed t2, _ = exactdown(g) 
-        @assert score != UniformScore() || ss2 == t2
-       
-        oldup += @elapsed ss1, _, _, _ = exact2(g, κ, score, :up)
-        newup += @elapsed t1, _ = exactup(g, κ) 
-        @assert score != UniformScore() || ss1 == t1
+#        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, score, :down)
+#        newdown += @elapsed t2, _ = exactdown(g) 
+#        @assert score != UniformScore() || ss2 == t2
+#       
+#        oldup += @elapsed ss1, _, _, _ = exact2(g, κ, score, :up)
+#        newup += @elapsed t1, _ = exactup(g, κ) 
+#        @assert score != UniformScore() || ss1 == t1
 
         
-        s1, s2, up1, down1 = exact2(g, κ, score)
+        if wien
+            s1, s2, up1, down1 = exact3(g, κ)
+        else
+            s1, s2, up1, down1 = exact2(g, κ, score)
+        end
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
         λup = s1   
@@ -449,13 +450,32 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
     gs
 end
 
-iterations = 10_000; verbose = false
-n = 3 # vertices
+#g1 = SimpleDiGraph(Edge.([(1, 2), (2, 1), (1, 3), (3, 1), (1, 4), (4, 1), (2, 4), (4, 2), (3, 4), (4, 3)]))
+#println("start")
+#c = countcliques(g1)
+#println(c)
+#bigc = Dict{Vector{Int64}, Int64}()
+#rep = 1000000
+#for i=1:rep
+#    ret = sampleclique(g1, rand(1:c))
+#    if haskey(bigc, ret)
+#        bigc[ret] += 1
+#    else
+#        bigc[ret] = 1
+#    end
+#end
+#
+#println(bigc)
+#
+#println("end")
+
+iterations = 20_000; verbose = false
+n = 50 # vertices
 κ = n - 1 # max degree
 reversible_too = false # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
-uniform = false
+uniform = true
 
 if uniform # sample uniform
     score = UniformScore()
@@ -488,7 +508,7 @@ elseif n == 4
     true_cpdag = [1 => 3, 2 => 3, 3 => 4]
 elseif n == 3
     score = let N = 200
-        Random.seed!(100)
+        Random.seed!(100)randsubseq(rng, 1:8, 0.3)
         v = randn(N)*0.5
         w = randn(N)*0.5
         z = v + w + randn(N)*0.5
@@ -501,7 +521,6 @@ elseif n == 3
 else
     error("not implemented")
 end 
-
 
 gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
 
