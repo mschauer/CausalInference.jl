@@ -168,6 +168,117 @@ function exact2(g, κ, score, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
+"""
+    exact3(g, κ, score, dir=:both)
+
+Return 
+"""
+function exact3(g, κ, score, dir=:both)
+    s1 = s2 = 0.0
+    x1 = y1 = x2 = y2 = 0
+    T1 = Int[]
+    H2 = Int[] 
+    for y in vertices(g)
+        blocked = falses(n)
+        nu = neighbors_undirected(g, y)
+        push!(nu, y)
+        for v in nu
+            blocked[v] = true
+        end
+        visfrom = Vector{BitVector}()
+        for z in nu
+            # => find all vertices reachable by semidirected path (with other neighbors of y and y itself blocked) from z and save somewhere
+            vis = falses(n)
+            q = Vector{Int64}()
+            push!(q, z)
+            vis[z] = true
+            while !isempty(q)
+                w = popfirst!(q)
+                for v in outneighbors(g, w)
+                    vis[v] && continue
+                    blocked[v] && continue
+                    push!(q, v)
+                    vis[v] = true
+                end
+            end
+            push!(visfrom, vis)
+        end
+        for x in vertices(g)
+            x == y && continue
+            if !isadjacent(g, x, y) && dir != :down
+                last(visfrom)[x] && continue
+                length(neighbors_adjacent(g, x)) == κ && continue
+                needtotake = Set(adj_neighbors(g, x, y))
+                # => get all other undirected neighbors we have to take to close semidirected paths
+                for i = 1:length(nu)
+                    if visfrom[i][x]
+                        push!(needtotake, nu[i])
+                    end
+                end
+                !isclique(g, needtotake) && continue
+                # => keep all other undirected neighbors which are connected to all the must have ones
+                potential = Vector{Int64}()
+                for v in nu
+                    v == y && continue
+                    v in needtotake && continue
+                    fullyconnected = true
+                    for w in needtotake
+                        if !isadjacent(g, v, w)
+                            fullyconnected = false
+                            break
+                        end
+                    end
+                    fullyconnected && !isadjacent(g, x, v) && push!(potential, v)
+                end
+                _, NAyx = tails_and_adj_neighbors(g, x, y)
+                Tyx = potential # TODO: change this, just as quick hack
+                for v in needtotake
+                    !isadjacent(g, v, x) && push!(Tyx, v)
+                end
+                @assert length(Tyx) < 127
+                for i in 0:UInt128(2)^length(Tyx) - 1
+                    T = Tyx[digits(Bool, i, base=2, pad=length(Tyx))]
+                    NAyxT = CausalInference.sorted_union_(NAyx, T)
+                    valid = isclique(g, NAyxT) #&& isblocked(g, y, x, NAyxT))
+                    if valid
+                        PAy = parents(g, y)
+                        s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                    else 
+                        s = 0.0
+                    end
+                    if valid && rand() > s1/(s1 + s) # sequentially draw sample
+                        x1, y1 = x, y
+                        T1 = T
+                    end
+                    s1 = s1 + s
+                end
+            elseif has_edge(g, x, y) && dir != :up
+                Hyx = adj_neighbors(g, x, y)
+                @assert length(Hyx) < 127
+                for i in 0:UInt128(2)^length(Hyx) - 1
+                    mask = digits(Bool, i, base=2, pad=length(Hyx))
+                    H = Hyx[mask] 
+                    NAyx_H = Hyx[map(~, mask)] 
+                    valid = isclique(g, NAyx_H)
+                    if valid
+                        PAy = parents(g, y)
+                        PAy⁻ = setdiff(PAy, x)
+                        s = balance(exp(Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                    else 
+                        s = 0.0
+                    end
+                    if valid && rand() > s2/(s2 + s)
+                        x2, y2 = x, y
+                        H2 = H
+                    end
+                    s2 = s2 + s
+                end
+            end 
+        end
+    end
+    s1, s2, (x1, y1, T1), (x2, y2, H2)
+end
+
 function countcliques(g)
     n = nv(g)
     preceding, _ = countmcs(g)
@@ -331,7 +442,7 @@ function exactdown(g)
     end
 end
 
-function exact3(g, κ)
+function exact4(g, κ)
     s1, (x1, y1, T1) = exactup(g, κ)
     s2, (x2, y2, H2) = exactdown(g)
     return s1, s2, (x1, y1, T1), (x2, y2, H2)
@@ -522,7 +633,7 @@ else
     error("not implemented")
 end 
 
-gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
+gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=false, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)
