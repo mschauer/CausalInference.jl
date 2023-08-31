@@ -232,12 +232,13 @@ function exact3(g, κ, score, dir=:both)
                 end
                 _, NAyx = tails_and_adj_neighbors(g, x, y)
                 Tyx = potential # TODO: change this, just as quick hack
-                for v in needtotake
-                    !isadjacent(g, v, x) && push!(Tyx, v)
-                end
                 @assert length(Tyx) < 127
                 for i in 0:UInt128(2)^length(Tyx) - 1
                     T = Tyx[digits(Bool, i, base=2, pad=length(Tyx))]
+                    for v in needtotake
+                        !isadjacent(g, v, x) && push!(T, v)
+                    end
+                    sort!(T) # do we need this?
                     NAyxT = CausalInference.sorted_union_(NAyx, T)
                     valid = isclique(g, NAyxT) #&& isblocked(g, y, x, NAyxT))
                     if valid
@@ -486,7 +487,7 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
 
         
         if wien
-            s1, s2, up1, down1 = exact3(g, κ)
+            s1, s2, up1, down1 = exact3(g, κ, score)
         else
             s1, s2, up1, down1 = exact2(g, κ, score)
         end
