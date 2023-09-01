@@ -8,6 +8,7 @@ const as_pairs = vpairs
 using Random
 Random.seed!(2)
 balance(t) = min(one(t), t)
+qu(x) = x*x'
 
 include("mcs.jl")
 
@@ -582,12 +583,12 @@ end
 #println("end")
 
 iterations = 20_000; verbose = false
-n = 50 # vertices
+n = 20 # vertices
 κ = n - 1 # max degree
 reversible_too = false # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
-uniform = true
+uniform = false
 
 if uniform # sample uniform
     score = UniformScore()
@@ -620,7 +621,7 @@ elseif n == 4
     true_cpdag = [1 => 3, 2 => 3, 3 => 4]
 elseif n == 3
     score = let N = 200
-        Random.seed!(100)randsubseq(rng, 1:8, 0.3)
+        Random.seed!(100)
         v = randn(N)*0.5
         w = randn(N)*0.5
         z = v + w + randn(N)*0.5
@@ -630,8 +631,19 @@ elseif n == 3
         GaussianScore(C, N, penalty)
     end
     true_cpdag = [1 => 2, 1 => 3]
-else
-    error("not implemented")
+else # 
+    score, true_cpdag = let N = 50 # increase to get more concentrated posterior
+        alpha = 0.12 # increase to get more edges in truth
+        Random.seed!(101)
+        g = randdag(n, alpha)
+        E = Matrix(adjacency_matrix(g)) # Markov operator multiplies from right 
+        L = E .* (0.3rand(n, n) .+ 0.3)
+        penalty = 2.0 # increase to get less edges in sample
+        Σtrue = Float64.(inv(big.(qu((I - L)))))
+        di = sqrt.(diag(Σtrue))
+        Ctrue = (Σtrue) ./ (di * di')
+        GaussianScore(Ctrue, N, penalty), as_pairs(cpdag(g))
+    end
 end 
 
 gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=false, κ, iterations, verbose)[burnin:end]
@@ -700,5 +712,16 @@ if score != UniformScore()
     println("True CPDAG:                    ", true_cpdag)
 end
 
-cm
 
+if !uniform
+    using GraphMakie, GLMakie
+    function graphdiff(g1, g2)
+        @assert nv(g1) == nv(g2)
+        fig, ax, pl = graphplot(g1; edge_color=(:darkorange, 0.3),  kwargs_pdag_graphmakie(g1)...)
+        graphplot!(ax, g2; edge_color=(:blue, 0.2), layout=pl[:node_pos][], kwargs_pdag_graphmakie(g2)...)
+        fig
+    end
+    fig2 = graphdiff(digraph(true_cpdag,n), digraph(first(keys(cm)),n))
+end
+
+cm
