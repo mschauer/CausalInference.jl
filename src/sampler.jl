@@ -121,8 +121,8 @@ function Base.iterate(C::CliqueIterator)
         end
     end
     # TODO: replace int by bitvector or something
-    state = (v, 0, P)
-    return (Vector{Int64}(), state)
+    state = (1, 0, P)
+    return Vector{Int64}(), state
 end
 
 function Base.iterate(C::CliqueIterator, state)
@@ -133,12 +133,12 @@ function Base.iterate(C::CliqueIterator, state)
     idx = state[2]
     potential = state[3][v]
     if idx >= 2^length(potential)
-        return Base.iterate(C, (v+1, idx, potential)) 
+        return Base.iterate(C, (v+1, 0, potential)) 
     else
         clique = potential[digits(Bool, idx, base=2, pad=length(potential))]
         push!(clique, v)
     end
-    return(clique, (v, idx+1, state[3]))
+    return clique, (v, idx+1, state[3])
 end
 
 # insert iterator for all operators op(_, y, _)
@@ -148,7 +148,9 @@ struct InsertIterator{T<:Integer}
 end
 
 function Base.iterate(O::InsertIterator)
-    n = nv(O.g)
+    g = O.g
+    y = O.y
+    n = nv(g)
     blocked = falses(n)
     nu = neighbors_undirected(g, y)
     push!(nu, y)
@@ -172,24 +174,67 @@ function Base.iterate(O::InsertIterator)
         end
         push!(visfrom, vis)
     end 
-    state = (1, visfrom)
+    state = (0, visfrom, nu, nothing, nothing)
     return Base.iterate(O, state)
 end
 
 function Base.iterate(O::InsertIterator, state)
     x = state[1]
     visfrom = state[2]
+    nu = state[3]
+    needtotake = state[4]
+    cliqueit = state[5]
     g = O.g
     n = nv(g)
     y = O.y
     if x > n 
         return nothing
     end
-    if isadjacent(g, x, y) || x == y
-        return Base.iterate(O, (x+1, visfrom))
+    if isadjacent(g, x, y) || x == y || last(visfrom)[x]
+        return Base.iterate(O, (x+1, visfrom, nu, needtotake, cliqueit))
     end
-    # TODO: implement listing of cliques
+    if cliqueit == nothing
+        needtotake = Set(adj_neighbors(g, x, y))
+        for i = 1:length(nu)
+            if visfrom[i][x]
+                push!(needtotake, nu[i])
+            end
+        end
+        !isclique(g, needtotake) && Base.iterate(O, (x+1, visfrom, nu, needtotake, cliqueit))
+        potential = Vector{Int64}()
+        for v in nu
+            v == y && continue
+            v in needtotake && continue
+            fullyconnected = true
+            for w in needtotake
+                if !isadjacent(g, v, w)
+                    fullyconnected = false
+                    break
+                end
+            end
+            fullyconnected && !isadjacent(g, x, v) && push!(potential, v)
+        end
+        sg, vmap = induced_subgraph(g, x, y)
+        # pass vmap to iterator to avoid mapping afterwards
+        cliqueit = CliqueIterator(sg)
+        # in clique iterator, catch trivial cases!
+        # Iterators.peel vs Base.iterate???
+        (clique, cliqueit) = Iterators.peel(cliqueit)
+        @assert clique != nothing 
+        clique = map(v -> vmap[v], clique)
+        append!(clique, needtotake)
+        # directly construct correct set in clique iterator
+        return setdiff(clique, adj_neighbors(g, x, y)), (x, visfrom, nu, needtotake, cliqueit)
+    end
+    (clique, cliqueit) = Iterators.peel(cliqueit)
+    clique == nothing && Base.iterate(O, (x+1, visfrom, nu, needtotake, cliqueit))
+    clique = map(v -> vmap[v], clique)
+    append!(clique, needtotake)
+    # directly construct correct set in clique iterator
+    return setdiff(clique, adj_neighbors(g, x, y)), (x, visfrom, nu, needtotake, cliqueit)
 end
+
+# TODO: write Delete Iterator
 
 ############################################################
 ############################################################
