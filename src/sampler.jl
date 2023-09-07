@@ -101,7 +101,98 @@ Number of edges that can be removed from a `pdag` counting undirected edges twic
 """
 ndown(g, total) = ne(g)
 
+###################################
+######## WORK IN PROGRESS #########
+###################################
 
+# assumes that g is a chordal graph
+struct CliqueIterator{T<:Integer}
+    g::SimpleDiGraph 
+end
+
+function Base.iterate(C::CliqueIterator)
+    g = C.g
+    n = nv(g)
+    _, invmcsorder = countmcs(g)
+    P = [Vector{Int64} for i = 1:n]
+    for i = 1:n
+        for j in neighbors(g, i)
+            invmcsorder[j] < invmcsorder[i] && push!(P, j)
+        end
+    end
+    # TODO: replace int by bitvector or something
+    state = (v, 0, P)
+    return (Vector{Int64}(), state)
+end
+
+function Base.iterate(C::CliqueIterator, state)
+    v = state[1]
+    if v > nv(C.g)
+        return nothing
+    end
+    idx = state[2]
+    potential = state[3][v]
+    if idx >= 2^length(potential)
+        return Base.iterate(C, (v+1, idx, potential)) 
+    else
+        clique = potential[digits(Bool, idx, base=2, pad=length(potential))]
+        push!(clique, v)
+    end
+    return(clique, (v, idx+1, state[3]))
+end
+
+# insert iterator for all operators op(_, y, _)
+struct InsertIterator{T<:Integer}
+    g::SimpleDiGraph{T}
+    y::T
+end
+
+function Base.iterate(O::InsertIterator)
+    n = nv(O.g)
+    blocked = falses(n)
+    nu = neighbors_undirected(g, y)
+    push!(nu, y)
+    for v in nu
+        blocked[v] = true
+    end
+    visfrom = Vector{BitVector}()
+    for z in nu
+        vis = falses(n)
+        q = Vector{Int64}()
+        push!(q, z)
+        vis[z] = true
+        while !isempty(q)
+            w = popfirst!(q)
+            for v in outneighbors(g, w)
+                vis[v] && continue
+                blocked[v] && continue
+                push!(q, v)
+                vis[v] = true
+            end
+        end
+        push!(visfrom, vis)
+    end 
+    state = (1, visfrom)
+    return Base.iterate(O, state)
+end
+
+function Base.iterate(O::InsertIterator, state)
+    x = state[1]
+    visfrom = state[2]
+    g = O.g
+    n = nv(g)
+    y = O.y
+    if x > n 
+        return nothing
+    end
+    if isadjacent(g, x, y) || x == y
+        return Base.iterate(O, (x+1, visfrom))
+    end
+    # TODO: implement listing of cliques
+end
+
+############################################################
+############################################################
 
 function exact(g, κ, score, dir=:both) 
     s1, s2, _ = exact2(g, κ, score, dir)
