@@ -101,143 +101,6 @@ Number of edges that can be removed from a `pdag` counting undirected edges twic
 """
 ndown(g, total) = ne(g)
 
-###################################
-######## WORK IN PROGRESS #########
-###################################
-
-# assumes that g is a chordal graph
-struct CliqueIterator{T<:Integer}
-    g::SimpleDiGraph 
-end
-
-function Base.iterate(C::CliqueIterator)
-    g = C.g
-    n = nv(g)
-    _, invmcsorder = countmcs(g)
-    P = [Vector{Int64} for i = 1:n]
-    for i = 1:n
-        for j in neighbors(g, i)
-            invmcsorder[j] < invmcsorder[i] && push!(P, j)
-        end
-    end
-    # TODO: replace int by bitvector or something
-    state = (1, 0, P)
-    return Vector{Int64}(), state
-end
-
-function Base.iterate(C::CliqueIterator, state)
-    v = state[1]
-    if v > nv(C.g)
-        return nothing
-    end
-    idx = state[2]
-    potential = state[3][v]
-    if idx >= 2^length(potential)
-        return Base.iterate(C, (v+1, 0, potential)) 
-    else
-        clique = potential[digits(Bool, idx, base=2, pad=length(potential))]
-        push!(clique, v)
-    end
-    return clique, (v, idx+1, state[3])
-end
-
-# insert iterator for all operators op(_, y, _)
-struct InsertIterator{T<:Integer}
-    g::SimpleDiGraph{T}
-    y::T
-end
-
-function Base.iterate(O::InsertIterator)
-    g = O.g
-    y = O.y
-    n = nv(g)
-    blocked = falses(n)
-    nu = neighbors_undirected(g, y)
-    push!(nu, y)
-    for v in nu
-        blocked[v] = true
-    end
-    visfrom = Vector{BitVector}()
-    for z in nu
-        vis = falses(n)
-        q = Vector{Int64}()
-        push!(q, z)
-        vis[z] = true
-        while !isempty(q)
-            w = popfirst!(q)
-            for v in outneighbors(g, w)
-                vis[v] && continue
-                blocked[v] && continue
-                push!(q, v)
-                vis[v] = true
-            end
-        end
-        push!(visfrom, vis)
-    end 
-    state = (0, visfrom, nu, nothing, nothing)
-    return Base.iterate(O, state)
-end
-
-function Base.iterate(O::InsertIterator, state)
-    x = state[1]
-    visfrom = state[2]
-    nu = state[3]
-    needtotake = state[4]
-    cliqueit = state[5]
-    g = O.g
-    n = nv(g)
-    y = O.y
-    if x > n 
-        return nothing
-    end
-    if isadjacent(g, x, y) || x == y || last(visfrom)[x]
-        return Base.iterate(O, (x+1, visfrom, nu, needtotake, cliqueit))
-    end
-    if cliqueit == nothing
-        needtotake = Set(adj_neighbors(g, x, y))
-        for i = 1:length(nu)
-            if visfrom[i][x]
-                push!(needtotake, nu[i])
-            end
-        end
-        !isclique(g, needtotake) && Base.iterate(O, (x+1, visfrom, nu, needtotake, cliqueit))
-        potential = Vector{Int64}()
-        for v in nu
-            v == y && continue
-            v in needtotake && continue
-            fullyconnected = true
-            for w in needtotake
-                if !isadjacent(g, v, w)
-                    fullyconnected = false
-                    break
-                end
-            end
-            fullyconnected && !isadjacent(g, x, v) && push!(potential, v)
-        end
-        sg, vmap = induced_subgraph(g, x, y)
-        # pass vmap to iterator to avoid mapping afterwards
-        cliqueit = CliqueIterator(sg)
-        # in clique iterator, catch trivial cases!
-        # Iterators.peel vs Base.iterate???
-        (clique, cliqueit) = Iterators.peel(cliqueit)
-        @assert clique != nothing 
-        clique = map(v -> vmap[v], clique)
-        append!(clique, needtotake)
-        # directly construct correct set in clique iterator
-        return setdiff(clique, adj_neighbors(g, x, y)), (x, visfrom, nu, needtotake, cliqueit)
-    end
-    (clique, cliqueit) = Iterators.peel(cliqueit)
-    clique == nothing && Base.iterate(O, (x+1, visfrom, nu, needtotake, cliqueit))
-    clique = map(v -> vmap[v], clique)
-    append!(clique, needtotake)
-    # directly construct correct set in clique iterator
-    return setdiff(clique, adj_neighbors(g, x, y)), (x, visfrom, nu, needtotake, cliqueit)
-end
-
-# TODO: write Delete Iterator
-
-############################################################
-############################################################
 
 function exact(g, κ, score, dir=:both) 
     s1, s2, _ = exact2(g, κ, score, dir)
@@ -305,285 +168,47 @@ function exact2(g, κ, score, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-"""
-    exact3(g, κ, score, dir=:both)
-
-Return 
-"""
-function exact3(g, κ, score, dir=:both)
+function exact2new(g, κ, score, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
     H2 = Int[] 
     for y in vertices(g)
-        blocked = falses(n)
-        nu = neighbors_undirected(g, y)
-        push!(nu, y)
-        for v in nu
-            blocked[v] = true
-        end
-        visfrom = Vector{BitVector}()
-        for z in nu
-            # => find all vertices reachable by semidirected path (with other neighbors of y and y itself blocked) from z and save somewhere
-            vis = falses(n)
-            q = Vector{Int64}()
-            push!(q, z)
-            vis[z] = true
-            while !isempty(q)
-                w = popfirst!(q)
-                for v in outneighbors(g, w)
-                    vis[v] && continue
-                    blocked[v] && continue
-                    push!(q, v)
-                    vis[v] = true
-                end
-            end
-            push!(visfrom, vis)
-        end
+        dir != :down && (semidirected = precompute_semidirected(g, y))
         for x in vertices(g)
-            x == y && continue
-            if !isadjacent(g, x, y) && dir != :down
-                last(visfrom)[x] && continue
-                length(neighbors_adjacent(g, x)) == κ && continue
-                needtotake = Set(adj_neighbors(g, x, y))
-                # => get all other undirected neighbors we have to take to close semidirected paths
-                for i = 1:length(nu)
-                    if visfrom[i][x]
-                        push!(needtotake, nu[i])
-                    end
-                end
-                !isclique(g, needtotake) && continue
-                # => keep all other undirected neighbors which are connected to all the must have ones
-                potential = Vector{Int64}()
-                for v in nu
-                    v == y && continue
-                    v in needtotake && continue
-                    fullyconnected = true
-                    for w in needtotake
-                        if !isadjacent(g, v, w)
-                            fullyconnected = false
-                            break
-                        end
-                    end
-                    fullyconnected && !isadjacent(g, x, v) && push!(potential, v)
-                end
-                _, NAyx = tails_and_adj_neighbors(g, x, y)
-                Tyx = potential # TODO: change this, just as quick hack
-                @assert length(Tyx) < 127
-                for i in 0:UInt128(2)^length(Tyx) - 1
-                    T = Tyx[digits(Bool, i, base=2, pad=length(Tyx))]
-                    for v in needtotake
-                        !isadjacent(g, v, x) && push!(T, v)
-                    end
-                    sort!(T) # do we need this?
-                    NAyxT = CausalInference.sorted_union_(NAyx, T)
-                    valid = isclique(g, NAyxT) #&& isblocked(g, y, x, NAyxT))
-                    if valid
-                        PAy = parents(g, y)
-                        s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
-                    else 
-                        s = 0.0
-                    end
-                    if valid && rand() > s1/(s1 + s) # sequentially draw sample
+            if dir != :down 
+                insit = InsertIterator(g, x, y, semidirected)
+                for T in insit
+                    PAy = parents(g, y)
+                    NAyxT = CausalInference.sorted_union_(adj_neighbors(g, x, y), T)
+                    # maybe we could do Δscoreinsert(score, g, x, y, T)
+                    # to hide complexity
+                    s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                    if rand() > s1/(s1 + s) # sequentially draw sample
                         x1, y1 = x, y
                         T1 = T
                     end
                     s1 = s1 + s
                 end
-            elseif has_edge(g, x, y) && dir != :up
-                Hyx = adj_neighbors(g, x, y)
-                @assert length(Hyx) < 127
-                for i in 0:UInt128(2)^length(Hyx) - 1
-                    mask = digits(Bool, i, base=2, pad=length(Hyx))
-                    H = Hyx[mask] 
-                    NAyx_H = Hyx[map(~, mask)] 
-                    valid = isclique(g, NAyx_H)
-                    if valid
-                        PAy = parents(g, y)
-                        PAy⁻ = setdiff(PAy, x)
-                        s = balance(exp(Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
-                    else 
-                        s = 0.0
-                    end
-                    if valid && rand() > s2/(s2 + s)
+            end
+            if dir != :up 
+                delit = DeleteIterator(g, x, y)
+                for H in delit
+                    PAy = parents(g, y)
+                    PAy⁻ = setdiff(PAy, x)
+                    # I would prefer Δscoredelete(score, g, x, y, H) as above
+                    NAyx_H = setdiff(adj_neighbors(g, x, y), H)
+                    s = balance(exp(Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                    if rand() > s2/(s2 + s)
                         x2, y2 = x, y
                         H2 = H
                     end
                     s2 = s2 + s
                 end
-            end 
+            end
         end
     end
     s1, s2, (x1, y1, T1), (x2, y2, H2)
-end
-
-function countcliques(g)
-    n = nv(g)
-    preceding, _ = countmcs(g)
-    # maybe use BigInt at some point
-    cnt = 1 # don't forget "empty" clique
-    for i = 1:n
-        cnt += 2^preceding[i]
-    end
-    return cnt
-end
-
-function sampleclique(g, r)
-    n = nv(g)
-    preceding, invmcsorder = countmcs(g)
-    cnt = 1 # don't forget "empty" clique
-    r <= cnt && return Vector{Int64}()
-    for i = 1:n
-        cnt += 2^preceding[i]
-        if r <= cnt
-            p = Vector{Int64}()
-            for j in neighbors(g, i)
-                invmcsorder[j] < invmcsorder[i] && push!(p, j) 
-            end
-             ret = randsubseq(p, 0.5)
-        #    subset = rand(0:2^preceding[i]-1)
-        #    ret = Vector{Int64}()
-         #   for d = 0:length(p)
-         #       if ((1 << (d-1)) & subset) > 0
-         #           push!(ret, p[d])
-         #       end
-         #   end
-            push!(ret, i)
-            return ret
-        end
-    end
-end
-
-function exactup(g, κ)
-    n = nv(g)
-    ttcnt = 0
-    cnts = Vector{Int64}()
-    cntids = Vector{Tuple{Int64, Int64}}()
-    need = Vector{Set{Int64}}()
-    pot = Vector{Vector{Int64}}()
-    for y in vertices(g)
-        length(neighbors_adjacent(g, y)) == κ && continue
-        blocked = falses(n)
-        nu = neighbors_undirected(g, y)
-        push!(nu, y)
-        for v in nu
-            blocked[v] = true
-        end
-        visfrom = Vector{BitVector}()
-        for z in nu
-            # => find all vertices reachable by semidirected path (with other neighbors of y and y itself blocked) from z and save somewhere
-            vis = falses(n)
-            q = Vector{Int64}()
-            push!(q, z)
-            vis[z] = true
-            while !isempty(q)
-                w = popfirst!(q)
-                for v in outneighbors(g, w)
-                    vis[v] && continue
-                    blocked[v] && continue
-                    push!(q, v)
-                    vis[v] = true
-                end
-            end
-            push!(visfrom, vis)
-        end
-        for x in vertices(g)
-            x == y && continue
-            isadjacent(g, x, y) && continue
-            last(visfrom)[x] && continue
-            length(neighbors_adjacent(g, x)) == κ && continue
-            needtotake = Set(adj_neighbors(g, x, y))
-            # => get all other undirected neighbors we have to take to close semidirected paths
-            for i = 1:length(nu)
-                if visfrom[i][x]
-                    push!(needtotake, nu[i])
-                end
-            end
-            !isclique(g, needtotake) && continue
-            # => keep all other undirected neighbors which are connected to all the must have ones
-            potential = Vector{Int64}()
-            for v in nu
-                v == y && continue
-                v in needtotake && continue
-                fullyconnected = true
-                for w in needtotake
-                    if !isadjacent(g, v, w)
-                        fullyconnected = false
-                        break
-                    end
-                end
-                fullyconnected && push!(potential, v)
-            end
-            # => count number of cliques in chordal graph
-            sg, _ = induced_subgraph(g, potential)
-            cnt = countcliques(sg)
-            ttcnt += cnt
-            push!(cnts, ttcnt)
-            push!(cntids, (x,y))
-            push!(need, needtotake)
-            push!(pot, potential)
-            # println(x, " ", y, " ", ttcnt) 
-        end
-    end
-    # store counts for each pair x,y and sample one of them
-    # then sample a clique randomly in chordal graph -> by same procedure find# highest index node and then take random subset of prev visited neighbors
-    ttcnt == 0 && return ttcnt, (0, 0, Int[]) 
-    r = rand(1:ttcnt)
-    for i = 1:length(cnts)
-        if r <= cnts[i]
-            (x, y) = cntids[i]
-            cnt = cnts[i]
-            i > 1 && (cnt -= cnts[i-1])
-            r2 = rand(1:cnt)
-            sg, vmap = induced_subgraph(g, pot[i])
-            cl = map(v -> vmap[v], sampleclique(sg, r2))
-            append!(cl, need[i])
-            return ttcnt, (x, y, setdiff(cl, adj_neighbors(g, x, y)))
-        end
-    end
-end
-
-function exactdown(g)
-    ttcnt = 0
-    cnts = Vector{Int64}()
-    cntids = Vector{Tuple{Int64, Int64}}()
-    for x in vertices(g)
-        for y in [neighbors_undirected(g, x); children(g, x)]
-            NAyx = adj_neighbors(g, x, y)
-            if length(NAyx) == 0
-                ttcnt += 1
-            elseif length(NAyx) == 1
-                ttcnt += 2
-            else
-                sg, _ = induced_subgraph(g, NAyx)
-                cnt = countcliques(sg)
-                ttcnt += cnt
-            end
-            push!(cnts, ttcnt)
-            push!(cntids, (x,y))
-        end
-    end 
-    ttcnt == 0 && return 0, (0, 0, Int[])
-    # sample clique
-    r = rand(1:ttcnt)
-    for i = 1:length(cnts)
-        if r <= cnts[i]
-            (x, y) = cntids[i]
-            cnt = cnts[i]
-            i > 1 && (cnt -= cnts[i-1])
-            r2 = rand(1:cnt)
-            NAyx = adj_neighbors(g, x, y)
-            sg, vmap = induced_subgraph(g, NAyx)
-            cl = map(v -> vmap[v], sampleclique(sg, r2))
-            return ttcnt, (x, y, setdiff(NAyx, cl)) 
-        end
-    end
-end
-
-function exact4(g, κ)
-    s1, (x1, y1, T1) = exactup(g, κ)
-    s2, (x2, y2, H2) = exactdown(g)
-    return s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
 function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 1.0, wien=true,
