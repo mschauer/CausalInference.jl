@@ -10,7 +10,7 @@ Random.seed!(2)
 balance(t) = min(one(t), t)
 qu(x) = x*x'
 
-include("mcs.jl")
+include("operators.jl")
 
 using CausalInference: isadjacent, tails_and_adj_neighbors, adj_neighbors, isclique, Insert!, Delete!
 using CausalInference: isundirected, parents, meek_rule1, meek_rule2, meek_rule3, meek_rule4, children, 
@@ -168,7 +168,7 @@ function exact2(g, κ, score, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function exact2new(g, κ, score, dir=:both)
+function exact2new(g, score, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -183,6 +183,8 @@ function exact2new(g, κ, score, dir=:both)
                     NAyxT = CausalInference.sorted_union_(adj_neighbors(g, x, y), T)
                     # maybe we could do Δscoreinsert(score, g, x, y, T)
                     # to hide complexity
+                    # or just Δscoreinsert(score, g, op)
+                    # and op contains all necessary stuff e.g. NAyxT and so on
                     s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
                     if rand() > s1/(s1 + s) # sequentially draw sample
                         x1, y1 = x, y
@@ -249,7 +251,7 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
 
         
         if wien
-            s1, s2, up1, down1 = exact3(g, κ, score)
+            s1, s2, up1, down1 = exact2new(g, score) # no kappa yet
         else
             s1, s2, up1, down1 = exact2(g, κ, score)
         end
@@ -343,13 +345,13 @@ end
 #
 #println("end")
 
-iterations = 20_000; verbose = false
-n = 20 # vertices
+iterations = 50_000; verbose = false
+n = 50 # vertices
 κ = n - 1 # max degree
 reversible_too = false # do baseline 
 #iterations = 50; verbose = true
 burnin = iterations÷2
-uniform = false
+uniform = true
 
 if uniform # sample uniform
     score = UniformScore()
@@ -407,7 +409,7 @@ else #
     end
 end 
 
-gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=false, κ, iterations, verbose)[burnin:end]
+gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)
