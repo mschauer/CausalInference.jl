@@ -10,35 +10,26 @@ using LinkedLists
 # - uniform_exact, which counts and samples operator in polynomial-time by avoiding full enumeration (only works for uniform score) 
 
 """
-    vispush!(l::LinkedList, pointers, x, vis)
-
-"""
-@inline function vispush!(l::LinkedLists.LinkedList, pointers, x, vis)
-    if vis
-        pointers[x] = push!(l,x)
-    else
-        pointers[x] = pushfirst!(l,x)
-    end
-end
-
-"""
-    countmcs(G)
+    count_mcs(G)
 
 TODO.
 
 """
 
-function countmcs(G)
+function count_mcs(G)
     n = nv(G)
-    sets = [LinkedLists.LinkedList{Int64}() for i = 1:n+1]
+
+    # data structures for MCS
+    sets = [LinkedLists.LinkedList{Int64}() for _ = 1:n+1]
     pointers = Vector{ListNode{Int64}}(undef,n)
     size = ones(Int64, n)
-    visited = falses(n) 
+
+    # output data structure
     invmcsorder = zeros(Int64, n)
 
     # init
     for v in vertices(G)
-        vispush!(sets[1], pointers, v, visited[v])
+        pointers[v] = push!(sets[1], v)
     end
     maxcard = 1
 
@@ -54,7 +45,7 @@ function countmcs(G)
             if size[w] >= 1
                 deleteat!(sets[size[w]], pointers[w])
                 size[w] += 1
-                vispush!(sets[size[w]], pointers, w, visited[w])
+                pointers[w] = push!(sets[size[w]], w)
             end
         end
         maxcard += 1
@@ -63,29 +54,27 @@ function countmcs(G)
         end
     end
 
-    return -size, invmcsorder
-    
+    return -size, invmcsorder 
 end
 
 """
-    mcs(G, K)
+    operator_mcs(G, K)
 
-Perform a Maximum Cardinality Search on graph G. The elements of clique K are of prioritized and chosen first.If K is empty a normal MCS is performed. Return the visit order.
+Perform a Maximum Cardinality Search on graph G. The elements of clique K are of prioritized and chosen first.
 
 """
-function mcs(G, K)
+function operator_mcs(G, K)
     n = nv(G)
     copy_K = copy(K)
 
     sets = [LinkedLists.LinkedList{Int64}() for i = 1:n+1]
     pointers = Vector{ListNode{Int64}}(undef,n)
     size = ones(Int64, n)
-    visited = falses(n) 
     invmcsorder = zeros(Int64, n)
 
     # init
     for v in vertices(G)
-        vispush!(sets[1], pointers, v, visited[v])
+        pointers[v] = push!(sets[1], v)
     end
     maxcard = 1
 
@@ -108,7 +97,7 @@ function mcs(G, K)
             if size[w] >= 1
                 deleteat!(sets[size[w]], pointers[w])
                 size[w] += 1
-                vispush!(sets[size[w]], pointers, w, visited[w])
+                pointers[w] = push!(sets[size[w]], w)
             end
         end
         maxcard += 1
@@ -142,7 +131,7 @@ function next_CPDAG(g, op, x, y, S)
         end
         push!(K, y)
     end
-    invmcsorder = mcs(c, K)
+    invmcsorder = operator_mcs(c, K)
     
     # maybe this is not necessary
     comp = Vector{Int64}(undef, n)
@@ -170,7 +159,7 @@ function next_CPDAG(g, op, x, y, S)
         rem_edge!(d, y, x)
     end
 
-    return cpdag(d)
+    return alt_cpdag(d)
 end
 
 ## use for tests
@@ -189,8 +178,8 @@ end
 function Base.iterate(C::CliqueIterator)
     g = C.g
     n = nv(g)
-    _, invmcsorder = countmcs(g)
-    P = [Vector{Int64}() for i = 1:n]
+    _, invmcsorder = count_mcs(g)
+    P = [Vector{Int64}() for _ = 1:n]
     for i = 1:n
         for j in neighbors(g, i)
             invmcsorder[j] < invmcsorder[i] && push!(P[i], j)
@@ -246,13 +235,15 @@ function precompute_semidirected(g, y)
 end
 
 # needs semidirected precomputed with precompute_semidirected(g, y) 
-# for efficiency have y in outer loop!!!
+# for efficiency have y in outer loop!
 struct InsertIterator{T<:Integer}
     g::SimpleDiGraph{T}
     x::T
     y::T
     semidirected::Vector{BitVector}
 end
+
+Base.IteratorSize(::InsertIterator) = Base.SizeUnknown()
 
 function Base.iterate(O::InsertIterator)
     g = O.g
@@ -263,6 +254,10 @@ function Base.iterate(O::InsertIterator)
         return nothing
     end
     nu = neighbors_undirected(g, y)
+    if length(nu) == 0
+        (empty, it) = Iterators.peel([Vector{Int64}()])
+        return empty, (it, Vector{Int64}())
+    end
     push!(nu, y)
     an = adj_neighbors(g, x, y)
     musttake = Set(an)
@@ -286,20 +281,19 @@ function Base.iterate(O::InsertIterator)
         fullyconnected && !isadjacent(g, x, v) && push!(cantake, v)
     end
     cliqueit = CliqueIterator(induced_subgraph(g, cantake)...)
-    state = (cliqueit, musttake, an)
+    state = (cliqueit, setdiff(musttake, an))
     return Base.iterate(O, state)
 end
 
 function Base.iterate(O::InsertIterator, state)
     cliqueit = state[1]
     musttake = state[2]
-    an = state[3]
     res = Iterators.peel(cliqueit)
     res === nothing && return nothing 
     clique = res[1]
     cliqueit = res[2]
     append!(clique, musttake)
-    return setdiff(clique, an), (cliqueit, musttake, an)
+    return clique, (cliqueit, musttake)
 end
 
 struct DeleteIterator{T<:Integer}
@@ -307,6 +301,8 @@ struct DeleteIterator{T<:Integer}
     x::T
     y::T
 end
+
+Base.IteratorSize(::DeleteIterator) = Base.SizeUnknown()
 
 function Base.iterate(O::DeleteIterator)
     g = O.g
@@ -316,6 +312,14 @@ function Base.iterate(O::DeleteIterator)
         return nothing
     end
     an = adj_neighbors(g, x, y)
+    if length(an) == 0
+        (empty, it) = Iterators.peel([Vector{Int64}()])
+        return empty, (it, an)
+    end
+    if length(an) == 1
+        (empty, it) = Iterators.peel([Vector{Int64}(), Vector{Int64}(an)])
+        return setdiff(an, empty), (it, an)
+    end
     cliqueit = CliqueIterator(induced_subgraph(g, an)...)
     state = (cliqueit, an)
     return Base.iterate(O, state)

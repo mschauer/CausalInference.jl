@@ -168,19 +168,23 @@ function exact2(g, κ, score, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function exact2new(g, score, dir=:both)
+function exact2new(g, κ, score, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
     H2 = Int[] 
     for y in vertices(g)
-        dir != :down && (semidirected = precompute_semidirected(g, y))
+        noinsert = (dir == :down)
+        length(neighbors_adjacent(g, y)) >= κ && (noinsert = true)
+        dir == :up && noinsert && continue
+        !noinsert && (semidirected = precompute_semidirected(g, y))
+        PAy = parents(g, y)
         for x in vertices(g)
-            if dir != :down 
+            if !noinsert 
+                length(neighbors_adjacent(g, x)) >= κ && continue
                 insit = InsertIterator(g, x, y, semidirected)
                 for T in insit
-                    PAy = parents(g, y)
-                    NAyxT = CausalInference.sorted_union_(adj_neighbors(g, x, y), T)
+                    NAyxT = union(adj_neighbors(g, x, y), T)
                     # maybe we could do Δscoreinsert(score, g, x, y, T)
                     # to hide complexity
                     # or just Δscoreinsert(score, g, op)
@@ -196,7 +200,6 @@ function exact2new(g, score, dir=:both)
             if dir != :up 
                 delit = DeleteIterator(g, x, y)
                 for H in delit
-                    PAy = parents(g, y)
                     PAy⁻ = setdiff(PAy, x)
                     # I would prefer Δscoredelete(score, g, x, y, H) as above
                     NAyx_H = setdiff(adj_neighbors(g, x, y), H)
@@ -251,7 +254,7 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
 
         
         if wien
-            s1, s2, up1, down1 = exact2new(g, score) # no kappa yet
+            s1, s2, up1, down1 = exact2new(g, κ,score) 
         else
             s1, s2, up1, down1 = exact2(g, κ, score)
         end
