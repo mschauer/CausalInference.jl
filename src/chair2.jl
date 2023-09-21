@@ -18,7 +18,8 @@ fig0
 
 frames = 200
 both = false
-framerate = 10
+#framerate = 10
+framerate = 30
 uniform = false
 resample = false
 
@@ -131,7 +132,7 @@ end
 display(fig)
 
 ex = uniform ? "uni" : ""
-record(fig, "append_animation$ex.mp4", 2:frames; framerate) do i
+record(fig, "mara_append_animation$ex.mp4", 2:frames; framerate) do i
     g[] = graphs[i]
     push!(tim[], ts[i])
     hei[] = push!(hei[], hs[i])
@@ -144,3 +145,44 @@ record(fig, "append_animation$ex.mp4", 2:frames; framerate) do i
 end
 
 fig1 = fig
+
+
+fig = Figure()
+
+ax2 = fig[1,1] = Axis(fig)
+hidedecorations!.(ax2)
+
+graphplot!(ax2, g, kwargs_pdag_graphmakie(g, arrowsize=100)..., curve_distance_usage = false, arrow_shift = :end, 
+    layout=pl0[:node_pos][], ilabels=V,  ilabels_fontsize = 30, node_color= colorant"#c7e1ca")
+ 
+xlims!(ax2, -1.3, 1.3)
+ylims!(ax2, -1.3, 1.3)
+
+#=
+  [2=>3, 3=>2, 3=>6, 4=>5, 5=>4, 5=>6, 6=>7, 6=>8]                         => 0.133102
+  [3=>6, 4=>5, 5=>4, 5=>6, 6=>7, 6=>8]                                     => 0.0483408
+  [1=>8, 2=>3, 3=>2, 3=>6, 4=>5, 5=>4, 5=>6, 6=>7, 6=>8]                   => 0.0302684
+=#
+g[] = digraph( [2=>3, 3=>2, 3=>6, 4=>5, 5=>4, 5=>6, 6=>7, 6=>8] )
+save("g0.133.png", fig)
+g[] = digraph( [3=>6, 4=>5, 5=>4, 5=>6, 6=>7, 6=>8]              )
+save("g0.048.png", fig)
+g[] = digraph( [1=>8, 2=>3, 3=>2, 3=>6, 4=>5, 5=>4, 5=>6, 6=>7, 6=>8] )
+save("g0.302.png", fig)
+
+
+g[] =  digraph(map(e-> V⁻[e[1]]=>V⁻[e[2]], G))
+save("dagtrue.png", fig)
+
+
+fig = Figure()
+
+ax1 = fig[1,1] = Axis(fig)
+
+xlims!(ax1, 0.0, frames/length(ts))
+tim = Observable(copy(ts))
+hei = Observable(copy(hs))
+
+stairs!(ax1, tim, hei, step=:post)
+ylims!(ax1, 0, n*(n-1)÷2)
+save("samples.png", fig)

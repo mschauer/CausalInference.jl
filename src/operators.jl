@@ -338,7 +338,7 @@ end
 ## TODO: refactor ##
 function countcliques(g)
     n = nv(g)
-    preceding, _ = countmcs(g)
+    preceding, _ = count_mcs(g)
     # maybe use BigInt at some point
     cnt = 1 # don't forget "empty" clique
     for i = 1:n
@@ -349,7 +349,7 @@ end
 
 function sampleclique(g, r)
     n = nv(g)
-    preceding, invmcsorder = countmcs(g)
+    preceding, invmcsorder = count_mcs(g)
     cnt = 1 # don't forget "empty" clique
     r <= cnt && return Vector{Int64}()
     for i = 1:n

@@ -6,8 +6,22 @@ using StatsBase
 using ProgressMeter
 const as_pairs = vpairs
 using Random
-Random.seed!(2)
-balance(t) = min(one(t), t)
+using Distributions
+using OffsetArrays
+using GLMakie
+include("dags20.jl")
+Random.seed!(5)
+#balance(t) = min(one(t), t)
+balance(t) = sqrt(t)
+#balance(t) = t/(1+t)
+
+#const bias = 0.1
+#prior(t, to) = dags20[t]/dags20[to]
+prior(_,_) = 1.0
+priordown(t) = prior(t, t-1)
+priorup(t) = prior(t, t+1)
+const coldness = 40.0
+
 qu(x) = x*x'
 
 include("operators.jl")
@@ -112,7 +126,7 @@ end
 
 Return 
 """
-function exact2(g, κ, score, dir=:both)
+function exact2(g, κ, score, total, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -130,10 +144,11 @@ function exact2(g, κ, score, dir=:both)
                         valid = (isclique(g, NAyxT) && isblocked(g, y, x, NAyxT))
                         if valid
                             PAy = parents(g, y)
-                            s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                            s = balance(priorup(total)*exp(coldness*Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
                         else 
                             s = 0.0
                         end
+                        @assert s >= 0
                         if valid && rand() > s1/(s1 + s) # sequentially draw sample
                             x1, y1 = x, y
                             T1 = T
@@ -152,10 +167,11 @@ function exact2(g, κ, score, dir=:both)
                     if valid
                         PAy = parents(g, y)
                         PAy⁻ = setdiff(PAy, x)
-                        s = balance(exp(Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                        s = balance(priordown(total)*exp(coldness*Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
                     else 
                         s = 0.0
                     end
+                    @assert s >= 0
                     if valid && rand() > s2/(s2 + s)
                         x2, y2 = x, y
                         H2 = H
@@ -168,7 +184,7 @@ function exact2(g, κ, score, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function exact2new(g, κ, score, dir=:both)
+function exact2new(g, κ, score, total, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -176,6 +192,7 @@ function exact2new(g, κ, score, dir=:both)
     for y in vertices(g)
         noinsert = (dir == :down)
         length(neighbors_adjacent(g, y)) >= κ && (noinsert = true)
+        #total == nv(g)*κ÷2-2 && (noinsert = true)
         dir == :up && noinsert && continue
         !noinsert && (semidirected = precompute_semidirected(g, y))
         PAy = parents(g, y)
@@ -189,7 +206,7 @@ function exact2new(g, κ, score, dir=:both)
                     # to hide complexity
                     # or just Δscoreinsert(score, g, op)
                     # and op contains all necessary stuff e.g. NAyxT and so on
-                    s = balance(exp(Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                    s = balance(priorup(total)*exp(coldness*Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
                     if rand() > s1/(s1 + s) # sequentially draw sample
                         x1, y1 = x, y
                         T1 = T
@@ -203,7 +220,7 @@ function exact2new(g, κ, score, dir=:both)
                     PAy⁻ = setdiff(PAy, x)
                     # I would prefer Δscoredelete(score, g, x, y, H) as above
                     NAyx_H = setdiff(adj_neighbors(g, x, y), H)
-                    s = balance(exp(Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                    s = balance(priordown(total)*exp(coldness*Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
                     if rand() > s2/(s2 + s)
                         x2, y2 = x, y
                         H2 = H
@@ -217,31 +234,30 @@ function exact2new(g, κ, score, dir=:both)
 end
 
 function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 1.0, wien=true,
-                        κ = min(n - 1, 10), iterations=10, verbose=false)
+                        κ = min(n - 1, 10), iterations=10, verbose=false, save=true)
     g, total = G
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
     end
-    total = 0
     gs = Vector{Tuple{typeof(g),Float64,Int,Int}}()
     dir = 1
-    traversals = 0
+    global traversals = 0
+    global tempty = 0.0
     τ = 0.0
     secs = 0.0
-    olddown = 0.0
-    newdown = 0.0
-    oldup = 0.0
-    newup = 0.0
-
+#    olddown = 0.0
+#    newdown = 0.0
+#    oldup = 0.0
+#    newup = 0.0
+    emax = n*κ÷2
     @showprogress for iter in 1:iterations
         τ = 0.0
         total_old = total
         dir_old = dir
-
         if isodd(traversals) && total == 0 # count number of traversal from empty to full
             traversals += 1
-        elseif iseven(traversals) && total == nv(g)*(nv(g) - 1)÷2 
+        elseif iseven(traversals) && total == emax
             traversals += 1
         end
 #        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, score, :down)
@@ -253,16 +269,23 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
 #        @assert score != UniformScore() || ss1 == t1
 
         
-        if wien
-            s1, s2, up1, down1 = exact2new(g, κ,score) 
+        if wien 
+            if score isa UniformScore
+                s1, s2, up1, down1 = uniform_exact(g, κ)
+                total < emax && (s1 *= balance(priorup(total)))
+                total > 0 && (s2 *= balance(priordown(total)))
+                
+            else 
+                s1, s2, up1, down1 = exact2new(g, κ, score, total)
+            end
         else
-            s1, s2, up1, down1 = exact2(g, κ, score)
+            s1, s2, up1, down1 = exact2(g, κ, score, total)
         end
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
         λup = s1   
         λ = dir == 1 ? abs(s1) : abs(s2)
-
+        local x, y
         while true 
 
             Δτ = randexp()/(ρ*λ)
@@ -277,14 +300,15 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
             end
             up = rand() < λup/λrw           
 
-     
+            
          
             if  (Δτ < Δτrw  && dir == 1) || (Δτ > Δτrw  && up)
 
-                local x, y
+                
                 x, y, T = up1
                 @assert x != y
-                push!(gs, (g, τ, dir, total))
+                total == 0 && (tempty += τ)
+                save && push!(gs, (g, τ, dir, total))
                 total += 1
                 secs += @elapsed begin
                     if wien
@@ -300,7 +324,8 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
             else
                 x, y, H = down1
                 @assert x != y
-                push!(gs, (g, τ, dir, total))
+                total == 0 && (tempty += τ)
+                save && push!(gs, (g, τ, dir, total))
                 total -= 1
                 secs += @elapsed begin
                     if wien
@@ -315,17 +340,21 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
                 break
             end
             @label flip
+            x = y = 0
             dir *= -1
-            push!(gs, (g, τ, dir, total))
+            total == 0 && (tempty += τ)
+            save && push!(gs, (g, τ, dir, total))
             break            
         end # break
-        verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total, " ", round(τ, digits=8))
-        verbose && println("\t", vpairs(g))
+        verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total,  " $x => $y ", round(τ, digits=8))
+        #verbose && println("\t", vpairs(g))
     end
     println("time moves $secs")
     println("nr. traversals $traversals")
-    println("cmpdown $olddown -> $newdown")
-    println("cmpup $oldup -> $newup")
+    println("time empty $tempty")
+    
+ #   println("cmpdown $olddown -> $newdown")
+ #   println("cmpup $oldup -> $newup")
     gs
 end
 
@@ -348,13 +377,16 @@ end
 #
 #println("end")
 
-iterations = 50_000; verbose = false
-n = 50 # vertices
+iterations = 30; verbose = false
+n = 16 # vertices
 κ = n - 1 # max degree
-reversible_too = false # do baseline 
+#κ = 4
+reversible_too = true # do baseline 
 #iterations = 50; verbose = true
-burnin = iterations÷2
-uniform = true
+#burnin = iterations÷2
+burnin = 1
+uniform = false
+verbose = true
 
 if uniform # sample uniform
     score = UniformScore()
@@ -411,8 +443,9 @@ else #
         GaussianScore(Ctrue, N, penalty), as_pairs(cpdag(g))
     end
 end 
-
-gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
+#G = (complete_digraph(n), n*κ÷2) 
+G = DiGraph(n), 0
+gs = @time randcpdag(n, G; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)
@@ -429,44 +462,59 @@ ws = wsnonrev = normalize(τs, 1)
 println("Average nr. of undirected edges: " , sum(undirecteds .* ws))
 
 
-
-if reversible_too
-    gsrev = @time randcpdag(n; ρ=0.0, σ=1.0, κ, iterations, verbose)[burnin:end]
-    hsrev = map(last, gsrev)
-    τsrev = map(x->getindex(x, 2), gsrev)
-    wsrev = normalize(τsrev, 1)
-end
-
 @show sum(τs)
 cm = keyedreduce(+, graph_pairs, ws)
 cm = sort(cm; byvalue=true, rev=true)
 
-dirs = map(x->getindex(x, 3), gs)
-cm2 = keyedreduce(+, graph_pairs, ws .* dirs)
+if reversible_too
+    gsrev = @time randcpdag(n, G; ρ=0.0, σ=1.0, κ, iterations, verbose)[burnin:end]
+    hsrev = map(last, gsrev)
+    τsrev = map(x->getindex(x, 2), gsrev)
+    wsrev = normalize(τsrev, 1)
+    graph_pairs_rev = as_pairs.(first.(gsrev))
 
+    cmrev = keyedreduce(+, graph_pairs_rev, wsrev)
+    cmrev = sort(cmrev; byvalue=true, rev=true)
+
+end
+
+
+ 
 println("# cpdags: $( n ≤ length(ncpdags) ? ncpdags[n] : "NA") (true), $(length(cm)) (sampled) " )
+reversible_too && println("# cpdags: $( n ≤ length(ncpdags) ? ncpdags[n] : "NA") (true), $(length(cmrev)) (sampled) " )
+
 println("prob: ", n ≤ length(ncpdags) ? round(1/(ncpdags[n]), sigdigits=3) : "NA"," (true), ", extrema(values(cm)), "(estimates) " )
 
-n ≤ length(ncpdags) && println("rmse ", norm(values(cm) .- 1/(ncpdags[n])))
+if n == κ - 1 && n ≤ length(ncpdags) 
+    println("rmse ", norm(values(cm) .- 1/(ncpdags[n])))
+else
+
+    println("extrema", extrema(values(cm)))
+    reversible_too && println("extrema", extrema(values(cmrev)))
+end
 println("mean repetitions ", mean(rle(hash.(graph_pairs))[2]))
 
 
-function figure() 
+function figure(;autocor=false) 
     
     fig = Figure()
     ax1 = fig[1,1] = Axis(fig)
-    ax2 = fig[2,1] = Axis(fig)
+    if autocor 
+        ax2 = fig[2,1] = Axis(fig)
+    end
     tim = cumsum(wsnonrev)
     stairs!(ax1, tim, hsnonrev, step=:post)
-    lines!(ax2, autocor(hsnonrev))
+    autocor && lines!(ax2, autocor(hsnonrev))
 
     if @isdefined hsrev 
         stairs!(ax1, cumsum(wsrev), hsrev, color=:orange, step=:post)
-        lines!(ax2, autocor(hsrev))
+        autocor && lines!(ax2, autocor(hsrev))
     end
 
-    ylims!(ax1, 0, n*(n-1)÷2)
-    xlims!(ax1, tim[max(1, length(hsnonrev) - 1000)], tim[end])
+    ylims!(ax1, 0, n*(κ)÷2)
+    #ylims!(ax1, 0, 250)
+
+   # xlims!(ax1, tim[max(1, length(hsnonrev) - 1000)], tim[end])
     ax1.yzoomlock = true
     fig
 end
@@ -491,3 +539,8 @@ if !uniform
 end
 
 cm
+
+fig2 = lines(log.(values(sort(keyedreduce(+, hs, ws)))), color=:blue)
+lines!(log.(values(sort(keyedreduce(+, hsrev, wsrev)))), color=:orange)
+fig2
+fig
