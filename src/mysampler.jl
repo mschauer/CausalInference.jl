@@ -46,16 +46,16 @@ const adjacents = neighbors_adjacent
 #
 #println("end")
 
-iterations = 30; verbose = false
-n = 16 # vertices
+iterations = 10000; verbose = false
+n = 20 # vertices
 κ = n - 1 # max degree
 #κ = 4
 reversible_too = true # do baseline 
 #iterations = 50; verbose = true
 #burnin = iterations÷2
 burnin = 1
-uniform = true
-verbose = true
+uniform = false
+verbose = false
 
 if uniform # sample uniform
     score = UniformScore()
@@ -109,7 +109,7 @@ else #
         Σtrue = Float64.(inv(big.(qu((I - L)))))
         di = sqrt.(diag(Σtrue))
         Ctrue = (Σtrue) ./ (di * di')
-        GaussianScore(Ctrue, N, penalty), as_pairs(cpdag(g))
+        GaussianScore(Symmetric(Ctrue), N, penalty), as_pairs(cpdag(g))
     end
 end 
 #G = (complete_digraph(n), n*κ÷2) 
@@ -136,7 +136,7 @@ cm = keyedreduce(+, graph_pairs, ws)
 cm = sort(cm; byvalue=true, rev=true)
 
 if reversible_too
-    gsrev = @time randcpdag(n, G; ρ=0.0, σ=1.0, κ, iterations, verbose)[burnin:end]
+    gsrev = @time randcpdag(n, G; score, ρ=0.0, σ=1.0, naive=false, κ, iterations, verbose)[burnin:end]
     hsrev = map(last, gsrev)
     τsrev = map(x->getindex(x, 2), gsrev)
     wsrev = normalize(τsrev, 1)
