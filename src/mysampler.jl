@@ -114,7 +114,7 @@ else #
 end 
 #G = (complete_digraph(n), n*κ÷2) 
 G = DiGraph(n), 0
-gs = @time randcpdag(n, G; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
+gs = @time randcpdag(n, G; score, ρ=1.0, σ=0.0, naive=false, κ, iterations, verbose)[burnin:end]
 
 graphs = first.(gs)
 graph_pairs = as_pairs.(graphs)

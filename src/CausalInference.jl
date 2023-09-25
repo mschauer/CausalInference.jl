@@ -29,7 +29,7 @@ export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export ges
 export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortasi!
-export uniform_exact, randcpdag, UniformScore
+export uniform_exact, randcpdag, UniformScore, causalzigzag
 export keyedreduce
 
 #include("pinv.jl")

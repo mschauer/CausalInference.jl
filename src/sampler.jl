@@ -1,4 +1,8 @@
+# Valid balancing functions
 
+metropolis_balance(t) = min(one(t), t)
+sqrt_balance(t) = sqrt(t)
+barker_balance(t) = t/(1+t) # softmin
 
 struct UniformScore
 end
@@ -170,8 +174,17 @@ function exact2new(g, κ, balance, prior, score, coldness, total, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function randcpdag(n, G = (DiGraph(n), 0); balance = x->min(one(x), x), prior = (_,_)->1.0, score=UniformScore(),
-                        coldness = 1.0, σ = 0.0, ρ = 1.0, wien=true,
+"""
+    causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prior = (t,t+1)->1.0, score=UniformScore(),
+                        coldness = 1.0, σ = 0.0, ρ = 1.0, naive=false,
+                        κ = min(n - 1, 10), iterations=10, verbose=false, save=true)
+
+Run the causal zigzag algorithm starting in a cpdag `(G, t)` with `t` oriented or unoriented edges,
+the balance function `balance ∈ {metropolis_balance, barker_balance, sqrt}`, `score` function (see `ges` algorithm)
+coldness parameter for iterations. `σ = 1.0, ρ = 0.0` gives purely diffusive behaviour, `σ = 0.0, ρ = 1.0` gives Zig-Zag behaviour.
+"""
+function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prior = (t,t+1)->1.0, score=UniformScore(),
+                        coldness = 1.0, σ = 0.0, ρ = 1.0, naive=false,
                         κ = min(n - 1, 10), iterations=10, verbose=false, save=true)
     g, total = G
     if κ >= n 
@@ -195,7 +208,7 @@ function randcpdag(n, G = (DiGraph(n), 0); balance = x->min(one(x), x), prior = 
             traversals += 1
         end
         
-        if wien 
+        if !naive 
             if score isa UniformScore
                 s1, s2, up1, down1 = uniform_exact(g, κ)
                 total < emax && (s1 *= balance(prior(total, total+1)))
@@ -237,7 +250,7 @@ function randcpdag(n, G = (DiGraph(n), 0); balance = x->min(one(x), x), prior = 
                 save && push!(gs, (g, τ, dir, total))
                 total += 1
                 secs += @elapsed begin
-                    if wien
+                    if !naive
                         g = next_CPDAG(g, :up, x, y, T)
                     else
                         g = copy(g)
@@ -254,7 +267,7 @@ function randcpdag(n, G = (DiGraph(n), 0); balance = x->min(one(x), x), prior = 
                 save && push!(gs, (g, τ, dir, total))
                 total -= 1
                 secs += @elapsed begin
-                    if wien
+                    if !naive
     		            g = next_CPDAG(g, :down, x, y, H)
                     else
                         g = copy(g)
@@ -292,3 +305,5 @@ function unzipgs(gs)
     ts = cumsum(ws)
     (;graphs, graph_pairs, hs, τs, ws, ts)
 end 
+
+const randcpdag = causalzigzag

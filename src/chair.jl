@@ -33,7 +33,7 @@ Ctrue = (Σtrue) ./ (di * di')
 score = UniformScore()
 
 #if !(@isdefined gs)
-    gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
+    gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, naive=false, κ, iterations, verbose)[burnin:end]
 #end
 
 graphs = first.(gs)

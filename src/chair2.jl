@@ -42,9 +42,9 @@ else
     score = GaussianScore(Ctrue, N, penalty)
 end
 if resample
-    gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)
+    gs = @time randcpdag(n; score, ρ=1.0, σ=0.0, naive=false, κ, iterations, verbose)
     if both
-        gs2 = randcpdag(n; score, ρ=0.0, σ=1.0, wien=true, κ, iterations, verbose)
+        gs2 = randcpdag(n; score, ρ=0.0, σ=1.0, naive=false, κ, iterations, verbose)
     end 
 end
 
