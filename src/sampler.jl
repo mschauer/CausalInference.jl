@@ -1,67 +1,10 @@
-using Revise
-using LinearAlgebra
-using CausalInference
-using CausalInference.Graphs
-using StatsBase
-using ProgressMeter
-const as_pairs = vpairs
-using Random
-using Distributions
-using OffsetArrays
-using GLMakie
-include("dags20.jl")
-Random.seed!(5)
-#balance(t) = min(one(t), t)
-balance(t) = sqrt(t)
-#balance(t) = t/(1+t)
 
-#const bias = 0.1
-#prior(t, to) = dags20[t]/dags20[to]
-prior(_,_) = 1.0
-priordown(t) = prior(t, t-1)
-priorup(t) = prior(t, t+1)
-const coldness = 40.0
-
-qu(x) = x*x'
-
-include("operators.jl")
-
-using CausalInference: isadjacent, tails_and_adj_neighbors, adj_neighbors, isclique, Insert!, Delete!
-using CausalInference: isundirected, parents, meek_rule1, meek_rule2, meek_rule3, meek_rule4, children, 
-    neighbors_adjacent, neighbors_undirected, Δscoreinsert, Δscoredelete
-using CausalInference.Combinatorics
-const adjacents = neighbors_adjacent
 
 struct UniformScore
 end
-import CausalInference.local_score
+#import CausalInference.local_score
 local_score(::UniformScore, _, _) = 0.0
 
-"""
-    keyedreduce(op, key::AbstractVector{T}, a, init=0.0) where T
-
-Similar to `countmap` returning a dictionary mapping unique key in `key` to the 
-reduction the given collection itr with the given binary operator `op`.
-
-```
-julia> keyedreduce(+, [:a, :b, :a], [7, 3, 2])
-Dict{Symbol, Float64} with 2 entries:
-  :a => 9.0
-  :b => 3.0
-```
-"""
-function keyedreduce(op, key::AbstractVector{T}, a, init=0.0) where T
-    cm = Dict{T,typeof(init)}()
-    for (v, τ) in zip(key, a)
-        index = Base.ht_keyindex2!(cm, v)
-        if index > 0
-            @inbounds cm.vals[index] = op(cm.vals[index] , τ)
-        else
-            @inbounds Base._setindex!(cm, op(init, τ), v, -index)
-        end
-    end
-    return cm
-end
 
 """
     ne_total(g)
@@ -98,7 +41,6 @@ end
 
 isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 
-ncpdags = [1, 2, 11, 185, 8782, 1067825, 312510571, 212133402500, 326266056291213, 1118902054495975181, 8455790399687227104576, 139537050182278289405732939, 4991058955493997577840793161279]
 
 """
     nup(g, total)
@@ -116,17 +58,12 @@ Number of edges that can be removed from a `pdag` counting undirected edges twic
 ndown(g, total) = ne(g)
 
 
-function exact(g, κ, score, dir=:both) 
-    s1, s2, _ = exact2(g, κ, score, dir)
-    -s1 + s2
-end
-
 """
-    exact2(g, κ, score, dir=:both)
+    exact2(g, κ, balance, prior, score, coldness, dir=:both)
 
 Return 
 """
-function exact2(g, κ, score, total, dir=:both)
+function exact2(g, κ, balance, prior, score, coldness, total, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -144,7 +81,7 @@ function exact2(g, κ, score, total, dir=:both)
                         valid = (isclique(g, NAyxT) && isblocked(g, y, x, NAyxT))
                         if valid
                             PAy = parents(g, y)
-                            s = balance(priorup(total)*exp(coldness*Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                            s = balance(prior(total, total+1)*exp(coldness*Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
                         else 
                             s = 0.0
                         end
@@ -167,7 +104,7 @@ function exact2(g, κ, score, total, dir=:both)
                     if valid
                         PAy = parents(g, y)
                         PAy⁻ = setdiff(PAy, x)
-                        s = balance(priordown(total)*exp(coldness*Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                        s = balance(prior(total, total-1)*exp(coldness*Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
                     else 
                         s = 0.0
                     end
@@ -184,7 +121,7 @@ function exact2(g, κ, score, total, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function exact2new(g, κ, score, total, dir=:both)
+function exact2new(g, κ, balance, prior, score, coldness, total, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -206,7 +143,7 @@ function exact2new(g, κ, score, total, dir=:both)
                     # to hide complexity
                     # or just Δscoreinsert(score, g, op)
                     # and op contains all necessary stuff e.g. NAyxT and so on
-                    s = balance(priorup(total)*exp(coldness*Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
+                    s = balance(prior(total, total+1)*exp(coldness*Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)))
                     if rand() > s1/(s1 + s) # sequentially draw sample
                         x1, y1 = x, y
                         T1 = T
@@ -220,7 +157,7 @@ function exact2new(g, κ, score, total, dir=:both)
                     PAy⁻ = setdiff(PAy, x)
                     # I would prefer Δscoredelete(score, g, x, y, H) as above
                     NAyx_H = setdiff(adj_neighbors(g, x, y), H)
-                    s = balance(priordown(total)*exp(coldness*Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
+                    s = balance(prior(total, total-1)*exp(coldness*Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)))
                     if rand() > s2/(s2 + s)
                         x2, y2 = x, y
                         H2 = H
@@ -233,7 +170,8 @@ function exact2new(g, κ, score, total, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 1.0, wien=true,
+function randcpdag(n, G = (DiGraph(n), 0); balance = x->min(one(x), x), prior = (_,_)->1.0, score=UniformScore(),
+                        coldness = 1.0, σ = 0.0, ρ = 1.0, wien=true,
                         κ = min(n - 1, 10), iterations=10, verbose=false, save=true)
     g, total = G
     if κ >= n 
@@ -246,10 +184,6 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
     global tempty = 0.0
     τ = 0.0
     secs = 0.0
-#    olddown = 0.0
-#    newdown = 0.0
-#    oldup = 0.0
-#    newup = 0.0
     emax = n*κ÷2
     @showprogress for iter in 1:iterations
         τ = 0.0
@@ -260,26 +194,18 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
         elseif iseven(traversals) && total == emax
             traversals += 1
         end
-#        olddown += @elapsed _, ss2, _, _ = exact2(g, κ, score, :down)
-#        newdown += @elapsed t2, _ = exactdown(g) 
-#        @assert score != UniformScore() || ss2 == t2
-#       
-#        oldup += @elapsed ss1, _, _, _ = exact2(g, κ, score, :up)
-#        newup += @elapsed t1, _ = exactup(g, κ) 
-#        @assert score != UniformScore() || ss1 == t1
-
         
         if wien 
             if score isa UniformScore
                 s1, s2, up1, down1 = uniform_exact(g, κ)
-                total < emax && (s1 *= balance(priorup(total)))
-                total > 0 && (s2 *= balance(priordown(total)))
+                total < emax && (s1 *= balance(prior(total, total+1)))
+                total > 0 && (s2 *= balance(prior(total, total-1)))
                 
             else 
-                s1, s2, up1, down1 = exact2new(g, κ, score, total)
+                s1, s2, up1, down1 = exact2new(g, κ, balance, prior, score, coldness, total)
             end
         else
-            s1, s2, up1, down1 = exact2(g, κ, score, total)
+            s1, s2, up1, down1 = exact2(g, κ, balance, prior, score, coldness, total)
         end
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
@@ -352,195 +278,17 @@ function randcpdag(n, G = (DiGraph(n), 0); score=UniformScore(), σ = 0.0, ρ = 
     println("time moves $secs")
     println("nr. traversals $traversals")
     println("time empty $tempty")
-    
- #   println("cmpdown $olddown -> $newdown")
- #   println("cmpup $oldup -> $newup")
+
     gs
 end
 
-#g1 = SimpleDiGraph(Edge.([(1, 2), (2, 1), (1, 3), (3, 1), (1, 4), (4, 1), (2, 4), (4, 2), (3, 4), (4, 3)]))
-#println("start")
-#c = countcliques(g1)
-#println(c)
-#bigc = Dict{Vector{Int64}, Int64}()
-#rep = 1000000
-#for i=1:rep
-#    ret = sampleclique(g1, rand(1:c))
-#    if haskey(bigc, ret)
-#        bigc[ret] += 1
-#    else
-#        bigc[ret] = 1
-#    end
-#end
-#
-#println(bigc)
-#
-#println("end")
 
-iterations = 30; verbose = false
-n = 16 # vertices
-κ = n - 1 # max degree
-#κ = 4
-reversible_too = true # do baseline 
-#iterations = 50; verbose = true
-#burnin = iterations÷2
-burnin = 1
-uniform = false
-verbose = true
-
-if uniform # sample uniform
-    score = UniformScore()
-elseif n == 5 # infer example data from https://mschauer.github.io/CausalInference.jl/latest/examples/ges_basic_examples/
-    score = let N = 200
-        Random.seed!(100)
-        x = randn(N)
-        v = x + randn(N)*0.5
-        w = x + randn(N)*0.5
-        z = v + w + randn(N)*0.5
-        s = z + randn(N)*0.5
-        X = [x v w z s]
-        penalty = 0.5
-        C = Symmetric(cov(X, dims = 1, corrected=false))
-        GaussianScore(C, N, penalty)
-    end
-    true_cpdag = [1 => 2, 1 => 3, 2 => 1, 2 => 4, 3 => 1, 3 => 4, 4 => 5]
-elseif n == 4
-    score = let N = 200
-        Random.seed!(100)
-        v = randn(N)*0.5
-        w = randn(N)*0.5
-        z = v + w + randn(N)*0.5
-        s = z + randn(N)*0.5
-        X = [v w z s]
-        penalty = 0.5
-        C = Symmetric(cov(X, dims = 1, corrected=false))
-        GaussianScore(C, N, penalty)
-    end
-    true_cpdag = [1 => 3, 2 => 3, 3 => 4]
-elseif n == 3
-    score = let N = 200
-        Random.seed!(100)
-        v = randn(N)*0.5
-        w = randn(N)*0.5
-        z = v + w + randn(N)*0.5
-        X = [v w z]
-        penalty = 0.5
-        C = Symmetric(cov(X, dims = 1, corrected=false))
-        GaussianScore(C, N, penalty)
-    end
-    true_cpdag = [1 => 2, 1 => 3]
-else # 
-    score, true_cpdag = let N = 50 # increase to get more concentrated posterior
-        alpha = 0.12 # increase to get more edges in truth
-        Random.seed!(101)
-        g = randdag(n, alpha)
-        E = Matrix(adjacency_matrix(g)) # Markov operator multiplies from right 
-        L = E .* (0.3rand(n, n) .+ 0.3)
-        penalty = 2.0 # increase to get less edges in sample
-        Σtrue = Float64.(inv(big.(qu((I - L)))))
-        di = sqrt.(diag(Σtrue))
-        Ctrue = (Σtrue) ./ (di * di')
-        GaussianScore(Ctrue, N, penalty), as_pairs(cpdag(g))
-    end
+function unzipgs(gs)
+    graphs = first.(gs)
+    graph_pairs = as_pairs.(graphs)
+    hs = map(last, gs)
+    τs = map(x->getindex(x, 2), gs)
+    ws = normalize(τs, 1)
+    ts = cumsum(ws)
+    (;graphs, graph_pairs, hs, τs, ws, ts)
 end 
-#G = (complete_digraph(n), n*κ÷2) 
-G = DiGraph(n), 0
-gs = @time randcpdag(n, G; score, ρ=1.0, σ=0.0, wien=true, κ, iterations, verbose)[burnin:end]
-
-graphs = first.(gs)
-graph_pairs = as_pairs.(graphs)
-hs = hsnonrev = map(last, gs)
-undirecteds = ne.(graphs) - hs
-
-
-i = rand(eachindex(hs))
-g, h = graphs[i], hs[i]
-
-τs = map(x->getindex(x, 2), gs)
-ws = wsnonrev = normalize(τs, 1)
-
-println("Average nr. of undirected edges: " , sum(undirecteds .* ws))
-
-
-@show sum(τs)
-cm = keyedreduce(+, graph_pairs, ws)
-cm = sort(cm; byvalue=true, rev=true)
-
-if reversible_too
-    gsrev = @time randcpdag(n, G; ρ=0.0, σ=1.0, κ, iterations, verbose)[burnin:end]
-    hsrev = map(last, gsrev)
-    τsrev = map(x->getindex(x, 2), gsrev)
-    wsrev = normalize(τsrev, 1)
-    graph_pairs_rev = as_pairs.(first.(gsrev))
-
-    cmrev = keyedreduce(+, graph_pairs_rev, wsrev)
-    cmrev = sort(cmrev; byvalue=true, rev=true)
-
-end
-
-
- 
-println("# cpdags: $( n ≤ length(ncpdags) ? ncpdags[n] : "NA") (true), $(length(cm)) (sampled) " )
-reversible_too && println("# cpdags: $( n ≤ length(ncpdags) ? ncpdags[n] : "NA") (true), $(length(cmrev)) (sampled) " )
-
-println("prob: ", n ≤ length(ncpdags) ? round(1/(ncpdags[n]), sigdigits=3) : "NA"," (true), ", extrema(values(cm)), "(estimates) " )
-
-if n == κ - 1 && n ≤ length(ncpdags) 
-    println("rmse ", norm(values(cm) .- 1/(ncpdags[n])))
-else
-
-    println("extrema", extrema(values(cm)))
-    reversible_too && println("extrema", extrema(values(cmrev)))
-end
-println("mean repetitions ", mean(rle(hash.(graph_pairs))[2]))
-
-
-function figure(;autocor=false) 
-    
-    fig = Figure()
-    ax1 = fig[1,1] = Axis(fig)
-    if autocor 
-        ax2 = fig[2,1] = Axis(fig)
-    end
-    tim = cumsum(wsnonrev)
-    stairs!(ax1, tim, hsnonrev, step=:post)
-    autocor && lines!(ax2, autocor(hsnonrev))
-
-    if @isdefined hsrev 
-        stairs!(ax1, cumsum(wsrev), hsrev, color=:orange, step=:post)
-        autocor && lines!(ax2, autocor(hsrev))
-    end
-
-    ylims!(ax1, 0, n*(κ)÷2)
-    #ylims!(ax1, 0, 250)
-
-   # xlims!(ax1, tim[max(1, length(hsnonrev) - 1000)], tim[end])
-    ax1.yzoomlock = true
-    fig
-end
-# using GLMakie
-@isdefined(Figure) && (fig = figure(); display(fig))
-
-if score != UniformScore()
-    println("Maximum a posteriory estimate: ", argmax(cm))
-    println("True CPDAG:                    ", true_cpdag)
-end
-
-
-if !uniform
-    using GraphMakie, GLMakie
-    function graphdiff(g1, g2)
-        @assert nv(g1) == nv(g2)
-        fig, ax, pl = graphplot(g1; edge_color=(:darkorange, 0.3),  kwargs_pdag_graphmakie(g1)...)
-        graphplot!(ax, g2; edge_color=(:blue, 0.2), layout=pl[:node_pos][], kwargs_pdag_graphmakie(g2)...)
-        fig
-    end
-    fig2 = graphdiff(digraph(true_cpdag,n), digraph(first(keys(cm)),n))
-end
-
-cm
-
-fig2 = lines(log.(values(sort(keyedreduce(+, hs, ws)))), color=:blue)
-lines!(log.(values(sort(keyedreduce(+, hsrev, wsrev)))), color=:orange)
-fig2
-fig

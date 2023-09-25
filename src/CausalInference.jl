@@ -1,4 +1,6 @@
 module CausalInference
+using ProgressMeter
+using OffsetArrays
 
 using Graphs
 using Graphs.SimpleGraphs
@@ -27,6 +29,8 @@ export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export ges
 export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortasi!
+export uniform_exact, randcpdag, UniformScore
+export keyedreduce
 
 #include("pinv.jl")
 include("graphs.jl")
@@ -45,7 +49,8 @@ include("backdoor.jl")
 include("ges.jl")
 include("gensearch.jl")
 include("workloads.jl")
-#include("sampler.jl")
+include("operators.jl")
+include("sampler.jl")
 #include("mcs.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
