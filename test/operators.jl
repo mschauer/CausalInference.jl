@@ -2,8 +2,11 @@ using Graphs
 using CausalInference
 using Test
 
-include("../src/operators.jl")
-include("../src/pdag.jl")
+import CausalInference.tails_and_adj_neighbors
+import CausalInference.adj_neighbors
+using CausalInference: precompute_semidirected, isadjacent, neighbors_undirected,
+        isclique, InsertIterator, sorted_intersect_, DeleteIterator, next_CPDAG, →, has_both
+
 
 isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
 function tails_and_adj_neighbors(g, x, y)
@@ -24,11 +27,11 @@ Here x and y are not adjacent and T are undirected-neighbors of y
 that are not adjacent to x.
 """
 function Insert!(g, x, y, T)
-    add_edge!(g, x → y)
+    add_edge!(g, x, y)
     
     # Orient all edges in T incident into child node
     for t ∈ T
-        orientedge!(g, t → y)
+        orientedge!(g, t, y)
     end
     return g
 end
