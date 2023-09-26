@@ -51,6 +51,7 @@ include("gensearch.jl")
 include("workloads.jl")
 include("operators.jl")
 include("sampler.jl")
+include("misc2.jl")
 #include("mcs.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)

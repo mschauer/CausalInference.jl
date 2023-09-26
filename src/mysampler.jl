@@ -99,18 +99,7 @@ elseif n == 3
     end
     true_cpdag = [1 => 2, 1 => 3]
 else # 
-    score, true_cpdag = let N = 50 # increase to get more concentrated posterior
-        alpha = 0.12 # increase to get more edges in truth
-        Random.seed!(101)
-        g = randdag(n, alpha)
-        E = Matrix(adjacency_matrix(g)) # Markov operator multiplies from right 
-        L = E .* (0.3rand(n, n) .+ 0.3)
-        penalty = 2.0 # increase to get less edges in sample
-        Σtrue = Float64.(inv(big.(qu((I - L)))))
-        di = sqrt.(diag(Σtrue))
-        Ctrue = (Σtrue) ./ (di * di')
-        GaussianScore(Symmetric(Ctrue), N, penalty), as_pairs(cpdag(g))
-    end
+    true_cpdag, score = CausalInference.make_gaussian_model(n)
 end 
 #G = (complete_digraph(n), n*κ÷2) 
 G = DiGraph(n), 0
