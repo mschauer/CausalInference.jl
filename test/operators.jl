@@ -5,7 +5,8 @@ using Test
 import CausalInference.tails_and_adj_neighbors
 import CausalInference.adj_neighbors
 using CausalInference: precompute_semidirected, isadjacent, neighbors_undirected,
-        isclique, InsertIterator, sorted_intersect_, DeleteIterator, next_CPDAG, →, has_both
+        isclique, InsertIterator, sorted_intersect_, DeleteIterator, next_CPDAG, →, has_both,
+        orientedge!
 
 
 isblocked(g, x, y, nodesRemoved) = !has_a_path(g, [x], y, nodesRemoved)
