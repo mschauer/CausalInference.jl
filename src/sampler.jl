@@ -298,7 +298,7 @@ end
 
 function unzipgs(gs)
     graphs = first.(gs)
-    graph_pairs = as_pairs.(graphs)
+    graph_pairs = vpairs.(graphs)
     hs = map(last, gs)
     τs = map(x->getindex(x, 2), gs)
     ws = normalize(τs, 1)

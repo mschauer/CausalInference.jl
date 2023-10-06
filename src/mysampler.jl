@@ -99,7 +99,8 @@ elseif n == 3
     end
     true_cpdag = [1 => 2, 1 => 3]
 else # 
-    true_cpdag, score = CausalInference.make_gaussian_model(n)
+    true_cpdag_, score = CausalInference.make_gaussian_model(n)
+    true_cpdag = as_pairs(true_cpdag_)
 end 
 #G = (complete_digraph(n), n*κ÷2) 
 G = DiGraph(n), 0
