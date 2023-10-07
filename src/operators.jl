@@ -6,7 +6,7 @@ using LinkedLists
 """
     count_mcs(G)
 
-
+Perform a Maximum Cardinality Search on graph G. 
 """
 function count_mcs(G)
     n = nv(G)

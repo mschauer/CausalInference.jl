@@ -145,4 +145,9 @@ CausalInference.remove!
 CausalInference.count_moves
 CausalInference.ne_undirected
 CausalInference.operator_mcs
+CausalInference.InsertIterator
+CausalInference.DeleteIterator
+CausalInference.count_mcs
+CausalInference.precompute_semidirected
+CausalInference.next_CPDAG
 ```
