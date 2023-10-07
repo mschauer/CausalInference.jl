@@ -2,20 +2,12 @@ using Graphs
 using LinkedLists
 
 
-# EXPORTS:
-# - next_CDPAG, which applies an operator and computes the resulting CPDAG in linear-time 
-# - precompute_semidirected, which computes for vertex y all vertices reachable via semidirected path from any undirected neighbor and y itself with all vertices in this same set blocked
-# - InsertIterator, which lists all insert operators for pair x,y (needs semidirected from prev point)
-# - DeleteIterator, which lists all delete operators for pair x,y
-# - count_moves_uniform, which counts and samples operator in polynomial-time by avoiding full enumeration (only works for uniform score) 
 
 """
     count_mcs(G)
 
-TODO.
 
 """
-
 function count_mcs(G)
     n = nv(G)
 
@@ -61,7 +53,6 @@ end
     operator_mcs(G, K)
 
 Perform a Maximum Cardinality Search on graph G. The elements of clique K are of prioritized and chosen first.
-
 """
 function operator_mcs(G, K)
     n = nv(G)
@@ -109,6 +100,12 @@ function operator_mcs(G, K)
     return invmcsorder
 end
 
+# EXPORTS:
+"""
+    next_CPDAG(g, op, x, y, S)
+
+`next_CDPAG` applies an operator and computes the resulting CPDAG in linear-time 
+"""
 function next_CPDAG(g, op, x, y, S)
     n = nv(g)
     c = copy(g)
@@ -206,6 +203,12 @@ function Base.iterate(C::CliqueIterator, state)
     return map(v -> C.vmap[v], clique), (v, idx+1, state[3])
 end
 
+"""
+    precompute_semidirected(g, y)
+
+Computes for vertex y all vertices reachable via semidirected path from any undirected neighbor and y 
+itself with all vertices in this same set blocked.
+"""
 function precompute_semidirected(g, y)
     n = nv(g)
     blocked = falses(n)
@@ -236,6 +239,11 @@ end
 
 # needs semidirected precomputed with precompute_semidirected(g, y) 
 # for efficiency have y in outer loop!
+"""
+    InsertIterator{T<:Integer}
+
+Lists all insert operators for pair x,y (needs semidirected from prev point)
+"""
 struct InsertIterator{T<:Integer}
     g::SimpleDiGraph{T}
     x::T
@@ -296,6 +304,11 @@ function Base.iterate(O::InsertIterator, state)
     return clique, (cliqueit, musttake)
 end
 
+"""
+    DeleteIterator{T<:Integer}
+
+Lists all delete operators for pair x,y.
+"""
 struct DeleteIterator{T<:Integer}
     g::SimpleDiGraph{T}
     x::T
@@ -502,6 +515,7 @@ end
 """
     count_moves_uniform(g, κ=nv(g) - 1) = s1, s2, (x1, y1, T1), (x2, y2, H2)
 
+Counts and samples operator in polynomial-time by avoiding full enumeration (only works for uniform score.) 
 Count the number `s1` of Insert and `s2` of Delete operators for CPDAG `g` with 
 degree bound `κ` and return a uniformly selected `Insert(x1, y1, T1)`` and a uniform selected 
 `Delete(x2, y2, H2)` operator. 

@@ -42,6 +42,7 @@ pcalg
 orient_unshielded
 apply_pc_rules
 skeleton
+CausalInference.skeleton_stable
 dseporacle
 unshielded
 orientable_unshielded
@@ -129,4 +130,19 @@ ges
 CausalInference.local_score
 CausalInference.Insert!
 CausalInference.Delete!
+```
+
+## Causal Zig-Zag
+```@docs
+CausalInference.nup
+CausalInference.ndown
+CausalInference.count_moves_uniform
+CausalInference.causalzigzag
+CausalInference.keyedreduce
+CausalInference.ne_total
+CausalInference.arrows
+CausalInference.remove!
+CausalInference.count_moves
+CausalInference.ne_undirected
+CausalInference.operator_mcs
 ```
