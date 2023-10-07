@@ -227,7 +227,7 @@ julia> 20*19÷2
 julia> 20*19÷2*(18*17÷4) + 20*19*18÷2 + 20*19*18÷2
 21280
 
-julia> uniform_exact(complete_digraph(n), n-1)[2]÷2
+julia> count_moves_uniform(complete_digraph(n), n-1)[2]÷2
 49807360
 =#
 function fixdags(;smooth = true)

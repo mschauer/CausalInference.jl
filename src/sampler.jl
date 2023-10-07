@@ -63,11 +63,11 @@ ndown(g, total) = ne(g)
 
 
 """
-    exact2(g, κ, balance, prior, score, coldness, dir=:both)
+    count_moves(g, κ, balance, prior, score, coldness, dir=:both)
 
 Return 
 """
-function exact2(g, κ, balance, prior, score, coldness, total, dir=:both)
+function count_moves(g, κ, balance, prior, score, coldness, total, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -125,7 +125,7 @@ function exact2(g, κ, balance, prior, score, coldness, total, dir=:both)
     s1, s2, (x1, y1, T1), (x2, y2, H2)
 end
 
-function exact2new(g, κ, balance, prior, score, coldness, total, dir=:both)
+function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:both)
     s1 = s2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
@@ -210,15 +210,15 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
         
         if !naive 
             if score isa UniformScore
-                s1, s2, up1, down1 = uniform_exact(g, κ)
+                s1, s2, up1, down1 = count_moves_uniform(g, κ)
                 total < emax && (s1 *= balance(prior(total, total+1)))
                 total > 0 && (s2 *= balance(prior(total, total-1)))
                 
             else 
-                s1, s2, up1, down1 = exact2new(g, κ, balance, prior, score, coldness, total)
+                s1, s2, up1, down1 = count_moves_new(g, κ, balance, prior, score, coldness, total)
             end
         else
-            s1, s2, up1, down1 = exact2(g, κ, balance, prior, score, coldness, total)
+            s1, s2, up1, down1 = count_moves(g, κ, balance, prior, score, coldness, total)
         end
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
