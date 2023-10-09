@@ -120,7 +120,7 @@ end
                 x = rand(vertices(g))
                 y = rand(vertices(g))
                 semidirected = precompute_semidirected(g, y)
-                if x != y && !isadjacent(g, x, y) && !last(semidirected)[x]
+                if x != y && !isadjacent(g, x, y) && !last(semidirected)[x] && !isempty(collect(InsertIterator(g, x, y, semidirected)))
                     break
                 end
             end
