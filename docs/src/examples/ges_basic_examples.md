@@ -46,3 +46,40 @@ est_g2 = pcalg(df, 0.01, gausscitest)
 est_g == est_g2
 ```
 For the data using this seed, both agree.
+
+# Causal Zig-Zag
+
+Instead of GES which greedily tries to maximize the BIC score, we can also sample the posterior distribution over CPDAGs corresponding to the BIC score. We have implemented the Causal Zig-Zag for this.
+(See: M. Schauer, M. Wienöbst: Causal structure learning with momentum: Sampling distributions over Markov Equivalence Classes of DAGs. (https://doi.org/10.48550/arXiv.2310.05655))
+
+
+```
+iterations = 50_000
+n = length(df) # vertices
+κ = n - 1 # max degree
+penalty = 2.0 # increase to get more edges in truth
+Random.seed!(101)
+C = cor(CausalInference.Tables.matrix(df))
+score = GaussianScore(C, N, penalty)
+gs = @time causalzigzag(n; score, κ, iterations)
+```
+
+`gs` contains the samples of the chain and weight information. The following two lines aggregate this information to obtain a posteriori probabilities of different CPDAGs. 
+
+```
+graphs, graph_pairs, hs, τs, ws, ts = CausalInference.unzipgs(gs)
+posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+```
+
+`posterior` is a dictorarity assigning each CPDAG is (marginal) a-posteriori probability using the prior with parameter `penalty`. (Graphs are represented as vector of directed edges.)
+
+```
+  [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5]                                           => 0.997285
+  [1=>2, 1=>3, 2=>1, 2=>3, 2=>4, 3=>1, 3=>2, 3=>4, 4=>2, 4=>3, 4=>5, 5=>4]             => 0.000590422
+  [1=>2, 1=>3, 1=>5, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5]                                     => 0.000565705
+  [1=>2, 1=>3, 1=>4, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5]                                     => 0.000543214
+  [1=>2, 1=>3, 2=>1, 2=>4, 2=>5, 3=>1, 3=>4, 4=>5]                                     => 0.000517662
+  ...
+```
+
+From this we see that the maximum a posterior graph coincides with the GES estimate and has high posterior weight, showing that the result of the GES algorithm is not incidental.  

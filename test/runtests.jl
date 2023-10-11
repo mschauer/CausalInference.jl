@@ -2,6 +2,7 @@ using CausalInference
 using Graphs
 using Test
 
+include("operators.jl")
 include("ges.jl")
 include("gesvsR.jl")
 include("gensearch.jl")

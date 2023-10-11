@@ -301,14 +301,6 @@ end
 # Scoring function
 ####################################################################
 
-# score equivalent (?) oracle score
-# two dag with the same cpdag need to have the same score sum
-function Δscoreinsert(cpdag::DiGraph, vparents, x, v, T)
-    !dsep(cpdag, x, v, vparents)
-end
-function Δscoredelete(cpdag::DiGraph, vparents, x, v, H)
-    dsep(cpdag, x, v, vparents)
-end
 
 Δscoreinsert(data, parents, x, v, _) = Δscore(data, parents, x, v)
 Δscoredelete(data, parents, x, v, _) = -Δscore(data, parents, x, v)

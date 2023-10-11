@@ -1,4 +1,6 @@
 module CausalInference
+using ProgressMeter
+using OffsetArrays
 
 using Graphs
 using Graphs.SimpleGraphs
@@ -6,6 +8,7 @@ using Combinatorics
 using Base.Iterators
 using Memoization, LRUCache
 using ThreadsX
+using LinkedLists
 
 import Base: ==, show
 
@@ -26,6 +29,8 @@ export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export ges
 export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortasi!
+export count_moves_uniform, randcpdag, UniformScore, causalzigzag
+export keyedreduce
 
 #include("pinv.jl")
 include("graphs.jl")
@@ -44,6 +49,10 @@ include("backdoor.jl")
 include("ges.jl")
 include("gensearch.jl")
 include("workloads.jl")
+include("operators.jl")
+include("sampler.jl")
+include("misc2.jl")
+#include("mcs.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
 const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)
@@ -57,6 +66,8 @@ function __init__()
         # requires both GraphRecipes.jl and Plots.jl
         @require GraphRecipes="bd48cda9-67a9-57be-86fa-5b3c104eda73" begin @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" include("../ext/GraphRecipesExt.jl") end
         @require TikzGraphs="b4f28e30-c73f-5eaf-a395-8a9db949a742" include("../ext/TikzGraphsExt.jl")
+        @require GraphMakie="1ecd5474-83a3-4783-bb4f-06765db800d2" include("../ext/GraphMakieExt.jl")
+
     end
 end
 end # end of module
