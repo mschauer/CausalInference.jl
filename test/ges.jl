@@ -99,8 +99,8 @@ end
             println("cond(C) ", cond(Ctrue))
     
             println("skel edges ", ne(h2))
-            println("skel missing edges ", length(setdiff(vpairs(h1), vpairs(h2))))
-            println("skel wrong edges ", length(setdiff(vpairs(h2), vpairs(h1))))
+            println("skel missing edges ", length(setdiff(vpairs(DiGraph(h1)), vpairs(DiGraph(h2)))))
+            println("skel wrong edges ", length(setdiff(vpairs(DiGraph(h2)), vpairs(DiGraph(h1)))))
     
             println("vertices $(nv(g)) edges $(ne(g))")
 
