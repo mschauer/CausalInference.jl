@@ -1,4 +1,6 @@
-# GES algorithm: Basic examples
+# Score based algorithms
+
+## Greedy equivalence search (GES)
 
 Causal discovery with the GES algorithm goes along the same lines as the PC algorithm. We again take the examle in chapter 2 of Judea Pearl's book. The causal model we are going to study can be represented using the following DAG:
 
@@ -47,7 +49,7 @@ est_g == est_g2
 ```
 For the data using this seed, both agree.
 
-# Causal Zig-Zag
+## Causal Zig-Zag
 
 Instead of GES which greedily tries to maximize the BIC score, we can also sample the posterior distribution over CPDAGs corresponding to the BIC score. We have implemented the Causal Zig-Zag for this.
 (See: M. Schauer, M. Wienöbst: Causal structure learning with momentum: Sampling distributions over Markov Equivalence Classes of DAGs. (https://doi.org/10.48550/arXiv.2310.05655))
