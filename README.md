@@ -4,7 +4,7 @@
 
 # Causalinference.jl
 
-Julia package for causal inference, graphical models and structure learning.
+Julia package for causal inference and analysis, graphical models and structure learning.
 
 This package contains code for the PC algorithm and the extended FCI algorithm, the score based greedy equivalence search (GES) algorithm, the Bayesian Causal Zig-Zag sampler and a function suite for adjustment set search.
 
