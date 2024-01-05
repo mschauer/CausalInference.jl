@@ -18,11 +18,10 @@ end
 @testset "exact oracle" begin 
     Random.seed!(58)
     for n in [6, 8, 10, 12, 14, 16, 18]
-        println(n)
         for alpha in [0.2, 3/n]
             g = randdag(n, alpha)
             res = exactscorebased(g)
-            @assert alt_cpdag(g) == res 
+            @test alt_cpdag(g) == res 
         end 
     end
 end
@@ -49,6 +48,6 @@ end
         @assert g == DiGraph(E)
 
         cg = alt_cpdag(g)
-        @assert cg == exactscorebased(d, (p, v) -> local_score(S, p, v))
+        @test cg == exactscorebased(d, (p, v) -> local_score(S, p, v))
     end
 end
