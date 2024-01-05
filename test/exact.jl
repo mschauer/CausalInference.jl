@@ -3,6 +3,7 @@ using Test, Random, Statistics, Combinatorics
 using LinearAlgebra, StatsBase
 using Memoization
 
+# doesn't work without this include (because I call exactscorebased(n, local_score) directly which I guess is not exported?)
 include("../src/exact.jl")
 
 function oracle_score(g, parents, v)
@@ -21,6 +22,17 @@ end
         for alpha in [0.2, 3/n]
             g = randdag(n, alpha)
             res = exactscorebased(g)
+            @test alt_cpdag(g) == res 
+        end 
+    end
+end
+
+@testset "exact oracle parallel" begin 
+    Random.seed!(58)
+    for n in [6, 8, 10, 12, 14, 16, 18]
+        for alpha in [0.2, 3/n]
+            g = randdag(n, alpha)
+            res = exactscorebased(g; parallel=true)
             @test alt_cpdag(g) == res 
         end 
     end

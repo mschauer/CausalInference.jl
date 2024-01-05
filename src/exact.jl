@@ -1,8 +1,3 @@
-using Graphs
-
-include("misc.jl")
-include("cpdag.jl")
-
 @inline subset_range(n) = 0:2^n-1
 @inline subset_size(n) = 2^n
 @inline element_range(n) = 0:n-1
@@ -75,11 +70,16 @@ function compute_network(n, ordering, bestparents)
     return g
 end
 
-# implements exact score based algorithm described in
-# https://arxiv.org/pdf/1206.6875.pdf
-# complexity is n*2^n, should scale up to ~20-25 variables (then memory becomes a problem)
-# can be parallelized
+#########################################
+# Main Entry point
+# #######################################
 
+""" 
+    exactscorebased(X; method=:gaussian_bic, penalty=0.5, parallel=false, verbose=false)
+
+Compute a CPDAG for the given observed data `X` (variables in columns) using the exact algorithm proposed by Silander and Myllymäki in https://arxiv.org/pdf/1206.6875.pdf for optimizing the BIC score (or any decomposable score).  
+The complexity is n*2^n and the algorithm should scale up to ~20-25 variables, afterwards memory becomes a problem.
+"""
 function exactscorebased(X::AbstractMatrix; method=:gaussian_bic, penalty=0.5, parallel=false, verbose=false)
     (_, n) = size(X)
     n > 25 && @warn "algorithm will take a long time to terminate and needs a lot of memory"
@@ -100,16 +100,26 @@ end
 function exactscorebased(n, local_score; parallel=false, verbose=false)
     # Step 1: calculate score for all n*2^(n-1) different (variable, variable set) pairs (variable and parents)
     localscores = [Vector{Float64}() for _ = 1:n]
-    # TODO: maybe parallelize loop
-    for i = element_range(n)
-        localscores[i+1] = [local_score(get_parents(i, j, n), i+1) for j = subset_range(n-1)]
+    if parallel 
+        Threads.@threads for i = element_range(n)
+            localscores[i+1] = [local_score(get_parents(i, j, n), i+1) for j = subset_range(n-1)]
+        end
+    else 
+        for i = element_range(n)
+            localscores[i+1] = [local_score(get_parents(i, j, n), i+1) for j = subset_range(n-1)]
+        end
     end
 
     # Step 2: find the best parents for all vertices and subsets (of candidate parents)
     bestparents = [Vector{Int64}() for _ = 1:n]
-    # TODO: maybe parallelize loop
-    for i = element_range(n)
-        bestparents[i+1] = compute_bestparents(i, n, localscores)
+    if parallel 
+        Threads.@threads for i = element_range(n)
+            bestparents[i+1] = compute_bestparents(i, n, localscores)
+        end
+    else 
+        for i = element_range(n)
+            bestparents[i+1] = compute_bestparents(i, n, localscores)
+        end
     end
 
     # Step 3: find the best sink for all subsets of variables
