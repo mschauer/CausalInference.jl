@@ -80,44 +80,34 @@ end
 # complexity is n*2^n, should scale up to ~20-25 variables (then memory becomes a problem)
 # can be parallelized
 
-# TODO: test non-oracle version
-#function exactscorebased(X::AbstractMatrix; method=:gaussian_bic, penalty=0.5, parallel=false, verbose=false)
-#    (_, n) = size(X)
-#    n > 30 && @warn "algorithm will take a long time to terminate and needs a lot of memory"
-#    n > 64 && @error "algorithm only works up to 64 variables (and will likely not be feasible for more than 30 variables)"
-#    
-#    if method == :gaussian_bic
-#        C = Symmetric(cov(X, dims = 1, corrected = false))
-#        return exactscorebased(n, GaussianScore(C, n, penalty); parallel, verbose)
-#    elseif method == :gaussian_bic_raw
-#        return exactscorebased(n, GaussianScoreQR(X, penalty); parallel, verbose)
-#    else 
-#        throw(ArgumentError("method=$method"))
-#    end
-#end
-
-function oracle_score(g, parents, v)
-    real_parents = inneighbors(g, v)
-    return -length(symdiff(parents, real_parents))
-end
-
-function exactscorebased(g::SimpleDiGraph; parallel=false, verbose=false)
-    n = nv(g)
-    local_score(parents, v) = oracle_score(g, parents, v)
-    exactscorebased(n, local_score; parallel, verbose)
+function exactscorebased(X::AbstractMatrix; method=:gaussian_bic, penalty=0.5, parallel=false, verbose=false)
+    (_, n) = size(X)
+    n > 25 && @warn "algorithm will take a long time to terminate and needs a lot of memory"
+    n > 64 && @error "algorithm only works up to 64 variables (and will likely not be feasible for more than 25-30 variables)"
+    
+    if method == :gaussian_bic
+        C = Symmetric(cov(X, dims = 1, corrected = false))
+        S = GaussianScore(C, n, penalty)
+        return exactscorebased(n, (p, v) -> local_score(S, p, v) ; parallel, verbose)
+    elseif method == :gaussian_bic_raw
+        S = GaussianScoreQR(X, penalty)
+        return exactscorebased(n, (p, v) -> local_score(S, p, v); parallel, verbose)
+    else 
+        throw(ArgumentError("method=$method"))
+    end
 end
 
 function exactscorebased(n, local_score; parallel=false, verbose=false)
     # Step 1: calculate score for all n*2^(n-1) different (variable, variable set) pairs (variable and parents)
     localscores = [Vector{Float64}() for _ = 1:n]
-    # TODO: parallelize loop
+    # TODO: maybe parallelize loop
     for i = element_range(n)
         localscores[i+1] = [local_score(get_parents(i, j, n), i+1) for j = subset_range(n-1)]
     end
 
     # Step 2: find the best parents for all vertices and subsets (of candidate parents)
     bestparents = [Vector{Int64}() for _ = 1:n]
-    # TODO: parallelize loop
+    # TODO: maybe parallelize loop
     for i = element_range(n)
         bestparents[i+1] = compute_bestparents(i, n, localscores)
     end
@@ -133,18 +123,3 @@ function exactscorebased(n, local_score; parallel=false, verbose=false)
     return alt_cpdag(compute_network(n, ordering, bestparents))
 end
 
-function testexact() 
-    Random.seed!(58)
-    for n in [6, 8, 10, 12, 14, 16, 18]
-        println(n)
-        for alpha in [0.2, 3/n]
-            g = randdag(n, alpha)
-            res = exactscorebased(g)
-            if alt_cpdag(g) != res 
-                println(g)
-                println(res)
-                return
-            end
-        end 
-    end
-end

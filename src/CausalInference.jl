@@ -12,6 +12,7 @@ using LinkedLists
 
 import Base: ==, show
 
+export exactscorebased
 export ancestors, descendants, alt_test_dsep, test_covariate_adjustment, alt_test_backdoor, find_dsep, find_min_dsep, find_covariate_adjustment, find_backdoor_adjustment, find_frontdoor_adjustment, find_min_covariate_adjustment, find_min_backdoor_adjustment, find_min_frontdoor_adjustment, list_dseps, list_covariate_adjustment, list_backdoor_adjustment, list_frontdoor_adjustment
 export dsep, skeleton, gausscitest, dseporacle, partialcor
 export unshielded, pcalg, vskel, vskel!, alt_vskel
@@ -27,7 +28,7 @@ export plot_pc_graph_text, plot_fci_graph_text, kwargs_pdag_graphmakie
 export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
-export ges
+export ges, local_score
 export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortasi!
 export count_moves_uniform, randcpdag, UniformScore, causalzigzag
 export keyedreduce
@@ -52,6 +53,7 @@ include("workloads.jl")
 include("operators.jl")
 include("sampler.jl")
 include("misc2.jl")
+include("exact.jl")
 #include("mcs.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
