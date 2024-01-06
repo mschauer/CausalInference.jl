@@ -85,3 +85,18 @@ posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 ```
 
 From this we see that the maximum a posterior graph coincides with the GES estimate and has high posterior weight, showing that the result of the GES algorithm is not incidental.  
+
+## Exact Algorithm
+
+We also provide an implementation of the exact optimization algorithm by Silander and Myllymäki (2006). Given observed data, it outputs the CPDAG representing the set of DAGs with maximum BIC score. The algorithm is exact, meaning it is guaranteed that the optimal CPDAG with regard to the BIC score is found.
+
+The time and memory complexity of the algorithm is in the order of $O(n \cdot 2^{n-1})$ with $n$ being the number of variables (which is significantly better than a naive brute-force algorithm, which considers all CPDAGs on $n$ vertices, but still amounts to exponential time). The algorithm generally runs reasonably fast for less than 20 variables. It can be scaled further, provided enough RAM is available, up to a little more than 25 variables, but cases beyond that are likely infeasible.
+
+It can be called similar to GES:
+```Julia
+est_g = exactscorebased(df; penalty=1.0, parallel=true)
+```
+
+Reference:
+
+* Silander, T., & Myllymäki, P. (2006). A simple approach for finding the globally optimal Bayesian network structure. In Uncertainty in Artificial Intelligence (pp. 445-452). 
