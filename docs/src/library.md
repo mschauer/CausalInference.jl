@@ -151,3 +151,8 @@ CausalInference.count_mcs
 CausalInference.precompute_semidirected
 CausalInference.next_CPDAG
 ```
+
+## Exact
+```@docs
+CausalInference.exactscorebased
+```
