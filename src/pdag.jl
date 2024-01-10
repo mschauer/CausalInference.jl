@@ -205,7 +205,7 @@ Returns sorted array.
 children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
 
 """
-    pdag_to_dag_dortarsi!!(g)
+    pdag_to_dag_dortarsi!(g)
 
 Complete PDAG to DAG using Dor & Tarsi (1992).
 """
