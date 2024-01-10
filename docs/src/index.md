@@ -1,10 +1,10 @@
 # [CausalInference.jl](https://github.com/mschauer/CausalInference.jl)
 
-A Julia package for causal inference, graphical models and structure learning. This package contains the PC algorithm [`pcalg`](@ref) and the extended FCI algorithm, as well as functionality to compute adjustment sets which can be used as control variables to compute causal effects by regression. 
+A Julia package for causal inference, graphical models and structure learning. This package contains constraint-based and score-based algorithms for causal structure learning, as well as functionality to compute adjustment sets which can be used as control variables to compute causal effects by regression. 
 
 ## Introduction
 
-The first aim of this package is to provide Julia implementations of popular algorithms for causal structure identification, the PC algorithm, the GES algorithm and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data. Secondly, similarly to DAGitty, covariate adjustment sets for estimating causal effects for example by regression can be computed. 
+The first aim of this package is to provide Julia implementations of popular algorithms for causal structure identification, the PC algorithm, the GES algorithm, an exact score-based method, and the FCI algorithm. The aim of these algorithms is to identify causal relationships in observational data alone, in circumstances where running experiments or A/B tests is impractical or even impossible. While identification of all causal relationships in observational data is not always possible, both algorithms clearly indicate which causal can and which cannot be determined from observational data. Secondly, similarly to [DAGitty](https://www.dagitty.net/), covariate adjustment sets for estimating causal effects for example by regression can be computed. 
 
 Causal inference is by no means an easy subject. Readers without any prior exposure to these topics are encouraged to go over the following resources in order to get a basic idea of what's involved in causal inference:
 
@@ -28,7 +28,7 @@ CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represen
 The listing algorithms for adjustment sets are implemented from scratch using an memority efficient iterator protocol to handle large problems.
 
 ## Performance
-The speed of the PC algorithm is comparable with the C++ code of the R package `pcalg`.
+The speed of the PC and GES algorithm is comparable with the C++ code of the R package `pcalg`. The exact score-based algorithm scales to 20-25 variables on consumer hardware, which comes close to the theoretical limits of these approaches. 
 
 ## Plotting
 Main package provides a text-based output describing all identified edges for PC and FCI algorithm ([`plot_pc_graph_text`](@ref) and [`plot_fci_graph_text`](@ref), respectively).
