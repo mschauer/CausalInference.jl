@@ -31,7 +31,7 @@ CausalInference.meek_rule2
 CausalInference.meek_rule3
 CausalInference.meek_rule4
 pdag2dag!
-pdag_to_dag_dortasi!
+pdag_to_dag_dortarsi!
 pdag_to_dag_meek!
 ```
 

@@ -29,7 +29,7 @@ export plot_pc_graph_recipes, plot_fci_graph_recipes # if GraphRecipes is loaded
 export plot_pc_graph_tikz, plot_fci_graph_tikz # if TikzGraphs is loaded
 export orient_unshielded, orientable_unshielded, apply_pc_rules
 export ges, local_score
-export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortasi!
+export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortarsi!
 export count_moves_uniform, randcpdag, UniformScore, causalzigzag
 export keyedreduce
 

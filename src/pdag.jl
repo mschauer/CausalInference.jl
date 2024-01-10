@@ -205,11 +205,11 @@ Returns sorted array.
 children(g, x) = setdiff(outneighbors(g, x), inneighbors(g, x))
 
 """
-    pdag_to_dag_dortasi!!(g)
+    pdag_to_dag_dortarsi!(g)
 
-Complete PDAG to DAG using Dor & Tasi (1992).
+Complete PDAG to DAG using Dor & Tarsi (1992).
 """
-function pdag_to_dag_dortasi!(g)
+function pdag_to_dag_dortarsi!(g)
     removed = falses(nv(g)) # Mark vertices removed from (sub-)graph A. Efficient if degree small?
     while !all(removed)
         touched = false
