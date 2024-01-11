@@ -32,8 +32,8 @@ using Random
     @test s ≈ sb
     #g2c, sc, (t1c, t2c) = ges(X; penalty, parallel=true)
     @test score_R ≈ score_dag(DiGraph(d), GaussianScore(C, n, penalty)) + s
-    @show score_R ≈ score_dag(pdag2dag!(copy(g2)), GaussianScore(C, n, penalty))
-    @show score_R ≈ score_dag(pdag2dag!(copy(g3)), GaussianScore(C, n, penalty))
+    @test score_R ≈ score_dag(pdag2dag!(copy(g2)), GaussianScore(C, n, penalty))
+    @test score_R ≈ score_dag(pdag2dag!(copy(g3)), GaussianScore(C, n, penalty))
 
     @test isempty(symdiff(vpairs(g2), vpairs(g2b)))
 
