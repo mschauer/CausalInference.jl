@@ -243,17 +243,22 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
         else
             s1, s2, Δscorevalue1, Δscorevalue2, up1, down1 = count_moves(g, κ, balance, prior, score, coldness, total)
         end
-        λbar = max(dir*float(-s1 + s2), 0.0)
-        λrw = float(s1 + s2) 
-        λup = float(s1)   
-        λ = dir == 1 ? float(s1) : float(s2)
+        #λbar = max(dir*float(-s1 + s2), 0.0)
+        #λrw = float(s1 + s2) 
+        #λup = float(s1)   
+        λ = dir == 1 ? (s1) : (s2)
+        λbar = max(dir*(-s1 + s2), 0.0)
+        λrw = (s1 + s2) 
+        λup = (s1)   
+        λ = dir == 1 ? (s1) : (s2)
+        
         local x, y
         while true 
 
             Δτ = randexp()/(ρ*λ)
             Δτrw = randexp()/(σ*λrw)
             Δτflip = randexp()/(ρ*λbar)
-            τ += min(Δτ, Δτflip, Δτrw)
+            τ += float(min(Δτ, Δτflip, Δτrw))
             if min(Δτ, Δτflip, Δτrw) > 1.0e10
                 @warn "Frozen in the cold at iteration $iter" # $Δτ, $Δτrw, $Δτflip"
                 stuck = true
