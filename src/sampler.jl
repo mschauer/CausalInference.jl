@@ -1,7 +1,8 @@
+using LogarithmicNumbers
 # Valid balancing functions
 
 metropolis_balance(t) = min(one(t), t)
-sqrt_balance(t) = sqrt(t)
+sqrt_balance(t) = t^(0.5)
 barker_balance(t) = t/(1+t) # softmin
 
 struct UniformScore
@@ -130,13 +131,18 @@ function count_moves(g, κ, balance, prior, score, coldness, total, dir=:both)
 end
 
 function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:both)
-    s1 = s2 = Δscorevalue1 = Δscorevalue2 = 0.0
+    s1 = s2 = ULogarithmic(0.0)
+    Δscorevalue = Δscorevalue1 = Δscorevalue2 = 0.0
     x1 = y1 = x2 = y2 = 0
     T1 = Int[]
     H2 = Int[] 
+    noinsert = nodelete = true
     for y in vertices(g)
         noinsert = (dir == :down)
+        nodelete = (dir == :up)
         length(neighbors_adjacent(g, y)) >= κ && (noinsert = true)
+        total == 0 && (nodelete = true)
+        
         #total == nv(g)*κ÷2-2 && (noinsert = true)
         dir == :up && noinsert && continue
         !noinsert && (semidirected = precompute_semidirected(g, y))
@@ -152,8 +158,8 @@ function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:bot
                     # or just Δscoreinsert(score, g, op)
                     # and op contains all necessary stuff e.g. NAyxT and so on
                     Δscorevalue = Δscoreinsert(score, NAyxT ∪ PAy, x, y, T)
-                    s = balance(prior(total, total+1)*exp(coldness*Δscorevalue))
-                    if rand() > s1/(s1 + s) # sequentially draw sample
+                    s = balance(prior(total, total+1)*exp(ULogarithmic, coldness*Δscorevalue))
+                    if rand() > 1/(1 + s/s1) # sequentially draw sample
                         x1, y1 = x, y
                         T1 = T
                         Δscorevalue1 = Δscorevalue
@@ -161,15 +167,15 @@ function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:bot
                     s1 = s1 + s
                 end
             end
-            if dir != :up 
+            if !nodelete
                 delit = DeleteIterator(g, x, y)
                 for H in delit
                     PAy⁻ = setdiff(PAy, x)
                     # I would prefer Δscoredelete(score, g, x, y, H) as above
                     NAyx_H = setdiff(adj_neighbors(g, x, y), H)
                     Δscorevalue = Δscoredelete(score, NAyx_H ∪ PAy⁻, x, y, H)
-                    s = balance(prior(total, total-1)*exp(coldness*Δscorevalue))
-                    if rand() > s2/(s2 + s)
+                    s = balance(prior(total, total-1)*exp(ULogarithmic, coldness*Δscorevalue))
+                    if rand() >  1/(1 + s/s2) 
                         x2, y2 = x, y
                         H2 = H
                         Δscorevalue2 = Δscorevalue
@@ -179,6 +185,10 @@ function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:bot
             end
         end
     end
+    #@show x1 y1 x2 y2 total s1 s2 noinsert nodelete Δscorevalue
+    noinsert || @assert x1 != 0 && y1 != 0
+    nodelete || @assert x2 != 0 && y2 != 0
+   
     s1, s2, Δscorevalue1, Δscorevalue2, (x1, y1, T1), (x2, y2, H2)
 end
 
@@ -210,6 +220,7 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
     emax = n*κ÷2
     scorevalue = 0.0
     @showprogress for iter in 1:iterations
+        stuck = false
         τ = 0.0
         total_old = total
         dir_old = dir
@@ -219,7 +230,7 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
             traversals += 1
         end
         
-        Δscorevalue1 = Δscorevalue2 = 0.0
+        Δscorevalue = Δscorevalue1 = Δscorevalue2 = 0.0
         if !naive 
             if score isa UniformScore
                 s1, s2, up1, down1 = count_moves_uniform(g, κ)
@@ -232,10 +243,10 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
         else
             s1, s2, Δscorevalue1, Δscorevalue2, up1, down1 = count_moves(g, κ, balance, prior, score, coldness, total)
         end
-        λbar = max(dir*(-s1 + s2), 0.0)
-        λrw = (s1 + s2) 
-        λup = s1   
-        λ = dir == 1 ? abs(s1) : abs(s2)
+        λbar = max(dir*float(-s1 + s2), 0.0)
+        λrw = float(s1 + s2) 
+        λup = float(s1)   
+        λ = dir == 1 ? float(s1) : float(s2)
         local x, y
         while true 
 
@@ -243,24 +254,27 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
             Δτrw = randexp()/(σ*λrw)
             Δτflip = randexp()/(ρ*λbar)
             τ += min(Δτ, Δτflip, Δτrw)
-            if isinf(τ) 
-                error("$Δτ, $Δτrw, $Δτflip")
+            if min(Δτ, Δτflip, Δτrw) > 1.0e10
+                @warn "Frozen in the cold at iteration $iter" # $Δτ, $Δτrw, $Δτflip"
+                stuck = true
+                @goto flip
             end
             if Δτflip < Δτ &&  Δτflip < Δτrw 
                 @goto flip
             end
             up = rand() < λup/λrw           
 
-            
+            # @show λup λrw  Δτ Δτrw
          
-            if  (Δτ < Δτrw  && dir == 1) || (Δτ > Δτrw  && up)
+            if  (Δτ <= Δτrw  && dir == 1) || (Δτ > Δτrw  && up)
 
                 
                 x, y, T = up1
                 @assert x != y
                 total == 0 && (tempty += τ)
                 save && push!(gs, (g, τ, dir, total, scorevalue))
-                scorevalue += Δscorevalue1
+                Δscorevalue = Δscorevalue1
+                scorevalue += Δscorevalue
                 total += 1
                 secs += @elapsed begin
                     if !naive
@@ -275,10 +289,12 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
                 break
             else
                 x, y, H = down1
+
                 @assert x != y
                 total == 0 && (tempty += τ)
                 save && push!(gs, (g, τ, dir, total, scorevalue))
-                scorevalue += Δscorevalue2
+                Δscorevalue = Δscorevalue2
+                scorevalue += Δscorevalue
                 total -= 1
                 secs += @elapsed begin
                     if !naive
@@ -299,8 +315,9 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
             save && push!(gs, (g, τ, dir, total, scorevalue))
             break            
         end # break
-        verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total,  " $x => $y ", round(τ, digits=8))
+        verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total,  " $x => $y ", round(τ, sigdigits=5), " ", round(Δscorevalue, sigdigits=5), " ", round(scorevalue, sigdigits=5))
         #verbose && println("\t", vpairs(g))
+        stuck && break
     end
     println("time moves $secs")
     println("nr. traversals $traversals")

@@ -19,7 +19,7 @@ using Random, CausalInference, Statistics, Test, Graphs
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    gs = @time causalzigzag(n; score, κ, iterations)
+    gs = causalzigzag(n; score, κ, iterations)
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
     posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
@@ -27,5 +27,11 @@ using Random, CausalInference, Statistics, Test, Graphs
     @test first(posterior).first == [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5] 
     # score of last sample
     @test score_dag(pdag2dag!(copy(graphs[end])), score) ≈ scores[end] + score_dag(DiGraph(n), score)
-
+    
+    gs = causalzigzag(n; balance=CausalInference.sqrt_balance, score, κ, iterations, coldness = 100.0)
+    g, s = ges(df; penalty=penalty, parallel=true)
+    @test gs[end][1] == g
+    @test gs[end][end] ≈ s
+    @test gs[1][end] == 0
+    @test ne(gs[1][1]) == 0
 end #testset
