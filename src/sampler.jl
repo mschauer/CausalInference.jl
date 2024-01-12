@@ -208,7 +208,7 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
     τ = 0.0
     secs = 0.0
     emax = n*κ÷2
-    scorevalue = 0.0
+    scorevalue = score_dag(SimpleDiGraph(n), score)
     @showprogress for iter in 1:iterations
         τ = 0.0
         total_old = total
