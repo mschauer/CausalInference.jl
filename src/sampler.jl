@@ -2,7 +2,7 @@ using LogarithmicNumbers
 # Valid balancing functions
 
 metropolis_balance(t) = min(one(t), t)
-sqrt_balance(t) = t^(0.5)
+sqrt_balance(t) = sqrt(t)
 barker_balance(t) = t/(1+t) # softmin
 
 struct UniformScore
