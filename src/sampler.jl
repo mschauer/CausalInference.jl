@@ -246,7 +246,6 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
         #λbar = max(dir*float(-s1 + s2), 0.0)
         #λrw = float(s1 + s2) 
         #λup = float(s1)   
-        λ = dir == 1 ? (s1) : (s2)
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
         λup = (s1)   
