@@ -22,7 +22,7 @@ function count_dag_moves(g, κ, balance, prior, score, coldness, total, dir=:bot
             x == y && continue
             if !noinsert 
                 length(neighbors_adjacent(g, x)) >= κ && continue
-                if !has_path(g, y, x)  
+                if !isadjacent(g, x, y) && !has_path(g, y, x)  
                     Δscorevalue = 0.0 # todo
                     s = balance(prior(total, total+1)*exp(ULogarithmic, coldness*Δscorevalue))
                     if rand() > 1/(1 + s/s1) # sequentially draw sample
@@ -131,11 +131,12 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
                 @assert x != y
                 total == 0 && (tempty += τ)
                 save && push!(gs, (g, τ, dir, total, scorevalue))
+                g = copy(g) # copy on save?
+                add_edge!(g, x, y)
                 Δscorevalue = Δscorevalue1
                 scorevalue += Δscorevalue
                 total += 1
-                g = copy(g) # copy on save?
-                add_edge!(g, x, y)
+
                 break
             else
                 x, y = down1
@@ -143,11 +144,13 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
                 @assert x != y
                 total == 0 && (tempty += τ)
                 save && push!(gs, (g, τ, dir, total, scorevalue))
+
+                g = copy(g) # copy on save?
+                rem_edge!(g, x, y)
                 Δscorevalue = Δscorevalue2
                 scorevalue += Δscorevalue
                 total -= 1
-                g = copy(g) # copy on save?
-                rem_edge!(g, x, y)
+
                 break
             end
             @label flip
