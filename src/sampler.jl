@@ -148,6 +148,7 @@ function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:bot
         !noinsert && (semidirected = precompute_semidirected(g, y))
         PAy = parents(g, y)
         for x in vertices(g)
+            x == y && continue
             if !noinsert 
                 length(neighbors_adjacent(g, x)) >= κ && continue
                 insit = InsertIterator(g, x, y, semidirected)
