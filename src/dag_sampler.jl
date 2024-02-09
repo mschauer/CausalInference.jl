@@ -80,9 +80,7 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
     scorevalue = 0.0
     @showprogress for iter in 1:iterations
         total = ne(g)
-        stuck = false
-        τ = 0.0
-        dir_old = dir
+       
         if isodd(traversals) && total == 0 # count number of traversal from empty to full
             traversals += 1
         elseif iseven(traversals) && total == emax
@@ -99,7 +97,12 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
         else 
             s1, s2, Δscorevalue1, Δscorevalue2, up1, down1 = count_dag_moves(g, κ, balance, prior, score, coldness, total)
         end
-
+        @label flipped
+        total = ne(g)
+       
+        stuck = false
+        τ = 0.0
+        dir_old = dir
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
         λup = (s1)   
@@ -158,12 +161,13 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
             dir *= -1
             total == 0 && (tempty += τ)
             save && push!(gs, (g, τ, dir, total, scorevalue))
-            break            
-        end # break
+            stuck && break
+            @goto flipped
+        end # break here
         verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total,  " $x => $y ", round(τ, sigdigits=5), " ", round(Δscorevalue, sigdigits=5), " ", round(scorevalue, sigdigits=5))
         #verbose && println("\t", vpairs(g))
         stuck && break
-    end
+    end # break here
     println("nr. traversals $traversals")
     println("time empty $tempty")
 
