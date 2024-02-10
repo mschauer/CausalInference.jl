@@ -35,3 +35,29 @@ using Random, CausalInference, Statistics, Test, Graphs
     @test gs[1][end] == 0
     @test ne(gs[1][1]) == 0
 end #testset
+
+
+@testset "CPDAG-Zig-Zag" begin
+    Random.seed!(1)
+      
+    iterations = 4_000
+    n = 3
+    gs = causalzigzag(n; iterations);
+    graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
+    posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+    @test length(posterior) == 11
+    @test maximum(values(posterior)) < 1/11 + 0.02
+    @test minimum(values(posterior)) > 1/11 - 0.02
+    @show T_skew = sum(τs)
+
+    gs = causalzigzag(n; iterations, σ=1.0, ρ=0.0);
+    graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
+    posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+    @test length(posterior) == 11
+    @test maximum(values(posterior)) < 1/11 + 0.02
+    @test minimum(values(posterior)) > 1/11 - 0.02
+    
+    @show T = sum(τs)
+
+    @test 1.98 < T_skew/T < 2.02
+end 
