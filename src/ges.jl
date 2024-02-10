@@ -9,7 +9,7 @@ end
 
 # Print method to display the Step
 function show(io::IO, nextstep::Step{A,B}) where {A,B}
-    print(io, "Edge: $(nextstep.edge), Subset: $(nextstep.subset), Δscore: $(nextstep.Δscore)")
+    print(io, "$(nextstep.edge), Subset $(nextstep.subset), Δscore $(round(nextstep.Δscore, sigdigits=5))")
 end
 
 
@@ -128,10 +128,10 @@ function ges_forward_search!(g, score, data, parallel, verbose)
             #verbose && println(vpairs(g))
             break
         end
-        verbose && println(step)
+        score += step.Δscore
+        verbose && println(step, " ", round(score, sigdigits=5))
         # Use the insert or delete operator update the graph
         Insert!(g, step)
-        score += step.Δscore
         
         # Convert the PDAG to a complete PDAG
         # Undirect all edges unless they participate in a v-structure
@@ -154,10 +154,10 @@ function ges_backward_search!(g, score, data, verbose)
             #verbose && println(vpairs(g))
             break
         end
-        verbose && println(step)
+        score += step.Δscore
+        verbose && println(step, " ", round(score, sigdigits=5))
         # Use the insert or delete operator update the graph
         Delete!(g, step)
-        score += step.Δscore
         #verbose && println(vpairs(g))
 
         # Convert the PDAG to a complete PDAG
