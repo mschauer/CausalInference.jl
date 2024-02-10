@@ -23,7 +23,7 @@ function count_dag_moves(g, κ, balance, prior, score, coldness, total, dir=:bot
             if !noinsert 
                 length(neighbors_adjacent(g, x)) >= κ && continue
                 if !isadjacent(g, x, y) && !has_path(g, y, x)  
-                    Δscorevalue = 0.0 # todo
+                    Δscorevalue = Δscore(score, inneighbors(g, y), x, y)
                     s = balance(prior(total, total+1)*exp(ULogarithmic, coldness*Δscorevalue))
                     if rand() > 1/(1 + s/s1) # sequentially draw sample
                         x1, y1 = x, y
@@ -35,7 +35,7 @@ function count_dag_moves(g, κ, balance, prior, score, coldness, total, dir=:bot
         end
         for x in inneighbors(g, y)
             if !nodelete
-                Δscorevalue = 0.0
+                Δscorevalue = -Δscore(score, setdiff(inneighbors(g, y), x), x, y)
                 s = balance(prior(total, total-1)*exp(ULogarithmic, coldness*Δscorevalue))
                 if rand() >  1/(1 + s/s2) 
                     x2, y2 = x, y
@@ -79,7 +79,7 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
     emax = n*κ÷2
     scorevalue = 0.0
     @showprogress for iter in 1:iterations
-        total = ne(g)
+        total = total_old = ne(g)
        
         if isodd(traversals) && total == 0 # count number of traversal from empty to full
             traversals += 1
