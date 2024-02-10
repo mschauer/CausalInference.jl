@@ -1,4 +1,4 @@
-using Random, CausalInference, Statistics, Test, Graphs
+using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
 @testset "Zig-Zag" begin
     Random.seed!(1)
 
@@ -39,25 +39,23 @@ end #testset
 
 @testset "CPDAG-Zig-Zag" begin
     Random.seed!(1)
-      
-    iterations = 4_000
+    A007984 = [1, 2, 11, 185, 8782, 1067825, 312510571, 212133402500, 326266056291213, 1118902054495975181, 8455790399687227104576, 139537050182278289405732939, 4991058955493997577840793161279] 
     n = 3
+    m = A007984[n]
+    iterations = m*2_000
+
     gs = causalzigzag(n; iterations);
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
     posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
-    @test length(posterior) == 11
-    @test maximum(values(posterior)) < 1/11 + 0.02
-    @test minimum(values(posterior)) > 1/11 - 0.02
-    @show T_skew = sum(τs)
+    @test length(posterior) == m
+    @test norm(values(posterior) .- 1/m, 1)/2 < 0.05
+    T_skew = sum(τs)
 
     gs = causalzigzag(n; iterations, σ=1.0, ρ=0.0);
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
     posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
-    @test length(posterior) == 11
-    @test maximum(values(posterior)) < 1/11 + 0.02
-    @test minimum(values(posterior)) > 1/11 - 0.02
-    
-    @show T = sum(τs)
-
+    @test length(posterior) == m
+    @test norm(values(posterior) .- 1/m, 1)/2 < 0.05
+    T = sum(τs)
     @test 1.98 < T_skew/T < 2.02
 end 
