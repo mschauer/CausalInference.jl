@@ -90,7 +90,7 @@ end
     open_edges(g, X, Y, S = Set{eltype(g)}()) = o, vlist
 
 Return an undirected graph `o` containing the edges on open paths 
-from `X` to `Y` given `S` in `g` and a vertex list. Vertex `i` of `g`
+from `X` to `Y` given `S` in `g` and a vertex list. Vertex `i` of `o`
 corresponds to the vertex of the original graph in the `i-th` position
 of `vlist`. 
 """
