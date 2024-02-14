@@ -76,8 +76,29 @@ function descendants(g, X, veto = no_veto)
     return gensearch(g, X, (pe, ne, v, w) -> ne == RIGHT && !veto(pe, ne, v, w))
 end
 
+"""
+    bayesball(g, X, S = Set{eltype(g)}())
+
+Return the set of vertices d-connected to the set of vertices X given set of vertices S in dag g.
+"""
 function bayesball(g, X, S = Set{eltype(g)}(), veto = no_veto)
     return gensearch(g, X, (pe, ne, v, w) -> !veto(pe, ne, v, w) && (pe == INIT || (v in S && pe == RIGHT && ne == LEFT) || (!(v in S) && !(pe == RIGHT && ne == LEFT))))
+end
+
+
+"""
+    open_edges(g, X, Y, S = Set{eltype(g)}()) = o, vlist
+
+Return an undirected graph `o` containing the edges on open paths 
+from `X` to `Y` given `S` in `g` and a vertex list. Vertex `i` of `g`
+corresponds to the vertex of the original graph in the `i-th` position
+of `vlist`. 
+"""
+function open_edges(g, X, Y, S = Set{eltype(g)}())
+    edges = Pair{Int,Int}[]
+    CausalInference.gensearch(g, X, (pe, ne, v, w) ->  (pe == INIT || (v in S && pe == RIGHT && ne == LEFT) || (!(v in S) && !(pe == RIGHT && ne == LEFT))) && (push!(edges, v=>w); true))
+    g2 = CausalInference.graph(edges, nv(g))
+    g2, vlist = induced_subgraph(g2, sort(collect(bayesball(g, Y, S))))
 end
 
 """
