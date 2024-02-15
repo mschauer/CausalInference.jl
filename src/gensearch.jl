@@ -87,18 +87,17 @@ end
 
 
 """
-    open_edges(g, X, Y, S = Set{eltype(g)}()) = o, vlist
+    bayesball_graph(g, X, Y, S = Set{eltype(g)}()) = b
 
-Return an undirected graph `o` containing the edges on open paths 
-from `X` to `Y` given `S` in `g` and a vertex list. Vertex `i` of `g`
-corresponds to the vertex of the original graph in the `i-th` position
-of `vlist`. 
+Return an undirected graph `b` containing edges for possible moves of the
+Bayes ball. Vertex `i` of `g` is vertex `2i-1` of `b`
+if entered forward, `2i` if entered backward.
 """
-function open_edges(g, X, Y, S = Set{eltype(g)}())
+function bayesball_graph(g, X, S = Set{eltype(g)}())
+    ι(e, i) = e == RIGHT ? 2i-1 : 2i 
     edges = Pair{Int,Int}[]
-    CausalInference.gensearch(g, X, (pe, ne, v, w) ->  (pe == INIT || (v in S && pe == RIGHT && ne == LEFT) || (!(v in S) && !(pe == RIGHT && ne == LEFT))) && (push!(edges, v=>w); true))
-    g2 = CausalInference.graph(edges, nv(g))
-    g2, vlist = induced_subgraph(g2, sort(collect(bayesball(g, Y, S))))
+    CausalInference.gensearch(g, X, (pe, ne, v, w) ->  (pe == INIT || (v in S && pe == RIGHT && ne == LEFT) || (!(v in S) && !(pe == RIGHT && ne == LEFT))) && (push!(edges, ι(pe, v)=>ι(ne, w)); true))
+    CausalInference.graph(edges, 2*nv(g))
 end
 
 """
