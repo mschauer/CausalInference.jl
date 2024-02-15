@@ -1,6 +1,7 @@
 using Graphs
 using CausalInference
 using Test
+using CausalInference: graph 
 
 # for some of the tests other results would not be wrong per se 
 # e.g. for the finding methods, other valid sets could be returned
@@ -93,4 +94,10 @@ end
     @test_throws ArgumentError dsep(g1, [1,2], [2,3], [4,5])
     @test_throws ArgumentError dsep(g1, [1,2], [3,4], [4,5])
     @test_throws ArgumentError dsep(g1, [1,2], [3,4], [5,1])
+end
+
+@testset "bayesball_graph" begin
+    g = digraph([1=>3, 2=>3, 3=>4, 2=>4, 1=>4])
+    g2 = CausalInference.bayesball_graph(g, 2, [3])
+    @test g2 == graph([(2, 5), (2, 7), (4, 5), (4, 7)], 8)
 end

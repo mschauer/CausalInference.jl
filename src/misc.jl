@@ -17,8 +17,7 @@ end
 
 Create `Graph` from edge-list.
 """
-function graph(E)
-    d = maximum(flatten(E))
+function graph(E, d = maximum(flatten(E)))  
     g = Graph(d)
     for (i, j) in E
         add_edge!(g, i, j)
