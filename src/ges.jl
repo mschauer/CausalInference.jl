@@ -362,7 +362,7 @@ function local_score_(os::GaussianScore, p, v)
         c = @view C[p, v]
         Cp = C[v, v] - dot(c, (@view C[p, p])\c)
     end
-    (-n*(1 + log(Cp)) - penalty*(1  + k)*log(n))/2
+    (-n*(1 + log(max(0,Cp))) - penalty*(1  + k)*log(n))/2
 end
 
 
@@ -390,7 +390,7 @@ hash(a::GaussianScoreQR, u::UInt) = hash(a.hash, u)
         x = @view X[:, p]
         Cp = var(y - x*(x\y);  mean=0.0, corrected=false) 
     end
-    (-n*(1 + log(Cp)) - penalty*(1 + k)*log(n))/2
+    (-n*(1 + log(max(0,Cp))) - penalty*(1 + k)*log(n))/2
 end
 
 
