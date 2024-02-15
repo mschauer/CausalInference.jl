@@ -148,6 +148,7 @@ function count_moves_new(g, κ, balance, prior, score, coldness, total, dir=:bot
         !noinsert && (semidirected = precompute_semidirected(g, y))
         PAy = parents(g, y)
         for x in vertices(g)
+            x == y && continue
             if !noinsert 
                 length(neighbors_adjacent(g, x)) >= κ && continue
                 insit = InsertIterator(g, x, y, semidirected)
@@ -220,10 +221,7 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
     emax = n*κ÷2
     scorevalue = 0.0
     @showprogress for iter in 1:iterations
-        stuck = false
-        τ = 0.0
         total_old = total
-        dir_old = dir
         if isodd(traversals) && total == 0 # count number of traversal from empty to full
             traversals += 1
         elseif iseven(traversals) && total == emax
@@ -243,9 +241,13 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
         else
             s1, s2, Δscorevalue1, Δscorevalue2, up1, down1 = count_moves(g, κ, balance, prior, score, coldness, total)
         end
-        #λbar = max(dir*float(-s1 + s2), 0.0)
-        #λrw = float(s1 + s2) 
-        #λup = float(s1)   
+        @label flipped
+
+        stuck = false
+        τ = 0.0
+        total_old = total
+        dir_old = dir
+
         λbar = max(dir*(-s1 + s2), 0.0)
         λrw = (s1 + s2) 
         λup = (s1)   
@@ -317,7 +319,8 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
             dir *= -1
             total == 0 && (tempty += τ)
             save && push!(gs, (g, τ, dir, total, scorevalue))
-            break            
+            stuck && break
+            @goto flipped           
         end # break
         verbose && println(total_old, dir_old == 1 ? "↑" : "↓", total,  " $x => $y ", round(τ, sigdigits=5), " ", round(Δscorevalue, sigdigits=5), " ", round(scorevalue, sigdigits=5))
         #verbose && println("\t", vpairs(g))
