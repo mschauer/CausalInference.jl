@@ -99,5 +99,5 @@ end
 @testset "bayesball_graph" begin
     g = digraph([1=>3, 2=>3, 3=>4, 2=>4, 1=>4])
     g2 = CausalInference.bayesball_graph(g, 2, [3])
-    @test g2 == graph([(2, 5), (2, 7), (4, 5), (4, 7)], 8)
+    @test g2 == digraph([2 => 5, 2 => 7, 4 => 5, 4 => 7, 5 => 2, 5 => 4], 8)
 end
