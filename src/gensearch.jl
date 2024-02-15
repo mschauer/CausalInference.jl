@@ -87,7 +87,7 @@ end
 
 
 """
-    bayesball_graph(g, X, Y, S = Set{eltype(g)}()) = b
+    bayesball_graph(g, X, S = Set{eltype(g)}())
 
 Return an undirected graph `b` containing edges for possible moves of the
 Bayes ball. Vertex `i` of `g` is vertex `2i-1` of `b`
