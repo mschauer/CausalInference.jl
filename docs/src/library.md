@@ -102,6 +102,11 @@ graph_to_text
 kwargs_pdag_graphmakie
 CausalInference.combinations_without
 ```
+## Bayes ball
+```@docs
+CausalInference.bayesball
+CausalInference.bayesball_graph
+```
 
 ## Adjustment
 ```@docs
@@ -150,6 +155,12 @@ CausalInference.DeleteIterator
 CausalInference.count_mcs
 CausalInference.precompute_semidirected
 CausalInference.next_CPDAG
+```
+
+## DAG Zig-Zag
+```@docs
+CausalInference.dagzigzag
+CausalInference.count_dag_moves 
 ```
 
 ## Exact
