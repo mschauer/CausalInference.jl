@@ -1,7 +1,8 @@
 using Graphs
 using CausalInference
 using Test
-using CausalInference: graph 
+using CausalInference: graph
+using Combinatorics: combinations
 
 # for some of the tests other results would not be wrong per se 
 # e.g. for the finding methods, other valid sets could be returned
@@ -100,4 +101,19 @@ end
     g = digraph([1=>3, 2=>3, 3=>4, 2=>4, 1=>4])
     g2 = CausalInference.bayesball_graph(g, 2, [3])
     @test g2 == digraph([2 => 5, 2 => 7, 4 => 5, 4 => 7, 5 => 2, 5 => 4], 8)
+
+
+    for d in 2:8
+        g = randdag(d, 0.3)
+        for S in combinations(1:d)
+            Sᶜ = setdiff(1:d, S)
+            for v in Sᶜ
+                g2 = CausalInference.bayesball_graph(g, v, S)
+                for w in Sᶜ
+                    w == v && continue
+                    @test !dsep(g, v, w, S) == has_path(g2, 2v, 2w-1) || has_path(g2, 2v, 2w) 
+                end
+            end
+        end
+    end
 end
