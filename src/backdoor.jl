@@ -27,7 +27,12 @@ end
     backdoor_criterion(g::AbstractGraph, u::Integer, v::Integer, Z; verbose = false)
 
 Test that given directed graph `g`, no node in `Z` is descendant of `u` and `Z` d-separates `u` from `v` 
-in the subgraph that only has the backdoors of `u` left (outgoing edges of `u` removed)
+in the subgraph that only has the backdoors of `u` left (outgoing edges of `u` removed).
+
+If so, the causal effect of `u` on `v` is identifiable and is given by the formula:
+
+    ∑{z∈Z} p(v | u, z)p(z)
+
 """
 function backdoor_criterion(g::AbstractGraph{T}, u::Integer, v::Integer, S = T[];
                             verbose = false) where {T}
