@@ -33,6 +33,7 @@ If so, the causal effect of `u` on `v` is identifiable and is given by the formu
 
     ∑{z∈Z} p(v | u, z)p(z)
 
+In the linear Gaussian model, find `E[Y | X = x, Z = z] = α + βx + γ'z` and obtain `E[Y | do(x)] = α + βx + γ'E[Z].
 """
 function backdoor_criterion(g::AbstractGraph{T}, u::Integer, v::Integer, S = T[];
                             verbose = false) where {T}
