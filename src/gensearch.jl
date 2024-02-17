@@ -92,7 +92,7 @@ end
 Return an mixed graph `b` containing edges for possible moves of the
 Bayes ball. Vertex `x` of `g` is vertex  "`x` forward" at `2x-1` of `b`
 if entered forward and "`x` backward" at `2x` if entered backward.
-`y` is d-connected to `x` given `S` if there is a 
+`y` is d-connected to `x` given `S` if and only if there is a 
 semi-directed path in `b` from "`x` backward" to "`y` forward"
  or "`y` backward").
 """
