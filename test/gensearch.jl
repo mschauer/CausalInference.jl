@@ -99,7 +99,7 @@ end
 
 @testset "bayesball_graph" begin
     g = digraph([1=>3, 2=>3, 3=>4, 2=>4, 1=>4])
-    g2 = CausalInference.bayesball_graph(g, 2, [3])
+    g2 = CausalInference.bayesball_graph(g, 2, [3], back=true)
     @test g2 == digraph([2 => 5, 2 => 7, 4 => 5, 4 => 7, 5 => 2, 5 => 4], 8)
 
 
@@ -108,10 +108,12 @@ end
         for S in combinations(1:d)
             Sᶜ = setdiff(1:d, S)
             for v in Sᶜ
-                g2 = CausalInference.bayesball_graph(g, v, S)
-                for w in Sᶜ
-                    w == v && continue
-                    @test !dsep(g, v, w, S) == has_path(g2, 2v, 2w-1) || has_path(g2, 2v, 2w) 
+                for back in (true, false)
+                    g2 = CausalInference.bayesball_graph(g, v, S)
+                    for w in Sᶜ
+                        w == v && continue
+                        @test !dsep(g, v, w, S) == has_path(g2, 2v, 2w-1) || has_path(g2, 2v, 2w) 
+                    end
                 end
             end
         end
