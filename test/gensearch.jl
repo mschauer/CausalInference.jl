@@ -108,10 +108,12 @@ end
         for S in combinations(1:d)
             Sᶜ = setdiff(1:d, S)
             for v in Sᶜ
-                g2 = CausalInference.bayesball_graph(g, v, S)
-                for w in Sᶜ
-                    w == v && continue
-                    @test !dsep(g, v, w, S) == has_path(g2, 2v, 2w-1) || has_path(g2, 2v, 2w) 
+                for back in (true, false)
+                    g2 = CausalInference.bayesball_graph(g, v, S)
+                    for w in Sᶜ
+                        w == v && continue
+                        @test !dsep(g, v, w, S) == has_path(g2, 2v, 2w-1) || has_path(g2, 2v, 2w) 
+                    end
                 end
             end
         end
