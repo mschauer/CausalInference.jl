@@ -22,18 +22,19 @@ using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
     score = GaussianScore(C, N, penalty)
     for balance in (CausalInference.sqrt_balance, CausalInference.metropolis_balance)
         @testset "$balance" begin
-        gs = dagzigzag(n; score, balance, κ, iterations, verbose=false)
-        @test ne.(first.(gs)) == getindex.(gs, 4)
-        # score of last sample
-        graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
-        @test score_dag(graphs[end], score) ≈ scores[end] + score_dag(DiGraph(n), score)
-        @test !any(Graphs.is_cyclic.(graphs))
-        posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
-        Π = normalize(map(g->exp(score_dag(digraph(g, n), score)), collect(keys(posterior))), 1)
-        @test norm(collect(values(posterior)) - Π, 1) < 30/sqrt(iterations)
+            gs = dagzigzag(n; score, balance, κ, iterations, verbose=false)
+            @test ne.(first.(gs)) == getindex.(gs, 4)
+            # score of last sample
+            graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
+            @test score_dag(graphs[end], score) ≈ scores[end] + score_dag(DiGraph(n), score)
+            @test !any(Graphs.is_cyclic.(graphs))
+            posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+            logΠ = map(g->score_dag(digraph(g, n), score), collect(keys(posterior)))
+            Π = normalize(exp.(logΠ .- maximum(logΠ) ), 1)
+            @test norm(collect(values(posterior)) - Π, 1) < 30/sqrt(iterations)
 
-        posterior = sort(keyedreduce(+, vpairs.(cpdag.(graphs)), ws); byvalue=true, rev=true)
-        @test first(posterior).first == [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5] 
+            posterior = sort(keyedreduce(+, vpairs.(cpdag.(graphs)), ws); byvalue=true, rev=true)
+            @test first(posterior).first == [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5] 
         end
     end
 end #testset
