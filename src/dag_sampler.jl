@@ -1,5 +1,4 @@
 using LogarithmicNumbers
-# Valid balancing functions
 
 
 """
@@ -52,6 +51,29 @@ function count_dag_moves(g, κ, balance, prior, score, coldness, total, dir=:bot
     s1, s2, Δscorevalue1, Δscorevalue2, (x1, y1), (x2, y2)
 end
 
+function count_dag_turn_moves(g, κ, balance, prior, score, coldness, total)
+    s0 = ULogarithmic(0.0)
+    Δscorevalue0 = 0.0
+    x0 = y0 = 0
+    for y in vertices(g)
+        for x in inneighbors(g, y) # remove x -> y, add y -> x
+            if has_a_path(g, setdiff(outneighbors(g, x), y), y) 
+                continue
+            end
+            Δscorevalue = -Δscore(score, setdiff(inneighbors(g, y), x), x, y)
+            Δscorevalue += Δscore(score, inneighbors(g, x), y, x)
+                  
+            s = balance(prior(total, total-1)*exp(ULogarithmic, coldness*Δscorevalue))
+            if rand() >  1/(1 + s/s0) 
+                x0, y0 = x, y
+                Δscorevalue0 = Δscorevalue
+            end
+            s0 = s0 + s     
+        end
+    end
+    s0, Δscorevalue0, (x0, y0)
+end
+
 """
     dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_)->1.0, score=UniformScore(),
                         coldness = 1.0, σ = 0.0, ρ = 1.0, 
@@ -87,7 +109,7 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
             traversals += 1
         end
         
-        Δscorevalue = Δscorevalue1 = Δscorevalue2 = 0.0
+        Δscorevalue =  Δscorevalue0 = Δscorevalue1 = Δscorevalue2 = 0.0
     
         if false #fixme score isa UniformScore
             s1, s2, up1, down1 = count_dag_moves_uniform(g, κ)
@@ -96,6 +118,7 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
             
         else 
             s1, s2, Δscorevalue1, Δscorevalue2, up1, down1 = count_dag_moves(g, κ, balance, prior, score, coldness, total)
+            s0, Δscorevalue0, turn0 = count_dag_turn_moves(g, κ, balance, prior, score, coldness, total)   
         end
         @label flipped
         total = ne(g)
@@ -104,29 +127,43 @@ function dagzigzag(n, G = DiGraph(n); balance = metropolis_balance, prior = (_,_
         τ = 0.0
         dir_old = dir
         λbar = max(dir*(-s1 + s2), 0.0)
-        λrw = (s1 + s2) 
-        λup = (s1)   
-        λ = dir == 1 ? (s1) : (s2)
+        λrw = s1 + s2
+        λup = s1 
+        λturn = s0  
+        λ = dir == 1 ? s1 : s2
         
         local x, y
         while true 
 
             Δτ = randexp()/(ρ*λ)
+            Δτturn = randexp()/(λturn)
             Δτrw = randexp()/(σ*λrw)
             Δτflip = randexp()/(ρ*λbar)
-            τ += float(min(Δτ, Δτflip, Δτrw))
-            if min(Δτ, Δτflip, Δτrw) > 1.0e10
+            τ += float(min(Δτ, Δτturn, Δτflip, Δτrw))
+            if min(Δτ, Δτturn, Δτflip, Δτrw) > 1.0e10
                 @warn "Frozen in the cold at iteration $iter" # $Δτ, $Δτrw, $Δτflip"
                 stuck = true
                 @goto flip
             end
-            if Δτflip < Δτ &&  Δτflip < Δτrw 
+            if Δτflip < Δτ &&  Δτflip < Δτrw && Δτflip < Δτturn
                 @goto flip
             end
+            if Δτturn < Δτ &&  Δτturn < Δτrw 
+                x, y = turn0
+                @assert x != y
+                @assert total > 0
+                save && push!(gs, (g, τ, dir, total, scorevalue))
+                g = copy(g) # copy on save?
+                rem_edge!(g, x, y)
+                add_edge!(g, y, x)
+                Δscorevalue = Δscorevalue0
+                scorevalue += Δscorevalue
+                break
+            end
+
             up = rand() < λup/λrw           
 
             # @show λup λrw  Δτ Δτrw
-         
             if  (Δτ <= Δτrw  && dir == 1) || (Δτ > Δτrw  && up)
 
                 
