@@ -83,13 +83,13 @@ The complexity is n*2^n and the algorithm should scale up to ~20-25 variables, a
 * Silander, T., & Myllymäki, P. (2006). A simple approach for finding the globally optimal Bayesian network structure. In Uncertainty in Artificial Intelligence (pp. 445-452). 
 """
 function exactscorebased(X::AbstractMatrix; method=:gaussian_bic, penalty=0.5, parallel=false, verbose=false)
-    (_, n) = size(X)
+    (N, n) = size(X)
     n > 25 && @warn "algorithm will take a long time to terminate and needs a lot of memory"
     n > 64 && @error "algorithm only works up to 64 variables (and will likely not be feasible for more than 25-30 variables)"
     
     if method == :gaussian_bic
         C = Symmetric(cov(X, dims = 1, corrected = false))
-        S = GaussianScore(C, n, penalty)
+        S = GaussianScore(C, N, penalty)
         return exactscorebased(n, (p, v) -> local_score(S, p, v) ; parallel, verbose)
     elseif method == :gaussian_bic_raw
         S = GaussianScoreQR(X, penalty)
