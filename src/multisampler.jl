@@ -14,8 +14,8 @@ struct Action
     args::Tuple{Any}
 end
 
-function init(_, _, nextτ, g, dir, total)
-    return Sample(g, nextτ, dir, total, 0.0) # TODO add initial score 
+function init(_, _, nextτ, g, dir, total, scoreval)
+    return Sample(g, nextτ, dir, total, 0.0, scoreval) 
 end
 
 function applyup(samplers, i, nextτ, x, y, T, Δscoreval)
@@ -61,9 +61,9 @@ function sampleevent(samplers, i, M, balance, prior, score, coldness, σ, ρ, κ
 
     if Δτdir == Δτmin 
         if prevsample.dir == 1
-            prevsample.τ + Δτdir, applyup, (argsup..., Δscorevalup)
+            return prevsample.τ + Δτdir, applyup, (argsup..., Δscorevalup)
         else 
-            prevsample.τ + Δτdir, applydown, (argsdown..., Δscorevaldown)
+            return prevsample.τ + Δτdir, applydown, (argsdown..., Δscorevaldown)
         end
     end
 
@@ -102,11 +102,11 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     # init M samplers
     # write init function
     samplers = [Vector{Sample}() for _ = 1:M]
-    nextevent = Vector{Sample}(undef, M)
+    nextaction = Vector{Sample}(undef, M)
     queue = PriorityQueue{Int32, Float64}()
     
     for i = 1:M 
-        nextevent[i] = Action(0.0, init, (G, 1, 0))
+        nextevent[i] = Action(0.0, init, (G, 1, 0, 0.0)) # pass correct initial score?!
         enqueue!(queue, i, 0.0)
     end
 
