@@ -12,6 +12,7 @@ using LinkedLists
 
 import Base: ==, show
 
+export multisampler
 export exactscorebased
 export ancestors, descendants, alt_test_dsep, test_covariate_adjustment, alt_test_backdoor, find_dsep, find_min_dsep, find_covariate_adjustment, find_backdoor_adjustment, find_frontdoor_adjustment, find_min_covariate_adjustment, find_min_backdoor_adjustment, find_min_frontdoor_adjustment, list_dseps, list_covariate_adjustment, list_backdoor_adjustment, list_frontdoor_adjustment
 export dsep, skeleton, gausscitest, dseporacle, partialcor
@@ -56,6 +57,7 @@ include("dag_sampler.jl")
 include("misc2.jl")
 include("exact.jl")
 #include("mcs.jl")
+include("multisampler.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
 const EXTENSIONS_SUPPORTED = isdefined(Base, :get_extension)
