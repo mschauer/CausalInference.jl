@@ -41,8 +41,8 @@ function applyflip(samplers, i, nextτ)
     return Sample(prevsample.g, nextτ, -1*prevsample.dir, prevsample.total, prevsample.scoreval)
 end
 
-function applycopy(samplers, i, nextτ, j)
-    sample = last(samplers[i])
+function applycopy(samplers, _, nextτ, j)
+    sample = last(samplers[j])
     return Sample(sample.g, nextτ, sample.dir, sample.total, sample.scoreval)
 end
 
