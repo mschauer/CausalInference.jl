@@ -12,11 +12,11 @@ struct Action
     args::Tuple{Vararg{Any}}
 end
 
-function expcoldness(τ, k=0.001)
+function expcoldness(τ, k=0.0005)
     return exp(k*τ)
 end
 
-function Dexpcoldness(τ, k=0.001)
+function Dexpcoldness(τ, k=0.0005)
     return k*exp(k*τ)
 end
 
@@ -57,8 +57,7 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
     # TODO: does this make any sense?
-    λterm = Dexpcoldness(prevsample.τ) * expcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
-
+    λterm = exp(ULogarithmic, 0.0)*Dexpcoldness(prevsample.τ) * expcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
