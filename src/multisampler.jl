@@ -8,7 +8,7 @@ end
 
 struct Action
     τ::Float64 
-    func::Function
+    apply::Function
     args::Tuple{Vararg{Any}}
 end
 
@@ -56,7 +56,6 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    # TODO: does this make any sense?
     λterm = exp(ULogarithmic, 0.0)*Dexpcoldness(prevsample.τ) * expcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
@@ -118,7 +117,7 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
 
     @showprogress for _ in 1:iterations 
         i = dequeue!(queue)
-        nextsample = nextaction[i].func(samplers, i, nextaction[i].τ, nextaction[i].args...)
+        nextsample = nextaction[i].apply(samplers, i, nextaction[i].τ, nextaction[i].args...)
         push!(samplers[i], nextsample)
         nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
         enqueue!(queue, i, nextaction[i].τ)
