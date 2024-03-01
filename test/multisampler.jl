@@ -13,11 +13,12 @@ using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
     
     df = (x=x, v=v, w=w, z=z, s=s)
     iterations = 5_000
+    penalty = 2.0 # increase to get more edges in truth
     n = length(df) # vertices
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    global bestgraph, samplers = multisampler(n; score, iterations)
+    bestgraph, samplers = multisampler(n; score, iterations)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
