@@ -93,7 +93,7 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
         while j == i 
             j = rand(1:M)
         end
-        return Action(prevsample.τ + Δτterm, applycopy, (j)) # maybe sample copied process here directly
+        return Action(prevsample.τ + Δτterm, applycopy, (j)) 
     end
 
     @assert false
