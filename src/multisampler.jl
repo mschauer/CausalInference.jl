@@ -42,8 +42,8 @@ function applyflip(samplers, i, nextτ)
 end
 
 function applycopy(samplers, _, nextτ, j)
-    sample = last(samplers[j])
-    return Sample(sample.g, nextτ, sample.dir, sample.total, sample.scoreval)
+    copysample = last(samplers[j])
+    return Sample(copysample.g, nextτ, copysample.dir, copysample.total, copysample.scoreval)
 end
 
 # for starters without turn move
