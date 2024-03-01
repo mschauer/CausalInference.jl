@@ -100,7 +100,6 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     end
     
     # init M samplers
-    # write init function
     samplers = [Vector{Sample}() for _ = 1:M]
     nextaction = Vector{Action}(undef, M)
     queue = PriorityQueue{Int32, Float64}()
