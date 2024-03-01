@@ -42,8 +42,8 @@ function applyflip(samplers, i, nextτ)
 end
 
 function applycopy(samplers, i, nextτ, j)
-    @assert i != j 
-    return Sample(samplers[j].g, nextτ, samplers[j].dir, samplers[j].total, samplers[j].scoreval)
+    sample = last(samplers[i])
+    return Sample(sample.g, nextτ, sample.dir, sample.total, sample.scoreval)
 end
 
 # for starters without turn move
@@ -88,12 +88,7 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
     end
 
     if Δτterm == Δτmin 
-        j = i
-        # not pretty, infinite loop if M=1 -> give warning
-        while j == i 
-            j = rand(1:M)
-        end
-        return Action(prevsample.τ + Δτterm, applycopy, (j)) 
+        return Action(prevsample.τ + Δτterm, applycopy, (rand(1:M),)) 
     end
 
     @assert false
@@ -142,5 +137,5 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
         end
     end
 
-    return bestgraph
+    return bestgraph, samplers
 end
