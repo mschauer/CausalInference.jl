@@ -1,5 +1,3 @@
-using DataStructures
-
 struct Sample
     g::DiGraph
     τ::Float64
@@ -11,11 +9,19 @@ end
 struct Action
     τ::Float64 
     func::Function
-    args::Tuple{Any}
+    args::Tuple{Vararg{Any}}
+end
+
+function expcoldness(τ, k=0.001)
+    return exp(k*τ)
+end
+
+function Dexpcoldness(τ, k=0.001)
+    return k*exp(k*τ)
 end
 
 function init(_, _, nextτ, g, dir, total, scoreval)
-    return Sample(g, nextτ, dir, total, 0.0, scoreval) 
+    return Sample(g, nextτ, dir, total, scoreval) 
 end
 
 function applyup(samplers, i, nextτ, x, y, T, Δscoreval)
@@ -41,59 +47,60 @@ function applycopy(samplers, i, nextτ, j)
 end
 
 # for starters without turn move
-function sampleevent(samplers, i, M, balance, prior, score, coldness, σ, ρ, κ, ) 
+function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ) 
     # preprocess 
     prevsample = last(samplers[i])
-    sup, sdown, Δscorevalup, Δscorevaldown, argsup, argsdown = count_moves_new(g, κ, balance, prior, score, coldness, prevsample.total)
+    sup, sdown, Δscorevalup, Δscorevaldown, argsup, argsdown = count_moves_new(prevsample.g, κ, balance, prior, score, expcoldness(prevsample.τ), prevsample.total)
 
     # propose moves
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    λterm = 0.0 # TODO
+    # TODO: does this make any sense?
+    λterm = Dexpcoldness(prevsample.τ) * expcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
 
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
-    Δτterm = randexp()/(dβdτ * β * scorevalue) # TODO # prior?
+    Δτterm = randexp()/(λterm) 
 
     Δτmin = min(Δτdir, Δτupdown, Δτflip, Δτterm)
 
     if Δτdir == Δτmin 
         if prevsample.dir == 1
-            return prevsample.τ + Δτdir, applyup, (argsup..., Δscorevalup)
+            return Action(prevsample.τ + Δτdir, applyup, (argsup..., Δscorevalup))
         else 
-            return prevsample.τ + Δτdir, applydown, (argsdown..., Δscorevaldown)
+            return Action(prevsample.τ + Δτdir, applydown, (argsdown..., Δscorevaldown))
         end
     end
 
     if Δτupdown == Δτmin
         λup = sup
         if rand() < λup/λupdown
-            return prevsample.τ + Δτupdown, applyup, (argsup..., Δscorevalup)
+            return Action(prevsample.τ + Δτupdown, applyup, (argsup..., Δscorevalup))
         else 
-            return prevsample.τ + Δτupdown, applydown, (argsdown..., Δscorevaldown)
+            return Action(prevsample.τ + Δτupdown, applydown, (argsdown..., Δscorevaldown))
         end
     end
     
     if Δτflip == Δτmin 
-        return prevsample.τ + Δτflip, applyflip, ()
+        return Action(prevsample.τ + Δτflip, applyflip, ())
     end
 
     if Δτterm == Δτmin 
         j = i
-        # not pretty
+        # not pretty, infinite loop if M=1 -> give warning
         while j == i 
             j = rand(1:M)
         end
-        return prevsample.τ + Δτterm, applycopy, (j) # maybe sample copied process here directly
+        return Action(prevsample.τ + Δτterm, applycopy, (j)) # maybe sample copied process here directly
     end
 
     @assert false
 end
 
-# todo: κ = n-1 as default
-function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), coldness = 1.0, σ = 0.0, ρ = 1.0, κ = min(n - 1, 10), iterations = 10, verbose = false, save = true)
+# remark: chose κ = n-1 as default
+function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, iterations = min(3*n^2, 50000)) #, verbose = false, save = true)
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
@@ -102,11 +109,11 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     # init M samplers
     # write init function
     samplers = [Vector{Sample}() for _ = 1:M]
-    nextaction = Vector{Sample}(undef, M)
+    nextaction = Vector{Action}(undef, M)
     queue = PriorityQueue{Int32, Float64}()
     
     for i = 1:M 
-        nextevent[i] = Action(0.0, init, (G, 1, 0, 0.0)) # pass correct initial score?!
+        nextaction[i] = Action(0.0, init, (first(G), 1, last(G), 0.0)) # pass correct initial score?!
         enqueue!(queue, i, 0.0)
     end
 
@@ -117,11 +124,25 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
 
     @showprogress for _ in 1:iterations 
         i = dequeue!(queue)
-        nextsample = nextaction[i].func(samplers, i, nextaction[i].τ, nextaction[i].args)
+        println(i)
+        nextsample = nextaction[i].func(samplers, i, nextaction[i].τ, nextaction[i].args...)
         push!(samplers[i], nextsample)
-        nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, coldness, σ, ρ, κ)
+        nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
         enqueue!(queue, i, nextaction[i].τ)
     end
 
     # postprocess
+    bestgraph = DiGraph(n)
+    bestscore = 0.0 # fix if correct initial score is given above
+    for i = 1:M
+        for sample in samplers[i]
+            println(sample.g)
+            if sample.scoreval > bestscore 
+                bestgraph = sample.g
+                bestscore = sample.scoreval
+            end
+        end
+    end
+
+    return bestgraph
 end

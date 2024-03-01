@@ -9,6 +9,7 @@ using Base.Iterators
 using Memoization, LRUCache
 using ThreadsX
 using LinkedLists
+using DataStructures
 
 import Base: ==, show
 
