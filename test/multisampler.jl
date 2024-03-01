@@ -1,4 +1,4 @@
-using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
+using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebra
 @testset "MultiSampler" begin
     Random.seed!(1)
 
@@ -18,7 +18,7 @@ using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    bestgraph, samplers = multisampler(n; score, iterations)
+    bestgraph, samplers = multisampler(n; score, σ=2.0, iterations)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
@@ -28,7 +28,6 @@ using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
     @test first(cm).first == MAP
 end #testset
 
-if false # if you have time 
 @testset "MultiSampler" begin
     Random.seed!(1)
 
@@ -42,14 +41,14 @@ if false # if you have time
     s = z + randn(N)*0.25
     
     df = (x=x, v=v, w=w, z=z, s=s)
-    iterations = 400
+    iterations = 200
     penalty = 2.0 # increase to get more edges in truth
     n = length(df) # vertices
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
     M = 200
-    bestgraph, samplers = multisampler(n; M, σ=10.0, score, iterations)
+    bestgraph, samplers = multisampler(n; M, σ=2.0, score, iterations)
     coldness = CausalInference.expcoldness(minimum(getfield.(last.(samplers), :τ)))
 
     gs = causalzigzag(n; score, κ=n-1, coldness, iterations)
@@ -69,10 +68,9 @@ if false # if you have time
     s = 0.0
     for (i, k) in enumerate(keys(cm))
         s += posterior[k]
-        @show cm[k] Π[i] 
+        #@show cm[k] Π[i] 
     end
     @show s
     @test s > 0.98
     @test norm(collect(values(cm)) - Π) < 0.02
 end #testset
-end
