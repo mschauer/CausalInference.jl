@@ -119,7 +119,7 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     end
 
     # todo: multiply iterations by M to keep passed iteration number indep of M?
-    # could also stop if one sampler has more than M samples
+    # could also stop if one sampler has more than iterations many samples
     # but then @showprogress does not work so nicely?! 
     iterations *= M
     bestgraph = DiGraph(n)
