@@ -41,13 +41,13 @@ end #testset
     s = z + randn(N)*0.25
     
     df = (x=x, v=v, w=w, z=z, s=s)
-    iterations = 200
+    iterations = 500
     penalty = 2.0 # increase to get more edges in truth
     n = length(df) # vertices
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    M = 200
+    M = 2000
     bestgraph, samplers = multisampler(n; M, σ=2.0, score, iterations)
     coldness = CausalInference.expcoldness(minimum(getfield.(last.(samplers), :τ)))
 
@@ -64,6 +64,7 @@ end #testset
     logΠ = map(g->score_dag(pdag2dag!(digraph(g, n)), score), collect(keys(cm)))
     Π = normalize(exp.(coldness*(logΠ .- maximum(logΠ))), 1)
     Πhat = normalize(collect(values(cm)), 1)
+    @show coldness
     display([Π Πhat])
     s = 0.0
     for (i, k) in enumerate(keys(cm))

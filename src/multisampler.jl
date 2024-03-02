@@ -47,16 +47,16 @@ function applycopy(samplers, _, nextτ, j)
 end
 
 # for starters without turn move
-function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ) 
+function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness) 
     # preprocess 
     prevsample = last(samplers[i])
-    sup, sdown, Δscorevalup, Δscorevaldown, argsup, argsdown = count_moves_new(prevsample.g, κ, balance, prior, score, expcoldness(prevsample.τ), prevsample.total)
+    sup, sdown, Δscorevalup, Δscorevaldown, argsup, argsdown = count_moves_new(prevsample.g, κ, balance, prior, score, coldness(prevsample.τ), prevsample.total)
 
     # propose moves
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    λterm = exp(ULogarithmic, 0.0)*Dexpcoldness(prevsample.τ) * expcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
+    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * coldness(prevsample.τ) * prevsample.scoreval # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
@@ -92,13 +92,22 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
     @assert false
 end
 
+function save!(as, a)
+    if length(as) == 0
+        push!(as, a)
+    else
+        as[end] = a
+    end
+end
+
 # remark: chose κ = n-1 as default
-function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, iterations = min(3*n^2, 50000)) #, verbose = false, save = true)
+function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness)) #, verbose = false, save = true)
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
     end
-    
+    coldness, Dcoldness = schedule
+
     # init M samplers
     samplers = [Vector{Sample}() for _ = 1:M]
     nextaction = Vector{Action}(undef, M)
@@ -113,26 +122,21 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     # could also stop if one sampler has more than M samples
     # but then @showprogress does not work so nicely?! 
     iterations *= M
-
+    bestgraph = DiGraph(n)
+    bestscore = 0.0 # fix if correct initial score is given above
+   
     @showprogress for _ in 1:iterations 
         i = dequeue!(queue)
         nextsample = nextaction[i].apply(samplers, i, nextaction[i].τ, nextaction[i].args...)
-        push!(samplers[i], nextsample)
-        nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ)
+        if nextsample.scoreval > bestscore 
+            bestgraph = nextsample.g
+            bestscore = nextsample.scoreval
+        end
+        save!(samplers[i], nextsample)
+        nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness)
         enqueue!(queue, i, nextaction[i].τ)
     end
 
-    # postprocess
-    bestgraph = DiGraph(n)
-    bestscore = 0.0 # fix if correct initial score is given above
-    for i = 1:M
-        for sample in samplers[i]
-            if sample.scoreval > bestscore 
-                bestgraph = sample.g
-                bestscore = sample.scoreval
-            end
-        end
-    end
 
     return bestgraph, samplers
 end
