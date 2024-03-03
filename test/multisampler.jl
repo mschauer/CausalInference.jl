@@ -36,6 +36,44 @@ end #testset
 
 @testset "MultiSampler" begin
     Random.seed!(1)
+
+    N = 400 # number of data points
+
+    # define simple linear model with added noise
+    x = randn(N)
+    v = x + randn(N)*0.25
+    w = x + randn(N)*0.25
+    z = v + w + randn(N)*0.25
+    s = z + randn(N)*0.25
+    
+    df = (x=x, v=v, w=w, z=z, s=s)
+    iterations = 1_000
+    penalty = 2.0 # increase to get more edges in truth
+    n = length(df) # vertices
+    Random.seed!(101)
+    C = cor(CausalInference.Tables.matrix(df))
+    score = GaussianScore(C, N, penalty)
+    decay = 3e-4
+
+    schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
+    M = 20
+    baseline = 0.0
+    balance = CausalInference.sqrt_balance
+    threshold = Inf
+    bestgraph, samplers = multisampler(n; M, ρ = 1.0, score, balance, baseline, schedule, iterations, threshold)
+    #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+
+    # maximum aposteriori estimate
+    MAP = [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5]
+    @test bestgraph == digraph(MAP, n)
+    cm = sort(countmap(vpairs.(getfield.(samplers, :g))), byvalue=true, rev=true)
+    Tmin, T = extrema(getfield.(samplers, :τ))
+    @show Tmin T schedule[1](T)
+    @test first(cm).first == MAP
+end 
+
+@testset "MultiSampler" begin
+    Random.seed!(1)
     decay = 1e-5
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
   

@@ -47,11 +47,7 @@ function applycopy(samplers, _, nextτ, j)
 end
 
 # for starters without turn move
-if VERSION >= v"1.9"
-    baseline_::Float64 = 0.0
-else
-    baseline_ = 0.0
-end
+const baseline_ = [0.0]
 
 function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold) 
     # preprocess 
@@ -62,10 +58,10 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    if baseline_ - prevsample.scoreval <= 0 # assert exp(score) < 1.0, -score > 0
-        baseline_ = prevsample.scoreval 
+    if baseline_[] - prevsample.scoreval <= 0 # assert exp(score) < 1.0, -score > 0
+        baseline_[] = prevsample.scoreval 
     end
-    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * clamp(baseline_ - prevsample.scoreval, eps(), threshold) # TODO: prior
+    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * clamp(baseline_[] - prevsample.scoreval, eps(), threshold) # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
@@ -109,7 +105,7 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     coldness, Dcoldness = schedule
 
     global baseline_
-    baseline_ = baseline
+    baseline_[] = baseline
     # init M samplers
     samplers = [Sample(G[1], 0.0, 1, G[2], 0.0) for _ = 1:M] # pass correct initial score?!
     nextaction = Vector{Action}(undef, M)
