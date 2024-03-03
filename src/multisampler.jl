@@ -47,7 +47,11 @@ function applycopy(samplers, _, nextτ, j)
 end
 
 # for starters without turn move
-baseline_::Float64 = 0.0
+if VERSION >= v"1.9"
+    baseline_::Float64 = 0.0
+else
+    baseline_ = 0.0
+end
 
 function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold) 
     # preprocess 
