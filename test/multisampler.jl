@@ -2,7 +2,7 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
 @testset "MultiSampler" begin
     Random.seed!(1)
 
-    N = 500 # number of data points
+    N = 400 # number of data points
 
     # define simple linear model with added noise
     x = randn(N)
@@ -36,7 +36,7 @@ end #testset
 
 @testset "MultiSampler" begin
     Random.seed!(1)
-    decay = 1e-4
+    decay = 1e-5
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
   
     N = 200 # number of data points
