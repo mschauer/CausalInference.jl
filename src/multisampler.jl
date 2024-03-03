@@ -116,7 +116,6 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     
     for i = 1:M 
         nextaction[i] = Action(0.0, init, (first(G), 1, last(G), 0.0)) # pass correct initial score?!
-        enqueue!(queue, i, 0.0)
     end
 
     # todo: multiply iterations by M to keep passed iteration number indep of M?
@@ -126,8 +125,12 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     bestgraph = DiGraph(n)
     bestscore = 0.0 # fix if correct initial score is given above
    
-    @showprogress for _ in 1:iterations 
-        i = dequeue!(queue)
+    @showprogress for iter in 1:iterations 
+        if iter <= M
+            i = iter
+        else
+            i = dequeue!(queue)
+        end
         nextsample = nextaction[i].apply(samplers, i, nextaction[i].τ, nextaction[i].args...)
         if nextsample.scoreval > bestscore 
             bestgraph = nextsample.g
