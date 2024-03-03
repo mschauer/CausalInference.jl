@@ -18,9 +18,10 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    decay = 1e-2
+    decay = 1e-5
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
-    bestgraph, samplers = multisampler(n; score, schedule, iterations)
+    M = 20
+    bestgraph, samplers = multisampler(n; M, ρ = 1.0, score, schedule, iterations)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
@@ -34,7 +35,7 @@ end #testset
 
 @testset "MultiSampler" begin
     Random.seed!(1)
-    decay = 1e-3
+    decay = 1e-4
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
   
     N = 200 # number of data points
@@ -54,7 +55,7 @@ end #testset
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
     M = 200
-    bestgraph, samplers = multisampler(n; M, σ=2.0, score, iterations)
+    bestgraph, samplers = multisampler(n; M, ρ=10.0, score, iterations)
     Tmin, T = extrema(getfield.(samplers, :τ))
     coldness = schedule[1](T)
     @show Tmin T coldness

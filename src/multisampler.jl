@@ -122,9 +122,10 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     iterations *= M
     bestgraph = DiGraph(n)
     bestscore = 0.0 # fix if correct initial score is given above
-   
+    count = 0
     @showprogress for iter in 1:iterations 
         i = dequeue!(queue)
+        count += nextaction[i].apply == applycopy
         nextsample = nextaction[i].apply(samplers, i, nextaction[i].τ, nextaction[i].args...)
         if nextsample.scoreval > bestscore 
             bestgraph = nextsample.g
@@ -134,7 +135,8 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
         nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness)
         enqueue!(queue, i, nextaction[i].τ)
     end
-
+    killratio = count/iterations
+    @show killratio
 
     return bestgraph, samplers
 end
