@@ -97,7 +97,7 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
     @assert false
 end
 # remark: chose κ = n-1 as default
-function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness), threshold=10.0) #, verbose = false, save = true)
+function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness), threshold=Inf) #, verbose = false, save = true)
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
