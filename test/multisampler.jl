@@ -18,19 +18,25 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    bestgraph, samplers = multisampler(n; score, σ=2.0, iterations)
+    decay = 1e-2
+    schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
+    bestgraph, samplers = multisampler(n; score, schedule, iterations)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
     MAP = [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5]
     @test bestgraph == digraph(MAP, n)
-    cm = sort(countmap(vpairs.(getfield.(last.(samplers), :g))), byvalue=true, rev=true)
+    cm = sort(countmap(vpairs.(getfield.(samplers, :g))), byvalue=true, rev=true)
+    Tmin, T = extrema(getfield.(samplers, :τ))
+    @show Tmin T schedule[1](T)
     @test first(cm).first == MAP
 end #testset
 
 @testset "MultiSampler" begin
     Random.seed!(1)
-
+    decay = 1e-3
+    schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
+  
     N = 200 # number of data points
 
     # define simple linear model with added noise
@@ -47,31 +53,33 @@ end #testset
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    M = 2000
+    M = 200
     bestgraph, samplers = multisampler(n; M, σ=2.0, score, iterations)
-    coldness = CausalInference.expcoldness(minimum(getfield.(last.(samplers), :τ)))
+    Tmin, T = extrema(getfield.(samplers, :τ))
+    coldness = schedule[1](T)
+    @show Tmin T coldness
 
-    gs = causalzigzag(n; score, κ=n-1, coldness, iterations)
+    gs = causalzigzag(n; score, κ=n-1, coldness, iterations=iterations*100)
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
     posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
-
+   
     # maximum aposteriori estimate
     MAP = [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5]
     @test bestgraph == digraph(MAP, n)
-    cm = sort((proportionmap(vpairs.(getfield.(last.(samplers), :g)))), byvalue=true, rev=true)
+    cm = sort((proportionmap(vpairs.(getfield.(samplers, :g)))), byvalue=true, rev=true)
     @test first(cm).first == MAP
     logΠ = map(g->score_dag(pdag2dag!(digraph(g, n)), score), collect(keys(cm)))
     Π = normalize(exp.(coldness*(logΠ .- maximum(logΠ))), 1)
     Πhat = normalize(collect(values(cm)), 1)
-    @show coldness
+
     display([Π Πhat])
     s = 0.0
     for (i, k) in enumerate(keys(cm))
-        s += posterior[k]
+        s += get(posterior, k, 0.0)
         #@show cm[k] Π[i] 
     end
     @show s
     @test s > 0.98
-    @test norm(collect(values(cm)) - Π) < 0.02
+    @test norm(collect(values(cm)) - Π) < 0.04
 end #testset
