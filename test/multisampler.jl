@@ -12,7 +12,7 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
     s = z + randn(N)*0.25
     
     df = (x=x, v=v, w=w, z=z, s=s)
-    iterations = 5_000
+    iterations = 1_000
     penalty = 2.0 # increase to get more edges in truth
     n = length(df) # vertices
     Random.seed!(101)
@@ -21,7 +21,8 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
     decay = 1e-5
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
     M = 20
-    bestgraph, samplers = multisampler(n; M, ρ = 1.0, score, schedule, iterations)
+    baseline = 0.0
+    bestgraph, samplers = multisampler(n; M, ρ = 1.0, score, baseline, schedule, iterations)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
@@ -54,8 +55,8 @@ end #testset
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
-    M = 200
-    bestgraph, samplers = multisampler(n; M, ρ=10.0, score, iterations)
+    M = 100
+    bestgraph, samplers = multisampler(n; M, score, schedule, iterations)
     Tmin, T = extrema(getfield.(samplers, :τ))
     coldness = schedule[1](T)
     @show Tmin T coldness

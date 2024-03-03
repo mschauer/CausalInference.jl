@@ -47,21 +47,21 @@ function applycopy(samplers, _, nextτ, j)
 end
 
 # for starters without turn move
-baseline::Float64 = 0.0
+baseline_::Float64 = 0.0
 
 function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness) 
     # preprocess 
     prevsample = samplers[i]
     sup, sdown, Δscorevalup, Δscorevaldown, argsup, argsdown = count_moves_new(prevsample.g, κ, balance, prior, score, coldness(prevsample.τ), prevsample.total)
-    global baseline
+    global baseline_
     # propose moves
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    if baseline - prevsample.scoreval >= 0 # assert exp(score) < 1.0
-        baseline = -prevsample.scoreval - eps()
+    if baseline_ - prevsample.scoreval >= 0 # assert exp(score) < 1.0
+        baseline_ = -prevsample.scoreval - eps()
     end
-    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * (baseline - prevsample.scoreval) # TODO: prior
+    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * (baseline_ - prevsample.scoreval) # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
@@ -97,15 +97,15 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
     @assert false
 end
 # remark: chose κ = n-1 as default
-function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness)) #, verbose = false, save = true)
+function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness)) #, verbose = false, save = true)
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
     end
     coldness, Dcoldness = schedule
 
-    global baseline
-    baseline = 0.0
+    global baseline_
+    baseline_ = baseline
     # init M samplers
     samplers = [Sample(G[1], 0.0, 1, G[2], 0.0) for _ = 1:M] # pass correct initial score?!
     nextaction = Vector{Action}(undef, M)
@@ -134,6 +134,7 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
         samplers[i] = nextsample
         nextaction[i] = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness)
         enqueue!(queue, i, nextaction[i].τ)
+        # todo: applyflip shouldn't increase counter
     end
     killratio = count/iterations
     @show killratio
