@@ -56,7 +56,8 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
+    λterm = -exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * prevsample.scoreval # TODO: prior
+    @assert λterm >= 0
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
