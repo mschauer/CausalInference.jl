@@ -143,9 +143,11 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     bestscore = 0.0 # fix if correct initial score is given above
     count = 0
     particles = M
+    t = 0.0
     @showprogress for iter in 1:iterations 
         action = dequeue!(queue)
-        count += action.apply! == applycopy
+        t = action.τ
+        count += (action.apply! == applycopy) || (action.apply! == applykill)
         particles -= action.apply! == applykill
         particles == 0 && break
 
@@ -159,7 +161,8 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
         # todo: applyflip shouldn't increase counter
     end
     killratio = count/iterations
-    @show killratio
+    β = schedule[1](t)
+    @show particles killratio t β
 
     return bestgraph, [sample for sample in samplers if sample.alive]
 end
