@@ -149,9 +149,10 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
         t = action.τ
         count += (action.apply! == applycopy) || (action.apply! == applykill)
         particles -= action.apply! == applykill
-        particles == 0 && break
 
         nextsample = action.apply!(samplers, action.i, action.τ, action.args...)
+        particles == 0 && break
+
         if nextsample.alive && nextsample.scoreval > bestscore 
             bestgraph = nextsample.g
             bestscore = nextsample.scoreval
