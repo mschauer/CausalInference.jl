@@ -108,7 +108,12 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
 
     if :term == A
         if rand() < keep
-            return Action(i, prevsample.τ + Δτterm, applycopy, (rand(1:M),)) 
+            if keep < 1
+                j = rand(findall(s.alive for s in samplers))
+            else 
+                j = rand(1:M)
+            end
+            return Action(i, prevsample.τ + Δτterm, applycopy, (j,)) 
         else
             return Action(i, prevsample.τ + Δτterm, applykill, ()) 
         end    

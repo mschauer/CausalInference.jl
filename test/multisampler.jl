@@ -72,8 +72,8 @@ end
 
 @testset "MultiSampler" begin
     Random.seed!(1)
-    decay = 1e-5
-    schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
+    decay = 5e-5
+    schedule = (τ -> 0.8 + τ*decay, τ -> decay) # linear
   
     N = 200 # number of data points
 
@@ -85,7 +85,7 @@ end
     s = z + randn(N)*0.25
     
     df = (x=x, v=v, w=w, z=z, s=s)
-    iterations = 500
+    iterations = 1000
     penalty = 2.0 # increase to get more edges in truth
     n = length(df) # vertices
     Random.seed!(101)
@@ -97,7 +97,7 @@ end
     coldness = schedule[1](T)
     @show Tmin T coldness
 
-    gs = causalzigzag(n; score, κ=n-1, coldness, iterations=iterations*100)
+    gs = causalzigzag(n; score, κ=n-1, ρ=10.0,  coldness, iterations=iterations*100)
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
     posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
@@ -118,6 +118,6 @@ end
         #@show cm[k] Π[i] 
     end
     @show s
-    @test s > 0.98
-    @test norm(collect(values(cm)) - Π) < 0.05
+    @test s > 0.99
+    @test norm(collect(values(cm)) - Π) < 0.02
 end #testset
