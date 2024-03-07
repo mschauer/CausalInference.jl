@@ -144,11 +144,15 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     count = 0
     particles = M
     t = 0.0
+    pr = Progress(iterations)
     @showprogress for iter in 1:iterations 
+        next!(pr; showvalues = [(:M,particles)])
         action = dequeue!(queue)
         t = action.τ
         count += (action.apply! == applycopy) || (action.apply! == applykill)
-        particles -= action.apply! == applykill
+        if action.apply! == applykill
+            particles -= 1
+        end
 
         nextsample = action.apply!(samplers, action.i, action.τ, action.args...)
         particles == 0 && break
