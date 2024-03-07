@@ -45,8 +45,8 @@ function applyflip(samplers, i, nextτ)
 end
 
 function applycopy(samplers, i, nextτ, j)
-    copysample = samplers[j]
-    return samplers[i] = Sample(copysample.g, nextτ, copysample.dir, copysample.total, copysample.scoreval)
+    copysample = samplers[j]                    # move opposite direction 
+    return samplers[i] = Sample(copysample.g, nextτ, -copysample.dir, copysample.total, copysample.scoreval)
 end
 
 function applykill(samplers, i, nextτ)
@@ -63,7 +63,7 @@ end
 # for starters without turn move
 const baseline_ = [0.0]
 
-function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep) 
+function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force) 
     # preprocess 
     prevsample = samplers[i]
     prevsample.alive || return Action(i, Inf, applynothing, ())
@@ -77,7 +77,7 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
     if baseline_[] - prevsample.scoreval <= 0 # assert exp(score) < 1.0, -score > 0
         baseline_[] = prevsample.scoreval 
     end
-    λterm = exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * clamp(baseline_[] - prevsample.scoreval, eps(), threshold) # TODO: prior
+    λterm = force*exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * clamp(baseline_[] - prevsample.scoreval, eps(), threshold) # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
@@ -122,7 +122,7 @@ function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldnes
     @assert false
 end
 # remark: chose κ = n-1 as default
-function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness), threshold=Inf, keep=1.0) #, verbose = false, save = true)
+function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness), threshold=Inf, keep=1.0, force=1.0) #, verbose = false, save = true)
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
@@ -131,12 +131,13 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
 
     global baseline_
     baseline_[] = baseline
+    initscoreval = score_dag(SimpleDiGraph(n), score)
     # init M samplers
-    samplers = [Sample(G[1], 0.0, 1, G[2], 0.0) for _ = 1:M] # pass correct initial score?!
+    samplers = [Sample(G[1], 0.0, 1, G[2], initscoreval) for _ = 1:M] # pass correct initial score?!
     queue = PriorityQueue{Action, Float64}()
     
     for i = 1:M 
-        action = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep)
+        action = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
         enqueue!(queue, action, action.τ)
     end
 
@@ -145,7 +146,7 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     # but then @showprogress does not work so nicely?! 
     iterations *= M
     bestgraph = DiGraph(n)
-    bestscore = 0.0 # fix if correct initial score is given above
+    bestscore = initscoreval
     count = 0
     particles = M
     t = 0.0
@@ -166,10 +167,11 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
             bestgraph = nextsample.g
             bestscore = nextsample.scoreval
         end
-        action = sampleaction(samplers, action.i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep)
+        action = sampleaction(samplers, action.i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
         enqueue!(queue, action, action.τ)
         # todo: applyflip shouldn't increase counter
     end
+    finish!(pr)
     killratio = count/iterations
     β = schedule[1](t)
     @show particles killratio t β

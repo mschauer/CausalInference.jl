@@ -22,7 +22,7 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
     M = 50
     baseline = 0.0
-    bestgraph, samplers = CausalInference.multisampler(n; M, score, baseline, schedule, iterations, keep=0.5)
+    bestgraph, samplers = CausalInference.multisampler(n; M, score, baseline, schedule, iterations, keep=0.5, force=0.1)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
