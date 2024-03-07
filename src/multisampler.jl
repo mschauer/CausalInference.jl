@@ -61,23 +61,18 @@ function applynothing(samplers, i, nextτ)
 end
 
 # for starters without turn move
-const baseline_ = [0.0]
 
-function sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force) 
+function sampleaction(samplers, i, M, balance, prior, score, maxscoreval, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force) 
     # preprocess 
     prevsample = samplers[i]
     prevsample.alive || return Action(i, Inf, applynothing, ())
  
     sup, sdown, Δscorevalup, Δscorevaldown, argsup, argsdown = count_moves_new(prevsample.g, κ, balance, prior, score, coldness(prevsample.τ), prevsample.total)
-    global baseline_
     # propose moves
     λdir = prevsample.dir == 1 ? sup : sdown 
     λupdown = sup + sdown 
     λflip = max(prevsample.dir*(-sup + sdown), 0.0)
-    if baseline_[] - prevsample.scoreval <= 0 # assert exp(score) < 1.0, -score > 0
-        baseline_[] = prevsample.scoreval 
-    end
-    λterm = force*exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * clamp(baseline_[] - prevsample.scoreval, eps(), threshold) # TODO: prior
+    λterm = force*exp(ULogarithmic, 0.0)*Dcoldness(prevsample.τ) * clamp(maxscoreval - prevsample.scoreval, eps(), threshold) # TODO: prior
     Δτdir = randexp()/(ρ*λdir)
     Δτupdown = randexp()/(σ*λupdown)
     Δτflip = randexp()/(ρ*λflip)
@@ -129,15 +124,16 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     end
     coldness, Dcoldness = schedule
 
-    global baseline_
-    baseline_[] = baseline
     initscoreval = score_dag(SimpleDiGraph(n), score)
+    bestgraph = DiGraph(n)
+    bestscore = initscoreval
+
     # init M samplers
     samplers = [Sample(G[1], 0.0, 1, G[2], initscoreval) for _ = 1:M] # pass correct initial score?!
     queue = PriorityQueue{Action, Float64}()
     
     for i = 1:M 
-        action = sampleaction(samplers, i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
+        action = sampleaction(samplers, i, M, balance, prior, score, bestscore, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
         enqueue!(queue, action, action.τ)
     end
 
@@ -145,16 +141,19 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     # could also stop if one sampler has more than iterations many samples
     # but then @showprogress does not work so nicely?! 
     iterations *= M
-    bestgraph = DiGraph(n)
-    bestscore = initscoreval
+
     count = 0
     particles = M
     t = 0.0
+    β = schedule[1](t)
     pr = Progress(iterations)
     @showprogress for iter in 1:iterations 
-        next!(pr; showvalues = [(:M,particles), (:t, round(t,  sigdigits=6)), (:score, bestscore), (:temp, round(schedule[1](t), sigdigits=6))])
         action = dequeue!(queue)
         t = action.τ
+        β = schedule[1](t)
+        β > 1e10 && break
+        next!(pr; showvalues = [(:M,particles), (:t, round(t,  sigdigits=6)), (:score, bestscore), (:temp, round(β, sigdigits=6))])
+     
         count += (action.apply! == applycopy) || (action.apply! == applykill)
         if action.apply! == applykill
             particles -= 1
@@ -167,14 +166,14 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
             bestgraph = nextsample.g
             bestscore = nextsample.scoreval
         end
-        action = sampleaction(samplers, action.i, M, balance, prior, score, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
+        action = sampleaction(samplers, action.i, M, balance, prior, score, bestscore, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
         enqueue!(queue, action, action.τ)
         # todo: applyflip shouldn't increase counter
     end
     finish!(pr)
     killratio = count/iterations
-    β = schedule[1](t)
+    
     @show particles killratio t β
 
-    return bestgraph, [sample for sample in samplers if sample.alive]
+    return bestgraph, bestscore, [sample for sample in samplers if sample.alive]
 end

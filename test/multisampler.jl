@@ -20,9 +20,9 @@ using Random, CausalInference, StatsBase, Statistics, Test, Graphs, LinearAlgebr
     score = GaussianScore(C, N, penalty)
     decay = 5.0e-5
     schedule = (τ -> 1.0 + τ*decay, τ -> decay) # linear
-    M = 50
+    M = 20
     baseline = 0.0
-    bestgraph, samplers = CausalInference.multisampler(n; M, score, baseline, schedule, iterations, keep=0.5, force=0.1)
+    bestgraph, bestscore, samplers = CausalInference.multisampler(n; M, score, baseline, schedule, iterations, keep=0.5, force=0.1)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
@@ -58,7 +58,7 @@ end #testset
     baseline = 0.0
     balance = CausalInference.sqrt_balance
     threshold = Inf
-    bestgraph, samplers = multisampler(n; M, ρ = 1.0, score, balance, baseline, schedule, iterations, threshold)
+    bestgraph, bestscore, samplers = multisampler(n; M, ρ = 1.0, score, balance, baseline, schedule, iterations, threshold)
     #posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
@@ -92,7 +92,7 @@ end
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
     M = 100
-    bestgraph, samplers = multisampler(n; M, score, schedule, iterations)
+    bestgraph, bestscore, samplers = multisampler(n; M, score, schedule, iterations)
     Tmin, T = extrema(getfield.(samplers, :τ))
     coldness = schedule[1](T)
     @show Tmin T coldness
