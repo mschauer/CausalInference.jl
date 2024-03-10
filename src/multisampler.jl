@@ -45,8 +45,9 @@ function applyflip(samplers, i, nextτ)
 end
 
 function applycopy(samplers, i, nextτ, j)
-    copysample = samplers[j]                    # move opposite direction 
-    return samplers[i] = Sample(copysample.g, nextτ, -copysample.dir, copysample.total, copysample.scoreval)
+    copysample = samplers[j]                    
+    s = (i == j) ? 1 : -1 # move opposite direction 
+    return samplers[i] = Sample(copysample.g, nextτ, s*copysample.dir, copysample.total, copysample.scoreval)
 end
 
 function applykill(samplers, i, nextτ)
@@ -117,7 +118,7 @@ function sampleaction(samplers, i, M, balance, prior, score, maxscoreval, σ, ρ
     @assert false
 end
 # remark: chose κ = n-1 as default
-function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness), threshold=Inf, keep=1.0, force=1.0) #, verbose = false, save = true)
+function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balance, prior = (_,_) -> 1.0, score=UniformScore(), σ = 0.0, ρ = 1.0, κ = n - 1, baseline = 0.0, iterations = min(3*n^2, 50000), schedule=(expcoldness, Dexpcoldness), target=1e10, threshold=Inf, keep=1.0, force=1.0) #, verbose = false, save = true)
     if κ >= n 
         κ = n - 1
         @warn "Truncate κ to $κ"
@@ -138,8 +139,6 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     end
 
     # todo: multiply iterations by M to keep passed iteration number indep of M?
-    # could also stop if one sampler has more than iterations many samples
-    # but then @showprogress does not work so nicely?! 
     iterations *= M
 
     count = 0
@@ -147,16 +146,20 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
     t = 0.0
     β = schedule[1](t)
     pr = Progress(iterations)
-    @showprogress for iter in 1:iterations 
+    iter = 1
+    while iter <= iterations
         action = dequeue!(queue)
         t = action.τ
         β = schedule[1](t)
-        β > 1e10 && break
+        β > target && break
         next!(pr; showvalues = [(:M,particles), (:t, round(t,  sigdigits=6)), (:score, bestscore), (:temp, round(β, sigdigits=6))])
      
         count += (action.apply! == applycopy) || (action.apply! == applykill)
         if action.apply! == applykill
             particles -= 1
+        end
+        if action.apply! != applyflip # flips are free
+            iter += 1
         end
 
         nextsample = action.apply!(samplers, action.i, action.τ, action.args...)
@@ -168,7 +171,6 @@ function multisampler(n, G = (DiGraph(n), 0); M = 10, balance = metropolis_balan
         end
         action = sampleaction(samplers, action.i, M, balance, prior, score, bestscore, σ, ρ, κ, coldness, Dcoldness, threshold, keep, force)
         enqueue!(queue, action, action.τ)
-        # todo: applyflip shouldn't increase counter
     end
     finish!(pr)
     killratio = count/iterations

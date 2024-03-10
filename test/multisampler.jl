@@ -72,7 +72,7 @@ end
 
 @testset "MultiSampler" begin
     Random.seed!(1)
-    decay = 5e-5
+    decay = 2e-5
     schedule = (τ -> 0.8 + τ*decay, τ -> decay) # linear
   
     N = 200 # number of data points
@@ -85,14 +85,14 @@ end
     s = z + randn(N)*0.25
     
     df = (x=x, v=v, w=w, z=z, s=s)
-    iterations = 1000
+    iterations = 880
     penalty = 2.0 # increase to get more edges in truth
     n = length(df) # vertices
     Random.seed!(101)
     C = cor(CausalInference.Tables.matrix(df))
     score = GaussianScore(C, N, penalty)
     M = 100
-    bestgraph, bestscore, samplers = multisampler(n; M, score, schedule, iterations)
+    bestgraph, bestscore, samplers = multisampler(n; M, score, schedule, iterations, target=1.2)
     Tmin, T = extrema(getfield.(samplers, :τ))
     coldness = schedule[1](T)
     @show Tmin T coldness
