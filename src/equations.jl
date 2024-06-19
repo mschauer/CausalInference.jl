@@ -23,6 +23,15 @@ struct SCM
     dag::DiGraph
 end
 
+function ols_compute(X,y)
+    X = hcat(ones(size(X, 1)), X) 
+    coef = X \ y
+    yhat = X * coef
+    resids = y - yhat
+
+    return coef, resids
+end
+
 # Function to estimate equations and return an SCM struct
 """
     estimate_equations(t, est_g::DiGraph)::SCM
@@ -37,7 +46,7 @@ Estimate linear equations from the given table `t` based on the structure of the
 - `SCM`: A struct containing the estimated variables, their corresponding coefficients, residuals, and the DAG.
 """
 function estimate_equations(t, est_g::DiGraph)::SCM
-    Tables.istable(t) || throw(ArgumentError("Argument does not support Tables.jl"))
+    Tables.istable(t) || throw(ArgumentError("Argument supports just Tables.jl types"))
     
     df = DataFrame(t)
     
@@ -53,13 +62,7 @@ function estimate_equations(t, est_g::DiGraph)::SCM
 
     adj_list = collect(edges(est_g))
 
-    function ols(X, y)
-        X = hcat(ones(size(X, 1)), X) 
-        coef = X \ y
-        yhat = X * coef
-        resids = y - yhat
-        return coef, resids
-    end
+
 
     variables = String[]
     coefficients = Vector{Vector{Float64}}()
@@ -76,7 +79,7 @@ function estimate_equations(t, est_g::DiGraph)::SCM
             X = hcat([df[!, pred] for pred in preds]...)
             y = df[!, node]
             
-            coef, resid = ols(X, y)
+            coef, resid = ols_compute(X, y)
             
             if isa(coef, Vector)
                 push!(variables, string(node))
@@ -97,6 +100,8 @@ function estimate_equations(t, est_g::DiGraph)::SCM
 
     return SCM(variables, coefficients, residuals, est_g)
 end
+
+
 
 # Function to generate data from the SCM
 """
