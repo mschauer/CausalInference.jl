@@ -1,4 +1,4 @@
-using DataFrames, LinearAlgebra, Graphs, Tables, Random, Statistics
+using LinearAlgebra, Graphs, Tables, Random, Statistics
 
 # Define the SCM struct
 """
@@ -23,12 +23,11 @@ struct SCM
     dag::DiGraph
 end
 
-function ols_compute(X,y)
-    X = hcat(ones(size(X, 1)), X) 
+function ols_compute(X, y)
+    X = hcat(ones(size(X, 1)), X)
     coef = X \ y
     yhat = X * coef
     resids = y - yhat
-
     return coef, resids
 end
 
@@ -48,13 +47,10 @@ Estimate linear equations from the given table `t` based on the structure of the
 function estimate_equations(t, est_g::DiGraph)::SCM
     Tables.istable(t) || throw(ArgumentError("Argument supports just Tables.jl types"))
     
-    df = DataFrame(t)
+    columns = Tables.columns(t)
+    schema = Tables.schema(t)
+    variables = propertynames(schema.names)
     
-    # Ensure all variable names are valid Julia symbols
-    if !(all(occursin(r"^[A-Za-z_][A-Za-z0-9_]*$", string(name)) for name in names(df)))
-        rename!(df, Symbol(name) => Symbol("var$(name)") for name in names(df))
-    end
-
     # Check if it is a DAG
     if is_cyclic(est_g)
         throw(ArgumentError("The provided graph is cyclic -> est_g::DiGraph should be a DAG."))
@@ -62,50 +58,44 @@ function estimate_equations(t, est_g::DiGraph)::SCM
 
     adj_list = collect(edges(est_g))
 
-
-
-    variables = String[]
+    var_names = String[]
     coefficients = Vector{Vector{Float64}}()
     residuals = Vector{Vector{Float64}}()
-    nodes = names(df)
+    nodes = variables
 
     for node in nodes
-        println("node: ", node , " variables: ", variables)
         node_index = findfirst(==(node), nodes)
-        
         preds = [nodes[e.src] for e in adj_list if e.dst == node_index]
-        
+
         if !isempty(preds)
-            X = hcat([df[!, pred] for pred in preds]...)
-            y = df[!, node]
-            
+            X = hcat([columns[pred] for pred in preds]...)
+            y = columns[node]
+
             coef, resid = ols_compute(X, y)
-            
+
             if isa(coef, Vector)
-                push!(variables, string(node))
+                push!(var_names, string(node))
                 push!(coefficients, coef)
                 push!(residuals, resid)
             else
                 println("Warning: Coefficients not stored for node $node. Expected vector, got $coef")
             end
         else
-            y = df[!, node]
-            intercept = mean(y)  
+            y = columns[node]
+            intercept = mean(y)
             resid = y .- intercept
-            push!(variables, string(node))
+            push!(var_names, string(node))
             push!(coefficients, [intercept])
             push!(residuals, resid)
         end
     end
 
-    return SCM(variables, coefficients, residuals, est_g)
+    return SCM(var_names, coefficients, residuals, est_g)
 end
-
-
 
 # Function to generate data from the SCM
 """
-    generate_data(scm::SCM, N::Int)::DataFrame
+    generate_data(scm::SCM, N::Int)::NamedTuple
 
 Generate data from the given SCM.
 
@@ -114,15 +104,13 @@ Generate data from the given SCM.
 - `N::Int`: The number of data points to generate.
 
 # Returns
-- `DataFrame`: A DataFrame containing the generated data.
+- `NamedTuple`: A NamedTuple containing the generated data.
 """
-function generate_data(scm::SCM, N::Int)::DataFrame
-    df = DataFrame()
+function generate_data(scm::SCM, N::Int)::NamedTuple
+    columns = Dict{Symbol, Vector{Float64}}()
     
     sorted_indices = topological_sort_by_dfs(scm.dag)
-    
     sorted_variables = [scm.variables[i] for i in sorted_indices]
-    
     variable_index_map = Dict(variable => index for (index, variable) in enumerate(scm.variables))
 
     for node in sorted_variables
@@ -131,17 +119,17 @@ function generate_data(scm::SCM, N::Int)::DataFrame
         residual_std = std(scm.residuals[idx])
         
         if length(coef) == 1
-            df[!, Symbol(node)] = coef[1] .+ residual_std * randn(N)  
+            columns[Symbol(node)] = coef[1] .+ residual_std * randn(N)
         else
             preds = [Symbol(scm.variables[i]) for i in inneighbors(scm.dag, idx)]
             if isempty(preds)
-                df[!, Symbol(node)] = coef[1] .+ residual_std * randn(N)  
+                columns[Symbol(node)] = coef[1] .+ residual_std * randn(N)
             else
-                X = hcat(ones(N), [df[!, pred] for pred in preds]...)  
-                df[!, Symbol(node)] = X * coef .+ residual_std * randn(N)
+                X = hcat(ones(N), [columns[pred] for pred in preds]...)
+                columns[Symbol(node)] = X * coef .+ residual_std * randn(N)
             end
         end
     end
     
-    return df
+    return NamedTuple(columns)
 end
