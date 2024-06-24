@@ -33,6 +33,8 @@ export pdag2dag!, pdag_to_dag_meek!, pdag_to_dag_dortarsi!
 export count_moves_uniform, randcpdag, UniformScore, causalzigzag, dagzigzag
 export keyedreduce
 
+export estimate_equations, generate_data
+
 #include("pinv.jl")
 include("graphs.jl")
 include("combinations_without.jl")
@@ -55,6 +57,7 @@ include("sampler.jl")
 include("dag_sampler.jl")
 include("misc2.jl")
 include("exact.jl")
+include("equations.jl")
 #include("mcs.jl")
 
 # Compatibility with the new "Package Extensions" (https://github.com/JuliaLang/julia/pull/47695)
