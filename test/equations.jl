@@ -1,5 +1,4 @@
 using CausalInference
-using TikzGraphs
 using Random
 Random.seed!(1)
 
