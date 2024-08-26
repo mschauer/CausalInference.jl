@@ -37,3 +37,5 @@ println("df_generated: ")
 
 
 display(df_generated)
+
+println(scm.CausalEffectsMatrix)
