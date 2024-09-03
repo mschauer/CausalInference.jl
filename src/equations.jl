@@ -85,8 +85,8 @@ function estimate_equations(t, est_g::DiGraph)::SCM
                 push!(residuals, resid)
 
                 pred_indices = [findfirst(==(pred), nodes) for pred in preds]
-                CausalEffectsMatrix[node_index, pred_indices] = coef[2:end] # Coefficients for predictors
-                CausalEffectsMatrix[node_index, end] = coef[1]  # Intercept
+                CausalEffectsMatrix[node_index, pred_indices] = coef[2:end] 
+                CausalEffectsMatrix[node_index, end] = coef[1]  
             else
                 println("Warning: Coefficients not stored for node $node. Expected vector, got $coef")
             end
