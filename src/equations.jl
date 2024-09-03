@@ -7,7 +7,7 @@ using LinearAlgebra, Graphs, Tables, Random, Statistics
     coefficients::Vector{<:Vector{<:AbstractFloat}}
     residuals::Vector{<:Vector{<:AbstractFloat}}
     dag::DiGraph
-    CausalEffectsMatrix::Matrix{Float64}
+    causal_effects::Matrix{Float64}
 
 A struct representing a Structural Causal Model (SCM).
 
@@ -16,14 +16,14 @@ A struct representing a Structural Causal Model (SCM).
 - `coefficients::Vector{<:Vector{<:AbstractFloat}}`: A list of coefficient vectors for each variable.
 - `residuals::Vector{<:Vector{<:AbstractFloat}}`: A list of residuals for each variable.
 - `dag::DiGraph`: The directed graph representing the structure of the SCM.
-- `CausalEffectsMatrix::Matrix{Float64}`: A matrix that represents the entire SCM, capturing the linear relationships defined by the SCM equations.
+- `causal_effects::Matrix{Float64}`: A matrix that represents the entire SCM, capturing the linear relationships defined by the SCM equations.
 """
 struct SCM
     variables::Vector{String}
     coefficients::Vector{Vector{Float64}}
     residuals::Vector{Vector{Float64}}
     dag::DiGraph
-    CausalEffectsMatrix::Matrix{Float64}
+    causal_effects::Matrix{Float64}
 end
 
 function ols_compute(X, y)
@@ -67,7 +67,7 @@ function estimate_equations(t, est_g::DiGraph)::SCM
     nodes = variables
 
     num_vars = length(variables)
-    CausalEffectsMatrix = zeros(Float64, num_vars, num_vars + 1) # +1 for intercept term
+    causal_effects = zeros(Float64, num_vars, num_vars + 1) # +1 for intercept term
 
     for node in nodes
         node_index = findfirst(==(node), nodes)
@@ -85,8 +85,8 @@ function estimate_equations(t, est_g::DiGraph)::SCM
                 push!(residuals, resid)
 
                 pred_indices = [findfirst(==(pred), nodes) for pred in preds]
-                CausalEffectsMatrix[node_index, pred_indices] = coef[2:end] 
-                CausalEffectsMatrix[node_index, end] = coef[1]  
+                causal_effects[node_index, pred_indices] = coef[2:end] 
+                causal_effects[node_index, end] = coef[1]  
             else
                 println("Warning: Coefficients not stored for node $node. Expected vector, got $coef")
             end
@@ -98,11 +98,11 @@ function estimate_equations(t, est_g::DiGraph)::SCM
             push!(coefficients, [intercept])
             push!(residuals, resid)
 
-            CausalEffectsMatrix[node_index, end] = intercept
+            causal_effects[node_index, end] = intercept
         end
     end
 
-    return SCM(var_names, coefficients, residuals, est_g, CausalEffectsMatrix)
+    return SCM(var_names, coefficients, residuals, est_g, causal_effects)
 end
 
 # Function to generate data from the SCM
