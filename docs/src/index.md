@@ -49,4 +49,4 @@ See [issue #1 (Roadmap/Contribution)](https://github.com/mschauer/CausalInferenc
 * D. M. Chickering: Learning Equivalence Classes of Bayesian-Network Structures. *Journal of Machine Learning Research* 2 (2002), 445-498.
 * D. Colombo, M. H. Maathuis: Order-Independent Constraint-Based Causal Structure Learning. *Journal of Machine Learning Research* 15 (2014), 3921-3962.
 * B. van der Zander, M. Liśkiewicz, J. Textor: Separators and Adjustment Sets in Causal Graphs: Complete Criteria and an Algorithmic Framework. (https://doi.org/10.48550/arXiv.1803.00116)
-* M. Schauer, M. Wienöbst: Causal structure learning with momentum: Sampling distributions over Markov Equivalence Classes of DAGs. (https://doi.org/10.48550/arXiv.2310.05655)
+* M. Schauer, M. Wienöbst: Causal structure learning with momentum: Sampling distributions over Markov Equivalence Classes of DAGs. *Proceedings of The 12th International Conference on Probabilistic Graphical Models*, PMLR 246 (2024), 382-400. (https://proceedings.mlr.press/v246/schauer24a.html)
