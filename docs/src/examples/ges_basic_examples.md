@@ -52,7 +52,7 @@ For the data using this seed, both agree.
 ## Causal Zig-Zag
 
 Instead of GES which greedily tries to maximize the BIC score, we can also sample the posterior distribution over CPDAGs corresponding to the BIC score. We have implemented the Causal Zig-Zag for this.
-(See: M. Schauer, M. Wienöbst: Causal structure learning with momentum: Sampling distributions over Markov Equivalence Classes of DAGs. (https://doi.org/10.48550/arXiv.2310.05655))
+(See: M. Schauer, M. Wienöbst: Causal structure learning with momentum: Sampling distributions over Markov Equivalence Classes. *Proceedings of The 12th International Conference on Probabilistic Graphical Models*, PMLR 246 (2024), 382-400. (https://proceedings.mlr.press/v246/schauer24a.html))
 
 
 ```
