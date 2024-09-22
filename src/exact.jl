@@ -90,10 +90,10 @@ function exactscorebased(X::AbstractMatrix; method=:gaussian_bic, penalty=0.5, p
     if method == :gaussian_bic
         C = Symmetric(cov(X, dims = 1, corrected = false))
         S = GaussianScore(C, N, penalty)
-        return exactscorebased(n, (p, v) -> local_score(S, p, v) ; parallel, verbose)
+        return exactscorebased(n, (p, v) -> local_score_(S, p, v) ; parallel, verbose)
     elseif method == :gaussian_bic_raw
         S = GaussianScoreQR(X, penalty)
-        return exactscorebased(n, (p, v) -> local_score(S, p, v); parallel, verbose)
+        return exactscorebased(n, (p, v) -> local_score_(S, p, v); parallel, verbose)
     else 
         throw(ArgumentError("method=$method"))
     end

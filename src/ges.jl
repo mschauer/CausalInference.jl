@@ -359,8 +359,8 @@ function local_score_(os::GaussianScore, p, v)
         c = C[p_, v]
         Cp = C[v, v] - c*(C[p_, p_]\c)
     else # compute conditional correlation
-        c = @view C[p, v]
-        Cp = C[v, v] - dot(c, (@view C[p, p])\c)
+        c = C[p, v]
+        Cp = C[v, v] - dot(c, C[p, p]\c)
     end
     (-n*(1 + log(max(0,Cp))) - penalty*(1  + k)*log(n))/2
 end
