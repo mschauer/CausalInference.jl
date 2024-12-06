@@ -1,4 +1,6 @@
 using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
+using OrderedCollections
+sort2(d; kwargs...) = sort!(OrderedDict(d); kwargs...)
 @testset "Zig-Zag" begin
     Random.seed!(1)
 
@@ -21,7 +23,7 @@ using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
     score = GaussianScore(C, N, penalty)
     gs = causalzigzag(n; score, κ, iterations)
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
-    posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+    posterior = sort2(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
 
     # maximum aposteriori estimate
     @test first(posterior).first == [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5] 
@@ -46,14 +48,14 @@ end #testset
 
     gs = causalzigzag(n; iterations);
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
-    posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+    posterior = sort2(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
     @test length(posterior) == m
     @test norm(values(posterior) .- 1/m, 1)/2 < 0.05
     T_skew = sum(τs)
 
     gs = causalzigzag(n; iterations, σ=1.0, ρ=0.0);
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
-    posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+    posterior = sort2(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
     @test length(posterior) == m
     @test norm(values(posterior) .- 1/m, 1)/2 < 0.05
     T = sum(τs)

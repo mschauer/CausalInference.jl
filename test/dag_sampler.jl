@@ -1,6 +1,7 @@
 using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
+using OrderedCollections
+sort2(d; kwargs...) = sort!(OrderedDict(d); kwargs...)
 @testset "Dag-Zig-Zag" begin
-
     Random.seed!(1)
 
     N = 100 # number of data points
@@ -28,12 +29,12 @@ using Random, CausalInference, Statistics, Test, Graphs, LinearAlgebra
             graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs)
             @test score_dag(graphs[end], score) ≈ scores[end] + score_dag(DiGraph(n), score)
             @test !any(Graphs.is_cyclic.(graphs))
-            posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+            posterior = sort2(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
             logΠ = map(g->score_dag(digraph(g, n), score), collect(keys(posterior)))
             Π = normalize(exp.(logΠ .- maximum(logΠ) ), 1)
             @test norm(collect(values(posterior)) - Π, 1) < 30/sqrt(iterations)
 
-            posterior = sort(keyedreduce(+, vpairs.(cpdag.(graphs)), ws); byvalue=true, rev=true)
+            posterior = sort2(keyedreduce(+, vpairs.(cpdag.(graphs)), ws); byvalue=true, rev=true)
             @test first(posterior).first == [1=>2, 1=>3, 2=>1, 2=>4, 3=>1, 3=>4, 4=>5] 
         end
     end
@@ -50,7 +51,7 @@ end #testset
     n = 3
     gs = dagzigzag(n; iterations);
     graphs, graph_pairs, hs, τs, ws, ts, scores = CausalInference.unzipgs(gs);
-    posterior = sort(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
+    posterior = sort2(keyedreduce(+, graph_pairs, ws); byvalue=true, rev=true)
     @test length(posterior) == 25
     @test maximum(values(posterior)) < 1/25 + 0.01
     @test minimum(values(posterior)) > 1/25 - 0.01
