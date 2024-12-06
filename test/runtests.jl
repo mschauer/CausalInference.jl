@@ -1,7 +1,7 @@
 using CausalInference
 using Graphs
 using Test
-
+include("zintervention.jl")
 include("exact.jl")
 include("operators.jl")
 include("ges.jl")
