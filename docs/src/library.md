@@ -33,7 +33,7 @@ CausalInference.meek_rule4
 pdag2dag!
 pdag_to_dag_dortarsi!
 pdag_to_dag_meek!
-do!
+CausalInference.do!
 ```
 
 ## PC algorithm
