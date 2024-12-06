@@ -83,7 +83,7 @@ function skeleton(g::SimpleGraph, I)
             @label nextedge
         end
         d = d + 1
-        if isdone
+        if isdone || d > n-2 
             return g, S
         end
     end
@@ -136,7 +136,7 @@ function skeleton_stable(g, I)
         end
         empty!(remove)
         d = d + 1
-        if isdone
+        if isdone || d > n-2 
             return g, S
         end
     end

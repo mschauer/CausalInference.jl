@@ -17,24 +17,21 @@ df = (x=x, v=v, w=w, z=z, s=s)
 
 est_g, score = ges(df; penalty=1.0, parallel=true)
 
-
 est_dag= pdag2dag!(est_g)
 
 scm= estimate_equations(df,est_dag)
 
-display(scm)
+#display(scm)
 
 #println(CI.SCM)
 
-df_generated= generate_data(scm, 2000)
+df_generated = generate_data(scm, 2000)
 
 println("df: ")
 
-display(df)
+#display(df)
 
 println("df_generated: ")
 
-
-
-display(df_generated)
+#display(df_generated)
 

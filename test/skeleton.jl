@@ -150,4 +150,9 @@ end
     d = 10
     @time h, s = skeleton(d, CausalInference.truetest)
     @test ne(h) == 0
+    d = 10
+    @time h, s = skeleton(d, (i, j, s) -> length(s) == 8)
+    @test ne(h) == 0
+    @time h, s = skeleton(d, (i, j, s) -> length(s) == 9)
+    @test ne(h) == div(d * (d - 1), 2)
 end
