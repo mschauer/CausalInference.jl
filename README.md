@@ -2,7 +2,7 @@
 [![Latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://mschauer.github.io/CausalInference.jl/latest/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1005091.svg)](https://doi.org/10.5281/zenodo.1005091)
 
-# Causalinference.jl
+# CausalInference.jl
 
 Julia package for causal inference and analysis, graphical models and structure learning.
 
