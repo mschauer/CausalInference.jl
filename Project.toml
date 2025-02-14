@@ -4,13 +4,13 @@ authors = ["Moritz Schauer <moritzschauer@web.de>"]
 version = "0.18.0"
 
 [deps]
+CliqueTrees = "60701a23-6482-424a-84db-faee86b9b1f8"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 LRUCache = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-LinkedLists = "70f5e60a-1556-5f34-a19e-a48b3e4aaee9"
 LogarithmicNumbers = "aa2f6b4e-9042-5d33-9679-40d3a6b85899"
 Memoization = "6fafb56a-5788-4b4e-91ca-c0cea6611c73"
 MetaGraphs = "626554b9-1ddb-594c-aa3c-2596fe9399a5"
@@ -38,6 +38,7 @@ GraphRecipesExt = ["GraphRecipes", "Plots"]
 TikzGraphsExt = "TikzGraphs"
 
 [compat]
+CliqueTrees = "0.2.1"
 Combinatorics = "1.0"
 DelimitedFiles = "1.6, 1.7, 1.8, 1.9"
 Distances = "0.8, 0.9, 0.10"
@@ -47,7 +48,6 @@ GraphRecipes = "0.5"
 Graphs = "1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 1.11, 1.12"
 LRUCache = "1.4, 1.5, 1.6"
 LinearAlgebra = "1"
-LinkedLists = "0.1"
 LogarithmicNumbers = "1.4"
 Memoization = "0.2"
 MetaGraphs = "0.7, 0.8"
