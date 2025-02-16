@@ -1,6 +1,5 @@
+using CliqueTrees: mcs
 using Graphs
-using LinkedLists
-
 
 
 """
@@ -9,44 +8,14 @@ using LinkedLists
 Perform a Maximum Cardinality Search on graph G. 
 """
 function count_mcs(G)
-    n = nv(G)
-
-    # data structures for MCS
-    sets = [LinkedLists.LinkedList{Int64}() for _ = 1:n+1]
-    pointers = Vector{ListNode{Int64}}(undef,n)
-    size = ones(Int64, n)
-
-    # output data structure
-    invmcsorder = zeros(Int64, n)
-
-    # init
-    for v in vertices(G)
-        pointers[v] = push!(sets[1], v)
-    end
-    maxcard = 1
-
-    for i = 1:n
-        v = first(sets[maxcard])
-        size[v] = -size[v] + 1
-        invmcsorder[v] = i
-
-        deleteat!(sets[maxcard], pointers[v])
-
-        # update the neighbors
-        for w in inneighbors(G, v)
-            if size[w] >= 1
-                deleteat!(sets[size[w]], pointers[w])
-                size[w] += 1
-                pointers[w] = push!(sets[size[w]], w)
-            end
-        end
-        maxcard += 1
-        while maxcard >= 1 && isempty(sets[maxcard])
-            maxcard -= 1
-        end
+    invmcsorder, size = mcs(G)
+    
+    for i in vertices(G)
+        invmcsorder[i] = 1 + nv(G) - invmcsorder[i]
+        size[i] = -size[i]
     end
 
-    return -size, invmcsorder 
+    size, invmcsorder
 end
 
 """
@@ -55,49 +24,13 @@ end
 Perform a Maximum Cardinality Search on graph G. The elements of clique K are of prioritized and chosen first.
 """
 function operator_mcs(G, K)
-    n = nv(G)
-    copy_K = copy(K)
-
-    sets = [LinkedLists.LinkedList{Int64}() for i = 1:n+1]
-    pointers = Vector{ListNode{Int64}}(undef,n)
-    size = ones(Int64, n)
-    invmcsorder = zeros(Int64, n)
-
-    # init
-    for v in vertices(G)
-        pointers[v] = push!(sets[1], v)
-    end
-    maxcard = 1
-
-    for i = 1:n
-        # first, the vertices in K are chosen
-        # they are always in the set of maximum cardinality vertices
-        if !isempty(copy_K)
-            v = popfirst!(copy_K)
-        # afterwards, the algorithm chooses any vertex from maxcard
-        else
-            v = first(sets[maxcard])
-        end
-        invmcsorder[v] = i
-        size[v] = -1
-
-        deleteat!(sets[maxcard], pointers[v])
-
-        # update the neighbors
-        for w in inneighbors(G, v)
-            if size[w] >= 1
-                deleteat!(sets[size[w]], pointers[w])
-                size[w] += 1
-                pointers[w] = push!(sets[size[w]], w)
-            end
-        end
-        maxcard += 1
-        while maxcard >= 1 && isempty(sets[maxcard])
-            maxcard -= 1
-        end
+    invmcsorder = first(mcs(G, reverse(K)))
+    
+    for i in vertices(G)
+        invmcsorder[i] = 1 + nv(G) - invmcsorder[i]
     end
 
-    return invmcsorder
+    invmcsorder
 end
 
 # EXPORTS:
