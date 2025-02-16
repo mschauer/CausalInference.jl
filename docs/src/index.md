@@ -14,11 +14,17 @@ Causal inference is by no means an easy subject. Readers without any prior expos
 
 There are also tutorials and examples linked in the navigation bar of this package.
 
-## Implementation Details
+See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for implemented functionality.
+
+
+## Performance and Implementation Details
+
+The package uses the very efficient [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) package internally.
+The speed of the PC and GES algorithm is comparable with the C++ code of the R package `pcalg`. The exact score-based algorithm scales to 20-25 variables on consumer hardware, which comes close to the theoretical limits of these approaches.
+A couple of packages provide high-performance implementatiosn of algorithms or provide performance relevant infrastructure: 
+[CliqueTrees.jl](https://github.com/AlgebraicJulia/CliqueTrees.jl), [NearestNeighbors.jl](https://github.com/KristofferC/NearestNeighbors.jl) [Memoization.jl](https://github.com/marius311/Memoization.jl), [PrecompileTools.jl](https://github.com/JuliaLang/PrecompileTools.jl), [ThreadsX.jl](https://github.com/tkf/ThreadsX.jl).
 
 The PC algorithm was tested on random DAGs by comparing the result of the PC algorithm using the *d*-separation oracle with the CPDAG computed with Chickering's DAG->CPDAG conversion algorithm (implemented as [`dsep`](@ref) and [`cpdag`](@ref) in this package).
-
-See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for other implemented functionality.
 
 The algorithms use the `SimpleGraph` and `SimpleDiGraph` graph representation of the Julia package [Graphs](https://github.com/JuliaGraphs/Graphs.jl).
 Both types of graphs are represented by sorted adjacency lists (vectors of vectors in the Graphs implementation).
@@ -26,9 +32,6 @@ Both types of graphs are represented by sorted adjacency lists (vectors of vecto
 CPDAGs are just modeled as `SimpleDiGraph`s, where unoriented edges are represented by a forward and a backward directed edge.
 
 The listing algorithms for adjustment sets are implemented from scratch using an memority efficient iterator protocol to handle large problems.
-
-## Performance
-The speed of the PC and GES algorithm is comparable with the C++ code of the R package `pcalg`. The exact score-based algorithm scales to 20-25 variables on consumer hardware, which comes close to the theoretical limits of these approaches. 
 
 ## Plotting
 Main package provides a text-based output describing all identified edges for PC and FCI algorithm ([`plot_pc_graph_text`](@ref) and [`plot_fci_graph_text`](@ref), respectively).
