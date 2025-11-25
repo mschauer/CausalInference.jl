@@ -1,7 +1,7 @@
 name = "CausalInference"
 uuid = "8e462317-f959-576b-b3c1-403f26cec956"
 authors = ["Moritz Schauer <moritzschauer@web.de>"]
-version = "0.19.1"
+version = "0.19.2"
 
 [deps]
 CliqueTrees = "60701a23-6482-424a-84db-faee86b9b1f8"
