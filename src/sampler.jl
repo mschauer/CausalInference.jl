@@ -219,7 +219,7 @@ function causalzigzag(n, G = (DiGraph(n), 0); balance = metropolis_balance, prio
     τ = 0.0
     secs = 0.0
     emax = n*κ÷2
-    scorevalue = 0.0
+    scorevalue = score_dag(SimpleDiGraph(n), score)
     @showprogress for iter in 1:iterations
         total_old = total
         if isodd(traversals) && total == 0 # count number of traversal from empty to full
