@@ -168,7 +168,7 @@ function sorted_union_(x::Vector{T}, y::Vector{T}) where T
         end
     end
 end
-function sorted_intersect_(x::Vector{T}, y::Vector{T}) where T
+function sorted_intersect_(x::AbstractVector{T}, y::AbstractVector{T}) where T
     z = T[]
     i = j = 1
     while true
