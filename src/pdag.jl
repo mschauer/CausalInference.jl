@@ -143,7 +143,8 @@ function neighbors_adjacent(g::SimpleDiGraph, x)
     #@assert z == sort(a ∪ b)
     z
 end
-function sorted_union_(x::Vector{T}, y::Vector{T}) where T
+# Accept AbstractVector (Graphs ≥1.14 may return FrozenVector from in/outneighbors).
+function sorted_union_(x::AbstractVector{T}, y::AbstractVector{T}) where T
     z = T[]
     i = j = 1
     while true
