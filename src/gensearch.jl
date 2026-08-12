@@ -322,8 +322,8 @@ function downwards(state, I, R)
 end
 
 function Base.iterate(A::ConstraintIterator)
-    R = deepcopy(A.R)
-    I = deepcopy(A.I)
+    R = copy(A.R)
+    I = copy(A.I)
     state = Vector{Tuple{Symbol, Symbol, eltype(A.g), Set{eltype(A.g)}, Set{eltype(A.g)}}}()
     A.find(A.g, A.X, A.Y, I, R) == false && return nothing
     issetequal(I, R) && return I, state
@@ -339,7 +339,7 @@ function Base.iterate(A::ConstraintIterator, state)
         dir == :down && set == :R && delete!(R, v)
         dir == :up && set == :R && push!(R, v)
         A.find(A.g,  A.X, A.Y, I, R) == false && continue
-        issetequal(I, R) && return deepcopy(I), state
+        issetequal(I, R) && return copy(I), state
         if dir == :down
             downwards(state, I, R)
         end
@@ -379,14 +379,128 @@ function list_backdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set
     return ConstraintIterator(g, X, Y, I, R, find_backdoor_adjustment)
 end
 
+# --- Bool-array frontdoor find (Wienöbst et al.; cf. mwien/frontdoor-adjustment) ---
+# Used by `list_frontdoor_adjustment` for lower constant factors than the
+# gensearch-based `find_frontdoor_adjustment` while preserving the same I/R
+# ConstraintIterator enumeration (O(n(n+m)) delay).
+
+function _frontdoor_bdbb!(G, Z, X, v, edgetype, visited, reachable)
+    visited[2 * v + edgetype] = true
+    reachable[v] = true
+    if !(v in Z) && !(v in X)
+        for u in outneighbors(G, v)
+            if !visited[2 * u]
+                _frontdoor_bdbb!(G, Z, X, u, 0, visited, reachable)
+            end
+        end
+    end
+    if (edgetype == 0 && (v in Z)) || (edgetype == 1 && !(v in Z))
+        for u in inneighbors(G, v)
+            if !visited[2 * u + 1]
+                _frontdoor_bdbb!(G, Z, X, u, 1, visited, reachable)
+            end
+        end
+    end
+end
+
+function _frontdoor_reachbd(G, X, Z)
+    visited = falses(2 * nv(G) + 1)
+    reachable = falses(nv(G))
+    for x in X
+        for edgetype in (0, 1)
+            if !visited[2 * x + edgetype]
+                _frontdoor_bdbb!(G, Z, X, x, edgetype, visited, reachable)
+            end
+        end
+    end
+    return Set{eltype(G)}(findall(identity, reachable))
+end
+
+function _frontdoor_modbb!(G, X, v, edgetype, visited, continuelater, forbidden)
+    visited[2 * v + edgetype] = true
+    forbidden[v] = true
+    if !(v in X)
+        for u in outneighbors(G, v)
+            if !visited[2 * u]
+                _frontdoor_modbb!(G, X, u, 0, visited, continuelater, forbidden)
+            end
+        end
+    end
+    if (edgetype == 0 && v in X) || (edgetype == 1 && !(v in X))
+        for u in inneighbors(G, v)
+            if forbidden[u] && !visited[2 * u + 1]
+                _frontdoor_modbb!(G, X, u, 1, visited, continuelater, forbidden)
+            elseif !visited[2 * u + 1]
+                continuelater[u] = true
+            end
+        end
+    end
+    if continuelater[v] && !visited[2 * v + 1]
+        _frontdoor_modbb!(G, X, v, 1, visited, continuelater, forbidden)
+    end
+end
+
+function _frontdoor_dfs!(G, Z, u, visited)
+    visited[u] = true
+    for v in outneighbors(G, u)
+        if !(v in Z) && !visited[v]
+            _frontdoor_dfs!(G, Z, v, visited)
+        end
+    end
+end
+
+function _frontdoor_checkfirst(G, X, Y, Z)
+    visited = falses(nv(G))
+    for x in X
+        if !visited[x]
+            _frontdoor_dfs!(G, Z, x, visited)
+        end
+    end
+    for y in Y
+        visited[y] && return false
+    end
+    return true
+end
+
+"""
+Find a frontdoor adjustment set with ``I ⊆ Z ⊆ R`` using the bool-array
+formulation from Wienöbst et al. (2024) / mwien/frontdoor-adjustment.
+Same contract as [`find_frontdoor_adjustment`](@ref): return `Z` or `false`.
+"""
+function _find_frontdoor_adjustment_bool(g, X, Y, I, R)
+    Za = setdiff(R, _frontdoor_reachbd(g, X, Set{eltype(g)}()))
+    visited = falses(2 * nv(g) + 1)
+    continuelater = falses(nv(g))
+    save = setdiff(Set(vertices(g)), Za)
+    forbidden = [x in save for x in 1:nv(g)]
+    for y in Y
+        for edgetype in (0, 1)
+            _frontdoor_modbb!(g, X, y, edgetype, visited, continuelater, forbidden)
+        end
+    end
+    Zab = setdiff(Za, Set{eltype(g)}(findall(identity, forbidden)))
+    if issubset(I, Zab) && _frontdoor_checkfirst(g, X, Y, Zab)
+        return Zab
+    else
+        return false
+    end
+end
+
 """
     list_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
 
-List all front-door adjustment sets `Z` with ``I ⊆ Z ⊆ R`` for sets of vertices `X` and `Y` in `g`. 
+List all front-door adjustment sets `Z` with ``I ⊆ Z ⊆ R`` for sets of vertices `X` and `Y` in `g`.
+
+Uses the same `ConstraintIterator` I/R enumeration as the other `list_*`
+methods (``O(n(n + m))`` delay with linear-time find; Wienöbst et al. 2024,
+Corollary 1). The find oracle is a bool-array implementation of the paper's
+Algorithm 2 (cf. [mwien/frontdoor-adjustment](https://github.com/mwien/frontdoor-adjustment)),
+which has lower constant factors than [`find_frontdoor_adjustment`](@ref) under
+heavy enumeration while returning the same family of sets.
 """
 function list_frontdoor_adjustment(g, X, Y, I = Set{eltype(g)}(), R = setdiff(Set(vertices(g)), X, Y))
     X, Y, I, R = toset.((X, Y, I, R))
-    return ConstraintIterator(g, X, Y, I, R, find_frontdoor_adjustment)
+    return ConstraintIterator(g, X, Y, I, R, _find_frontdoor_adjustment_bool)
 end
 
 # note that this enumeration approach does *not* work for *minimal* dseps and adjustment sets
