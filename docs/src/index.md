@@ -14,8 +14,19 @@ Causal inference is by no means an easy subject. Readers without any prior expos
 
 There are also tutorials and examples linked in the navigation bar of this package.
 
-See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for implemented functionality.
+Besides providing an end-user interface for causal discovery, `CausalInference.jl` implements core graphical and causal-discovery algorithms as reusable Julia components. As of summer 2026, these implementations are used downstream across the Julia ecosystem, including
+[AlgorithmicRecourseDynamics.jl](https://github.com/JuliaTrustworthyAI/AlgorithmicRecourseDynamics.jl),
+[Associations.jl](https://github.com/JuliaDynamics/Associations.jl),
+[CausalDynamics.jl](https://github.com/SimonAB/CausalDynamics.jl),
+[CausalTables.jl](https://github.com/salbalkus/CausalTables.jl),
+[CounterfactualExplanations.jl](https://github.com/JuliaTrustworthyAI/CounterfactualExplanations.jl),
+[RecursiveCausalDiscovery.jl](https://github.com/sepehr78/RecursiveCausalDiscovery.jl),
+[Stan.jl](https://github.com/StanJulia/Stan.jl),
+[StatisticalRethinking.jl](https://github.com/StatisticalRethinkingJulia/StatisticalRethinking.jl),
+[TaijaParallel.jl](https://github.com/JuliaTrustworthyAI/TaijaParallel.jl), and
+[RegressionAndOtherStories.jl](https://github.com/RegressionAndOtherStoriesJulia/RegressionAndOtherStories.jl).
 
+See the [Library](https://mschauer.github.io/CausalInference.jl/latest/library/) for implemented functionality.
 
 ## Performance and Implementation Details
 
