@@ -14,7 +14,7 @@ Causal inference is by no means an easy subject. Readers without any prior expos
 
 There are also tutorials and examples linked in the navigation bar of this package.
 
-Besides providing an end-user interface for causal discovery, `CausalInference.jl` implements core graphical and causal-discovery algorithms as reusable Julia components. As of summer 2026, these implementations are used downstream across the Julia ecosystem, including
+Besides providing an end-user interface for intervention analysis and causal discovery, `CausalInference.jl` implements core graphical and causal-discovery algorithms as reusable Julia components. As of summer 2026, these implementations are used downstream across the Julia ecosystem, including
 [AlgorithmicRecourseDynamics.jl](https://github.com/JuliaTrustworthyAI/AlgorithmicRecourseDynamics.jl),
 [Associations.jl](https://github.com/JuliaDynamics/Associations.jl),
 [CausalDynamics.jl](https://github.com/SimonAB/CausalDynamics.jl),
